@@ -1,0 +1,475 @@
+{
+  "departments": [],
+  "users": [],
+  "cases": [
+    {
+      "id": "case-1790709215041-9fhw",
+      "publicCaseId": "CC-RSFNA3B",
+      "reportType": "safety",
+      "category": "Immediate Danger",
+      "subcategory": "Suspicious Intruder / Weapon",
+      "description": "🚨 IMMEDIATE DANGER ALERT: Karenge.",
+      "location": "in market",
+      "incidentDate": "Right Now",
+      "incidentTime": "00:43",
+      "isAnonymous": true,
+      "reporterName": null,
+      "reporterContact": null,
+      "priority": "CRITICAL",
+      "status": "NEW",
+      "pinHash": "e7b0c6acf45556e04d61d271e252720ca266956a132ce0bac283944c717648bc",
+      "pinSalt": "6f45a206294e2dfdec30fc5cfb1513cf",
+      "assignedDepartmentId": "dept-security",
+      "assignedDepartmentName": "Campus Security & Emergency Response",
+      "assignedStaffId": null,
+      "assignedStaffName": null,
+      "evidence": [],
+      "aiAnalysis": {
+        "category": "student_safety",
+        "subcategory": "immediate_danger",
+        "priority_suggestion": "CRITICAL",
+        "suggested_department": "Campus Security & Emergency Response",
+        "confidence": 0.99,
+        "reasoning": "🚨 EMERGENCY REPORT: High-priority immediate alert dispatched directly to Campus Security & Response Units.",
+        "location_detected": "in market",
+        "evidence_present": false
+      },
+      "createdAt": "2026-09-29T19:13:35.041Z",
+      "updatedAt": "2026-09-29T19:13:35.041Z",
+      "timeline": [
+        {
+          "time": "2026-09-29T19:13:35.041Z",
+          "title": "🚨 Emergency Report Initiated",
+          "description": "Report created with complete privacy shield (Identity Protection: ON)."
+        },
+        {
+          "time": "2026-09-29T19:13:35.041Z",
+          "title": "AI Triage Completed",
+          "description": "Classified as Report with priority CRITICAL. Routed to Campus Security & Emergency Response."
+        }
+      ]
+    },
+    {
+      "id": "case-1790706467132-yotv",
+      "publicCaseId": "CC-4UU7GFD",
+      "reportType": "safety",
+      "category": "Immediate Danger",
+      "subcategory": "Immediate Hazard",
+      "description": "Urgent danger near lab",
+      "location": "Electronics Lab",
+      "incidentDate": "Today",
+      "incidentTime": "Unspecified",
+      "isAnonymous": true,
+      "reporterName": null,
+      "reporterContact": null,
+      "priority": "CRITICAL",
+      "status": "RESOLVED",
+      "pinHash": "534d094af7f715476ef84164a8c446d72ea6f85c9a970abde35df18d4c6ca1ed",
+      "pinSalt": "36c536a19a524d53d24c7baa38b96837",
+      "assignedDepartmentId": "dept-security",
+      "assignedDepartmentName": "Campus Security & Emergency Response",
+      "assignedStaffId": null,
+      "assignedStaffName": null,
+      "evidence": [],
+      "aiAnalysis": {
+        "category": "student_safety",
+        "subcategory": "immediate_danger",
+        "priority_suggestion": "CRITICAL",
+        "suggested_department": "Campus Security & Emergency Response",
+        "confidence": 0.99,
+        "reasoning": "🚨 EMERGENCY REPORT: High-priority immediate alert dispatched directly to Campus Security & Response Units.",
+        "location_detected": "Electronics Lab",
+        "evidence_present": false
+      },
+      "createdAt": "2026-09-29T18:27:47.132Z",
+      "updatedAt": "2026-09-29T19:10:31.839Z",
+      "timeline": [
+        {
+          "time": "2026-09-29T18:27:47.132Z",
+          "title": "🚨 Emergency Report Initiated",
+          "description": "Report created with complete privacy shield (Identity Protection: ON)."
+        },
+        {
+          "time": "2026-09-29T18:27:47.132Z",
+          "title": "AI Triage Completed",
+          "description": "Classified as Report with priority CRITICAL. Routed to Campus Security & Emergency Response."
+        },
+        {
+          "time": "2026-09-29T19:10:31.838Z",
+          "title": "Status Changed to RESOLVED",
+          "description": "Status transitioned to RESOLVED"
+        }
+      ]
+    },
+    {
+      "id": "case-1790236362470-n29i",
+      "publicCaseId": "CC-SBPBYKW",
+      "reportType": "safety",
+      "category": "Harassment / Intimidation",
+      "subcategory": "Harassment / Intimidation",
+      "description": "5th sem ka ladka mar raha hai",
+      "location": "Student Parking Lot",
+      "incidentDate": "Today",
+      "incidentTime": "Approx. 5:30 PM",
+      "isAnonymous": true,
+      "reporterName": null,
+      "reporterContact": null,
+      "priority": "CRITICAL",
+      "status": "ESCALATED",
+      "pinHash": "b984f7bbf8e33c23befd86038ce4b910330438619dbd4a21d9e6ca6b15bd4c30",
+      "pinSalt": "5cbfa4202710d904161aeee6c5727f32",
+      "assignedDepartmentId": "dept-security",
+      "assignedDepartmentName": "Campus Security & Emergency Response",
+      "assignedStaffId": null,
+      "assignedStaffName": null,
+      "evidence": [
+        {
+          "id": "ev-1790236354166-1b4o",
+          "fileName": "dp.png",
+          "sanitizedName": "ev_1790236354154_z2ykj6.png",
+          "fileType": "image/png",
+          "sizeBytes": 563318,
+          "uploadedAt": "2026-09-24T07:52:34.166Z",
+          "sanitizedPreviewPath": "/uploads/ev_1790236354154_z2ykj6.png"
+        }
+      ],
+      "aiAnalysis": {
+        "category": "student_safety",
+        "category_label": "Student Safety",
+        "subcategory": "medical_emergency_violence",
+        "subcategory_label": "Medical Emergency or Physical Distress",
+        "priority_suggestion": "CRITICAL",
+        "suggested_department_id": "dept-security",
+        "suggested_department_name": "Campus Security & Emergency Response",
+        "confidence": 0.95,
+        "reasoning": "The report indicates an urgent distress situation ('mar raha hai', meaning someone is in severe distress or danger) involving a student in the parking lot, requiring immediate emergency response.",
+        "location_detected": "Student Parking Lot",
+        "evidence_needed": false
+      },
+      "createdAt": "2026-09-24T07:52:42.470Z",
+      "updatedAt": "2026-09-24T08:37:53.270Z",
+      "timeline": [
+        {
+          "time": "2026-09-24T07:52:42.470Z",
+          "title": "Report Safely Submitted",
+          "description": "Report created with complete privacy shield (Identity Protection: ON)."
+        },
+        {
+          "time": "2026-09-24T07:52:42.470Z",
+          "title": "AI Triage Completed",
+          "description": "Classified as Medical Emergency or Physical Distress with priority CRITICAL. Routed to Campus Security & Emergency Response."
+        },
+        {
+          "time": "2026-09-24T08:37:10.162Z",
+          "title": "Status Changed to UNDER REVIEW",
+          "description": "Status transitioned to UNDER_REVIEW"
+        },
+        {
+          "time": "2026-09-24T08:37:53.270Z",
+          "title": "🚨 Case Escalated",
+          "description": "Escalated by Super Admin. Reason: not valid"
+        }
+      ]
+    },
+    {
+      "id": "case-1790236137899-m8ez",
+      "publicCaseId": "CC-JGF2LC4",
+      "reportType": "safety",
+      "category": "Harassment / Intimidation",
+      "subcategory": "Harassment / Intimidation",
+      "description": "no problem",
+      "location": "Student Parking Lot",
+      "incidentDate": "Today",
+      "incidentTime": "Approx. 5:30 PM",
+      "isAnonymous": true,
+      "reporterName": null,
+      "reporterContact": null,
+      "priority": "LOW",
+      "status": "AI_TRIAGED",
+      "pinHash": "93fdc29da2ac211a85756ce758606c90e2eca9bb10dce28417563c55cdc373a5",
+      "pinSalt": "7acedbd228939d5886b0d368bacf269a",
+      "assignedDepartmentId": "dept-security",
+      "assignedDepartmentName": "Campus Security & Emergency Response",
+      "assignedStaffId": null,
+      "assignedStaffName": null,
+      "evidence": [
+        {
+          "id": "ev-1790236126099-duhw",
+          "fileName": "dp.png",
+          "sanitizedName": "ev_1790236126077_necz1o.png",
+          "fileType": "image/png",
+          "sizeBytes": 563318,
+          "uploadedAt": "2026-09-24T07:48:46.099Z",
+          "sanitizedPreviewPath": "/uploads/ev_1790236126077_necz1o.png"
+        }
+      ],
+      "aiAnalysis": {
+        "category": "other",
+        "category_label": "General Campus Issue",
+        "subcategory": "incomplete_report",
+        "subcategory_label": "Incomplete Report",
+        "priority_suggestion": "LOW",
+        "suggested_department_id": "dept-security",
+        "suggested_department_name": "Campus Security & Emergency Response",
+        "confidence": 0.2,
+        "reasoning": "The report text 'no problem' provides insufficient information to determine an actual issue or emergency. It has been routed to security as a default for safety categories, but requires human review or follow-up with the student.",
+        "location_detected": "Student Parking Lot",
+        "evidence_needed": true
+      },
+      "createdAt": "2026-09-24T07:48:57.899Z",
+      "updatedAt": "2026-09-24T07:48:57.899Z",
+      "timeline": [
+        {
+          "time": "2026-09-24T07:48:57.899Z",
+          "title": "Report Safely Submitted",
+          "description": "Report created with complete privacy shield (Identity Protection: ON)."
+        },
+        {
+          "time": "2026-09-24T07:48:57.899Z",
+          "title": "AI Triage Completed",
+          "description": "Classified as Incomplete Report with priority LOW. Routed to Campus Security & Emergency Response."
+        }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-1790239055597-ajsa",
+      "caseId": "case-1790236362470-n29i",
+      "publicCaseId": "CC-SBPBYKW",
+      "senderType": "staff",
+      "senderName": "Super Admin",
+      "message": "i will take it",
+      "visibleToStudent": true,
+      "createdAt": "2026-09-24T08:37:35.596Z"
+    }
+  ],
+  "lostFoundItems": [],
+  "auditLogs": [
+    {
+      "id": "audit-1790709215045-gptr",
+      "timestamp": "2026-09-29T19:13:35.046Z",
+      "actorId": "anonymous-student",
+      "actorName": "Anonymous Student",
+      "action": "EMERGENCY_REPORT_CREATED",
+      "caseId": "case-1790709215041-9fhw",
+      "publicCaseId": "CC-RSFNA3B",
+      "metadata": {
+        "isAnonymous": true,
+        "category": "Immediate Danger",
+        "priority": "CRITICAL",
+        "assignedDepartment": "Campus Security & Emergency Response"
+      }
+    },
+    {
+      "id": "audit-1790709031853-sabu",
+      "timestamp": "2026-09-29T19:10:31.853Z",
+      "actorId": "staff-user",
+      "actorName": "Staff Officer",
+      "action": "CASE_STATUS_UPDATED",
+      "caseId": "case-1790706467132-yotv",
+      "publicCaseId": "CC-4UU7GFD",
+      "metadata": {
+        "previousStatus": "NEW",
+        "newStatus": "RESOLVED",
+        "notes": "Status transitioned to RESOLVED"
+      }
+    },
+    {
+      "id": "audit-1790706467135-2jh2",
+      "timestamp": "2026-09-29T18:27:47.135Z",
+      "actorId": "anonymous-student",
+      "actorName": "Anonymous Student",
+      "action": "EMERGENCY_REPORT_CREATED",
+      "caseId": "case-1790706467132-yotv",
+      "publicCaseId": "CC-4UU7GFD",
+      "metadata": {
+        "isAnonymous": true,
+        "category": "Immediate Danger",
+        "priority": "CRITICAL",
+        "assignedDepartment": "Campus Security & Emergency Response"
+      }
+    },
+    {
+      "id": "audit-1790239073278-ox4o",
+      "timestamp": "2026-09-24T08:37:53.279Z",
+      "actorId": "staff-user",
+      "actorName": "Super Admin",
+      "action": "CASE_ESCALATED",
+      "caseId": "case-1790236362470-n29i",
+      "publicCaseId": "CC-SBPBYKW",
+      "metadata": {
+        "reason": "not valid",
+        "previousPriority": "CRITICAL"
+      }
+    },
+    {
+      "id": "audit-1790239055605-qizq",
+      "timestamp": "2026-09-24T08:37:35.605Z",
+      "actorId": "staff-member",
+      "actorName": "Super Admin",
+      "action": "MESSAGE_SENT",
+      "caseId": "case-1790236362470-n29i",
+      "publicCaseId": "CC-SBPBYKW",
+      "metadata": {
+        "senderType": "staff",
+        "visibleToStudent": true
+      }
+    },
+    {
+      "id": "audit-1790239030169-hatl",
+      "timestamp": "2026-09-24T08:37:10.169Z",
+      "actorId": "staff-user",
+      "actorName": "Super Admin",
+      "action": "CASE_STATUS_UPDATED",
+      "caseId": "case-1790236362470-n29i",
+      "publicCaseId": "CC-SBPBYKW",
+      "metadata": {
+        "previousStatus": "AI_TRIAGED",
+        "newStatus": "UNDER_REVIEW",
+        "notes": "Status transitioned to UNDER_REVIEW"
+      }
+    },
+    {
+      "id": "audit-1790239001880-g576",
+      "timestamp": "2026-09-24T08:36:41.880Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-it-labs"
+      }
+    },
+    {
+      "id": "audit-1790238998577-5619",
+      "timestamp": "2026-09-24T08:36:38.578Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-hostel"
+      }
+    },
+    {
+      "id": "audit-1790238995121-94ls",
+      "timestamp": "2026-09-24T08:36:35.121Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-civil"
+      }
+    },
+    {
+      "id": "audit-1790238991668-df3a",
+      "timestamp": "2026-09-24T08:36:31.668Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-plumbing"
+      }
+    },
+    {
+      "id": "audit-1790238987629-qx4e",
+      "timestamp": "2026-09-24T08:36:27.629Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-electrical"
+      }
+    },
+    {
+      "id": "audit-1790238984322-2v7l",
+      "timestamp": "2026-09-24T08:36:24.322Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-welfare"
+      }
+    },
+    {
+      "id": "audit-1790238981106-r49x",
+      "timestamp": "2026-09-24T08:36:21.106Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-security"
+      }
+    },
+    {
+      "id": "audit-1790236917476-qvbd",
+      "timestamp": "2026-09-24T08:01:57.476Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-1790236917417"
+      }
+    },
+    {
+      "id": "audit-1790236917420-ra31",
+      "timestamp": "2026-09-24T08:01:57.420Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_CREATED",
+      "metadata": {
+        "departmentName": "Temp Test Dept"
+      }
+    },
+    {
+      "id": "audit-1790236362474-8bo8",
+      "timestamp": "2026-09-24T07:52:42.474Z",
+      "actorId": "anonymous-student",
+      "actorName": "Anonymous Student",
+      "action": "CASE_CREATED",
+      "caseId": "case-1790236362470-n29i",
+      "publicCaseId": "CC-SBPBYKW",
+      "metadata": {
+        "isAnonymous": true,
+        "category": "Harassment / Intimidation",
+        "priority": "CRITICAL",
+        "assignedDepartment": "Campus Security & Emergency Response"
+      }
+    },
+    {
+      "id": "audit-1790236137904-9nn1",
+      "timestamp": "2026-09-24T07:48:57.904Z",
+      "actorId": "anonymous-student",
+      "actorName": "Anonymous Student",
+      "action": "CASE_CREATED",
+      "caseId": "case-1790236137899-m8ez",
+      "publicCaseId": "CC-JGF2LC4",
+      "metadata": {
+        "isAnonymous": true,
+        "category": "Harassment / Intimidation",
+        "priority": "LOW",
+        "assignedDepartment": "Campus Security & Emergency Response"
+      }
+    },
+    {
+      "id": "audit-1790235831092-54zx",
+      "timestamp": "2026-09-24T07:43:51.092Z",
+      "actorId": "staff-1790235831089-8f9r",
+      "actorName": "Test Officer",
+      "action": "STAFF_REGISTERED",
+      "metadata": {
+        "departmentId": "dept-security",
+        "title": "Security Inspector"
+      }
+    },
+    {
+      "id": "audit-clean-start",
+      "actorId": "system",
+      "actorName": "CampusCare System",
+      "action": "SYSTEM_INITIALIZED",
+      "timestamp": "2026-09-24T12:00:00.000Z",
+      "metadata": {
+        "message": "Clean database initialized without dummy staff or cases."
+      }
+    }
+  ]
+}

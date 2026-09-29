@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --color-campus-50: #f0f7ff;
+  --color-campus-100: #e0effe;
+  --color-campus-200: #bae0fd;
+  --color-campus-300: #7cc7fb;
+  --color-campus-400: #38a8f6;
+  --color-campus-500: #0e8de7;
+  --color-campus-600: #0270c5;
+  --color-campus-700: #035aa0;
+  --color-campus-800: #074c83;
+  --color-campus-900: #0c406e;
+  --color-campus-950: #082848;
+
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0b0f19;
+  color: #f1f5f9;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-heading {
+  font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Premium Glassmorphism & Glow Utilities */
+.glass-card {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+}
+
+.glass-card-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  border-color: rgba(56, 168, 246, 0.35);
+  transform: translateY(-3px);
+  box-shadow: 0 24px 48px -12px rgba(14, 141, 231, 0.18);
+}
+
+.glow-ambient-blue {
+  background: radial-gradient(circle at 50% 0%, rgba(14, 141, 231, 0.22) 0%, rgba(14, 141, 231, 0) 70%);
+}
+
+.glow-ambient-red {
+  background: radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.25) 0%, rgba(239, 68, 68, 0) 70%);
+}
