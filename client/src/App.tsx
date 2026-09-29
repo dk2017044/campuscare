@@ -51,11 +51,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#070b14] text-slate-100 font-sans selection:bg-campus-500 selection:text-white relative overflow-x-hidden">
-      {/* Cyber/Ambient Glows */}
-      <div className="fixed -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-b from-blue-600/15 via-indigo-600/10 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed bottom-10 right-10 w-[450px] h-[450px] bg-sky-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed top-1/3 -left-20 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-3xl pointer-events-none -z-10" />
+    <div className="min-h-screen flex flex-col bg-[#0b0f19] text-slate-100 font-sans selection:bg-campus-500 selection:text-white relative overflow-x-hidden">
       {/* Toast Notification with Motion */}
       <AnimatePresence>
         {toastMessage && (
