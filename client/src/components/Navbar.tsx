@@ -129,245 +129,180 @@ export const Navbar: React.FC<Props> = ({
 
   return (
     <>
-      <header className="sticky top-2 z-50 px-3 sm:px-6 w-full max-w-6xl mx-auto">
-      <div className="rounded-2xl sm:rounded-full bg-slate-900/90 backdrop-blur-xl border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.4)] px-4 py-2 flex flex-wrap items-center justify-between gap-3">
-        {/* Logo */}
-        <div
-          onClick={() => setCurrentTab(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : 'admin_dashboard')}
-          className="flex items-center gap-2.5 cursor-pointer group shrink-0"
-        >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-campus-500 to-indigo-500 flex items-center justify-center text-white shadow-sm shadow-campus-500/30 group-hover:scale-105 transition-transform">
-            <Shield className="w-4 h-4" />
+      <header className="sticky top-0 z-50 bg-[#090d16]/95 backdrop-blur-md border-b border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-15 flex flex-wrap items-center justify-between gap-3 py-2 sm:py-0">
+          {/* Logo & Institutional Title */}
+          <div
+            onClick={() => setCurrentTab(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : 'admin_dashboard')}
+            className="flex items-center gap-2.5 cursor-pointer group shrink-0"
+          >
+            <div className="w-8 h-8 rounded-lg bg-slate-800 text-campus-400 border border-slate-700/80 flex items-center justify-center">
+              <Shield className="w-4 h-4" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-base font-bold text-white tracking-tight">CampusCare</span>
+              <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700/60">
+                {userRole === 'student' ? 'Student Portal' : userRole === 'staff' ? 'Staff Portal' : 'Admin'}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-base font-bold tracking-tight text-white">
-              Campus<span className="text-sky-400">Care</span>
-            </span>
-          </div>
-        </div>
 
-        {/* Navigation Links according to Role with Motion.dev Layout Spring */}
-        <nav className="flex items-center gap-1 order-3 sm:order-2 w-full sm:w-auto justify-center sm:justify-start">
-          {userRole === 'student' ? (
-            <>
+          {/* Navigation Links according to Role */}
+          <nav className="flex items-center gap-1 sm:gap-1.5 order-3 sm:order-2 w-full sm:w-auto justify-center sm:justify-start">
+            {userRole === 'student' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('student_home')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    currentTab === 'student_home' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Overview
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('report_safely')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    currentTab === 'report_safely' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Lock className="w-3 h-3 text-campus-400" />
+                  <span>Submit Report</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('maintenance')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    currentTab === 'maintenance' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Wrench className="w-3 h-3 text-amber-400" />
+                  <span>Maintenance</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('lost_found')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    currentTab === 'lost_found' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Search className="w-3 h-3 text-teal-400" />
+                  <span>Lost & Found</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('track_report')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    currentTab === 'track_report' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <ClipboardList className="w-3 h-3 text-sky-400" />
+                  <span>Track Status</span>
+                </button>
+              </>
+            ) : userRole === 'staff' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('staff_dashboard')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    currentTab === 'staff_dashboard' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <span>Assigned Cases</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab('lost_found')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    currentTab === 'lost_found' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  <span>Lost & Found Registry</span>
+                </button>
+              </>
+            ) : (
               <button
                 type="button"
-                onClick={() => setCurrentTab('student_home')}
-                className={`relative px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                  currentTab === 'student_home' ? 'text-white' : 'text-slate-400 hover:text-slate-200'
+                onClick={() => setCurrentTab('admin_dashboard')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  currentTab === 'admin_dashboard' ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:text-white'
                 }`}
               >
-                {currentTab === 'student_home' && (
-                  <motion.span
-                    layoutId="activeNavTab"
-                    className="absolute inset-0 bg-white/10 rounded-full border border-white/10 -z-10 shadow-inner"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <span>Home</span>
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Overview & Analytics</span>
               </button>
+            )}
+          </nav>
 
+          {/* Emergency SOS & Role Switcher */}
+          <div className="flex items-center gap-2.5 order-2 sm:order-3 shrink-0">
+            {userRole === 'student' && (
               <button
                 type="button"
                 onClick={() => setCurrentTab('emergency')}
-                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
-                  currentTab === 'emergency'
-                    ? 'bg-rose-600 text-white shadow-sm'
-                    : 'text-rose-400 hover:bg-rose-950/30 border border-rose-900/50'
-                }`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-950/80 hover:bg-rose-900 border border-rose-800/80 text-rose-300 text-xs font-medium transition-colors"
               >
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                <span>Emergency</span>
+                <AlertTriangle className="w-3 h-3 text-rose-400" />
+                <span>Emergency SOS</span>
               </button>
+            )}
 
-              <button
-                type="button"
-                onClick={() => setCurrentTab('report_safely')}
-                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                  currentTab === 'report_safely' ? 'text-white' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {currentTab === 'report_safely' && (
-                  <motion.span
-                    layoutId="activeNavTab"
-                    className="absolute inset-0 bg-campus-600 rounded-full -z-10 shadow-sm"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <Lock className="w-3 h-3 text-campus-300" />
-                <span>Report</span>
-              </button>
+            {/* Clean Segmented Role Switcher */}
+            <div className="inline-flex p-0.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
+              {(['student', 'staff', 'super_admin'] as Role[]).map((r) => {
+                const active = userRole === r;
+                const label = r === 'student' ? 'Student' : r === 'staff' ? 'Staff' : 'Admin';
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => {
+                      setUserRole(r);
+                      if (r === 'student') setCurrentTab('student_home');
+                      else if (r === 'staff') setCurrentTab('staff_dashboard');
+                      else setCurrentTab('admin_dashboard');
+                      localStorage.setItem('campuscare_role', r);
+                    }}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                      active ? 'bg-slate-800 text-white font-semibold' : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
 
-              <button
-                type="button"
-                onClick={() => setCurrentTab('maintenance')}
-                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                  currentTab === 'maintenance' ? 'text-amber-300' : 'text-slate-400 hover:text-slate-200'
-                }`}
+            {/* Department selector if in Staff mode */}
+            {userRole === 'staff' && (
+              <select
+                aria-label="Filter Department"
+                value={staffDept}
+                onChange={(e) => setStaffDept(e.target.value)}
+                className="bg-slate-900 text-amber-300 text-xs font-medium px-2 py-1 rounded-md border border-amber-500/40 focus:outline-none"
               >
-                {currentTab === 'maintenance' && (
-                  <motion.span
-                    layoutId="activeNavTab"
-                    className="absolute inset-0 bg-amber-500/20 border border-amber-500/40 rounded-full -z-10 shadow-sm"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <Wrench className="w-3 h-3 text-amber-400" />
-                <span>Maintenance</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCurrentTab('lost_found')}
-                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                  currentTab === 'lost_found' ? 'text-teal-300' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {currentTab === 'lost_found' && (
-                  <motion.span
-                    layoutId="activeNavTab"
-                    className="absolute inset-0 bg-teal-500/20 border border-teal-500/40 rounded-full -z-10 shadow-sm"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <Search className="w-3 h-3 text-teal-400" />
-                <span>Lost & Found</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCurrentTab('track_report')}
-                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                  currentTab === 'track_report' ? 'text-sky-300' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                {currentTab === 'track_report' && (
-                  <motion.span
-                    layoutId="activeNavTab"
-                    className="absolute inset-0 bg-sky-500/20 border border-sky-500/40 rounded-full -z-10 shadow-sm"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <ClipboardList className="w-3 h-3" />
-                <span>Track</span>
-              </button>
-            </>
-          ) : userRole === 'staff' ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setCurrentTab('staff_dashboard')}
-                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                  currentTab === 'staff_dashboard' ? 'text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {currentTab === 'staff_dashboard' && (
-                  <motion.span
-                    layoutId="activeNavTab"
-                    className="absolute inset-0 bg-amber-600 rounded-full -z-10 shadow-sm"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>Assigned Cases</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCurrentTab('lost_found')}
-                className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                  currentTab === 'lost_found' ? 'text-white' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {currentTab === 'lost_found' && (
-                  <motion.span
-                    layoutId="activeNavTab"
-                    className="absolute inset-0 bg-teal-600 rounded-full -z-10 shadow-sm"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <Search className="w-3.5 h-3.5" />
-                <span>Lost & Found Registry</span>
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setCurrentTab('admin_dashboard')}
-              className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full transition-colors ${
-                currentTab === 'admin_dashboard' ? 'text-white' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {currentTab === 'admin_dashboard' && (
-                <motion.span
-                  layoutId="activeNavTab"
-                  className="absolute inset-0 bg-purple-600 rounded-full -z-10 shadow-sm"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Overview & Analytics</span>
-            </button>
-          )}
-        </nav>
-
-        {/* 1-Click Multi-Role Switcher (Spring Pill Slider from Motion.dev) */}
-        <div className="flex items-center gap-2 order-2 sm:order-3 shrink-0">
-          <div className="inline-flex p-1 rounded-full bg-slate-950/80 border border-white/10 text-xs">
-            {(['student', 'staff', 'super_admin'] as Role[]).map((r) => {
-              const active = userRole === r;
-              const label = r === 'student' ? 'Student' : r === 'staff' ? 'Staff' : 'Admin';
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => {
-                    setUserRole(r);
-                    if (r === 'student') setCurrentTab('student_home');
-                    else if (r === 'staff') setCurrentTab('staff_dashboard');
-                    else setCurrentTab('admin_dashboard');
-                    localStorage.setItem('campuscare_role', r);
-                  }}
-                  className={`relative px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
-                    active ? 'text-white' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  {active && (
-                    <motion.span
-                      layoutId="activeRolePill"
-                      className={`absolute inset-0 rounded-full -z-10 shadow-sm ${
-                        r === 'student' ? 'bg-campus-600' : r === 'staff' ? 'bg-amber-600' : 'bg-purple-600'
-                      }`}
-                      transition={{ type: 'spring', stiffness: 450, damping: 35 }}
-                    />
-                  )}
-                  <span>{label}</span>
-                </button>
-              );
-            })}
+                <option value="all">All Depts</option>
+                <option value="dept-security">Security</option>
+                <option value="dept-welfare">Welfare</option>
+                <option value="dept-electrical">Electrical</option>
+                <option value="dept-plumbing">Plumbing</option>
+                <option value="dept-civil">Civil</option>
+                <option value="dept-hostel">Hostel</option>
+                <option value="dept-it-labs">IT Labs</option>
+              </select>
+            )}
           </div>
-
-          {/* Department selector if in Staff mode */}
-          {userRole === 'staff' && (
-            <select
-              aria-label="Filter Department"
-              value={staffDept}
-              onChange={(e) => setStaffDept(e.target.value)}
-              className="bg-slate-950 text-amber-300 text-xs font-medium px-2.5 py-1 rounded-full border border-amber-500/40 focus:outline-none"
-            >
-              <option value="all">All Depts</option>
-              <option value="dept-security">Security</option>
-              <option value="dept-welfare">Welfare</option>
-              <option value="dept-electrical">Electrical</option>
-              <option value="dept-plumbing">Plumbing</option>
-              <option value="dept-civil">Civil</option>
-              <option value="dept-hostel">Hostel</option>
-              <option value="dept-it-labs">IT Labs</option>
-            </select>
-          )}
         </div>
-      </div>
-    </header>
+      </header>
 
       {/* Dynamic Staff & Faculty Authentication Modal */}
       <AnimatePresence>
