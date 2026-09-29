@@ -1,246 +1,386 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { AlertTriangle, Lock, Wrench, Search, ClipboardList, ShieldCheck, ArrowRight, PhoneCall, Sparkles, CheckCircle2 } from 'lucide-react';
+import { 
+  AlertTriangle, 
+  Lock, 
+  Wrench, 
+  Search, 
+  ClipboardList, 
+  ShieldCheck, 
+  ArrowRight, 
+  PhoneCall, 
+  Sparkles, 
+  CheckCircle2, 
+  Radio, 
+  MessageSquare, 
+  Zap, 
+  Droplet, 
+  Layers, 
+  Wifi,
+  KeyRound
+} from 'lucide-react';
 
 interface Props {
   onNavigate: (tab: string) => void;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring' as const, stiffness: 350, damping: 25 }
+  }
+};
+
 export const StudentHome: React.FC<Props> = ({ onNavigate }) => {
   const [quickTrackId, setQuickTrackId] = useState('');
+  const [selectedTag, setSelectedTag] = useState('Harassment');
 
   const handleQuickTrack = (e: React.FormEvent) => {
     e.preventDefault();
-    if (quickTrackId.trim()) {
-      onNavigate('track_report');
-    }
+    onNavigate('track_report');
   };
 
   return (
-    <div className="space-y-10 py-6 max-w-6xl mx-auto">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-3xl bg-slate-900/80 text-white p-8 sm:p-12 border border-slate-800 shadow-xl">
-        <div className="max-w-3xl mx-auto text-center space-y-5">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-800 text-campus-400 border border-slate-700 text-xs font-semibold">
-            <Lock className="w-3.5 h-3.5 text-campus-400" />
-            <span>100% Confidential • No Login Required</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-            Campus problems deserve a{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-campus-400 to-sky-300">
-              safe, simple resolution.
-            </span>
-          </h1>
-
-          <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Report safety concerns, request urgent maintenance, locate lost items, or trigger emergency assistance with guaranteed privacy.
-          </p>
-        </div>
-      </section>
-
-      {/* Primary Action Cards (4 Focused Cards - Zero Clutter) */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        {/* 1. Emergency Alert */}
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-8 py-4 max-w-6xl mx-auto"
+    >
+      {/* 21st.dev Style Hero Section */}
+      <motion.section variants={itemVariants} className="relative text-center pt-6 pb-4 space-y-4">
+        {/* Animated Badge Pill */}
         <motion.div
-          whileHover={{ y: -4 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('emergency')}
-          className="group relative p-6 rounded-2xl border border-red-500/30 bg-slate-900/90 hover:border-red-500/70 transition-all cursor-pointer shadow-lg flex flex-col justify-between"
+          whileHover={{ scale: 1.03 }}
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 text-xs text-slate-300 shadow-inner backdrop-blur-md cursor-default"
         >
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-400" />
-              </div>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-300 border border-red-500/30">
-                Immediate SOS
-              </span>
-            </div>
-            <h2 className="font-bold text-lg text-white group-hover:text-red-400 transition-colors">
-              Emergency Alert
-            </h2>
-            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-              Instant beacon with alert siren dispatched directly to Campus Security & Response Units.
-            </p>
-          </div>
-          <div className="mt-5 pt-3.5 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-red-400">
-            <span>Trigger Alert</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </div>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
+          <span className="font-medium text-slate-300">Campus Incident & Support Hub</span>
+          <span className="text-slate-600">•</span>
+          <span className="text-emerald-400 font-semibold">100% Confidential</span>
         </motion.div>
 
-        {/* 2. Report Safely */}
-        <motion.div
-          whileHover={{ y: -4 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('report_safely')}
-          className="group relative p-6 rounded-2xl border border-slate-800 bg-slate-900/90 hover:border-campus-500/70 transition-all cursor-pointer shadow-lg flex flex-col justify-between"
-        >
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-campus-500/20 text-campus-400 flex items-center justify-center">
-                <Lock className="w-5 h-5 text-campus-400" />
-              </div>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-campus-500/20 text-campus-300 border border-campus-500/30">
-                Confidential
-              </span>
-            </div>
-            <h2 className="font-bold text-lg text-white group-hover:text-campus-400 transition-colors">
-              Report Grievance
-            </h2>
-            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-              Safely file harassment, ragging, counseling, or safety issues. Your identity is never exposed.
-            </p>
-          </div>
-          <div className="mt-5 pt-3.5 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-campus-400">
-            <span>File Report</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </motion.div>
+        {/* Heading */}
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.15]">
+          Safe, rapid resolutions.
+          <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-purple-300">
+            Built for campus peace of mind.
+          </span>
+        </h1>
 
-        {/* 3. Maintenance */}
-        <motion.div
-          whileHover={{ y: -4 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('maintenance')}
-          className="group relative p-6 rounded-2xl border border-slate-800 bg-slate-900/90 hover:border-amber-500/70 transition-all cursor-pointer shadow-lg flex flex-col justify-between"
-        >
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                <Wrench className="w-5 h-5 text-amber-400" />
-              </div>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                Facilities
-              </span>
-            </div>
-            <h2 className="font-bold text-lg text-white group-hover:text-amber-400 transition-colors">
-              Campus Repairs
-            </h2>
-            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-              Report defective fans, lab lights, water seepage, broken furniture, or classroom equipment.
-            </p>
-          </div>
-          <div className="mt-5 pt-3.5 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-amber-400">
-            <span>Request Repair</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </motion.div>
+        {/* Subtitle */}
+        <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          Report grievances without revealing your identity, request urgent campus repairs, locate lost items, or trigger emergency security dispatch in seconds.
+        </p>
 
-        {/* 4. Lost & Found */}
-        <motion.div
-          whileHover={{ y: -4 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onNavigate('lost_found')}
-          className="group relative p-6 rounded-2xl border border-slate-800 bg-slate-900/90 hover:border-teal-500/70 transition-all cursor-pointer shadow-lg flex flex-col justify-between"
-        >
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center">
-                <Search className="w-5 h-5 text-teal-400" />
-              </div>
-              <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                Items
-              </span>
-            </div>
-            <h2 className="font-bold text-lg text-white group-hover:text-teal-400 transition-colors">
-              Lost & Found
-            </h2>
-            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-              Search misplaced items or report recovered belongings across campus hostels and departments.
-            </p>
-          </div>
-          <div className="mt-5 pt-3.5 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-teal-400">
-            <span>Search Items</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Sleek Quick Track Card */}
-      <section className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-800 text-campus-400 flex items-center justify-center shrink-0">
-            <ClipboardList className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-white">Track an Existing Case</h3>
-            <p className="text-xs text-slate-400">Enter your Case ID to check real-time resolution updates and staff replies.</p>
-          </div>
-        </div>
-
-        <form onSubmit={handleQuickTrack} className="flex items-center gap-2 w-full sm:w-auto">
-          <input
-            type="text"
-            placeholder="e.g. CC-RSFNA3B"
-            value={quickTrackId}
-            onChange={(e) => setQuickTrackId(e.target.value)}
-            className="px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-campus-500 font-mono w-full sm:w-44"
-          />
-          <button
-            type="submit"
-            onClick={() => onNavigate('track_report')}
-            className="px-4 py-2 rounded-xl bg-campus-600 hover:bg-campus-500 text-white text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5"
+        {/* Hero Quick Action Pills */}
+        <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onNavigate('report_safely')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-slate-950 font-bold text-xs shadow-lg shadow-white/10 hover:bg-slate-100 transition-all"
           >
-            <span>Track</span>
+            <Lock className="w-3.5 h-3.5 text-slate-900" />
+            <span>File Confidential Report</span>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onNavigate('emergency')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-600 text-white font-bold text-xs shadow-lg shadow-rose-900/40 hover:bg-rose-500 transition-all border border-rose-400/30"
+          >
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-200" />
+            <span>Emergency SOS</span>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.04, y: -2 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => onNavigate('track_report')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900/90 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700/80 shadow-sm transition-all"
+          >
+            <ClipboardList className="w-3.5 h-3.5 text-sky-400" />
+            <span>Track Case Status</span>
+          </motion.button>
+        </div>
+      </motion.section>
+
+      {/* 21st.dev Style Bento Grid */}
+      <motion.section variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Bento 1: Grievance & Harassment Safe Intake (Span 2 cols on desktop) */}
+        <motion.div
+          whileHover={{ y: -3 }}
+          className="md:col-span-2 p-6 sm:p-7 rounded-3xl bg-slate-900/70 border border-slate-800/80 hover:border-slate-700 transition-all backdrop-blur-xl flex flex-col justify-between relative overflow-hidden group shadow-lg"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-campus-500/10 text-campus-400 border border-campus-500/20 text-[11px] font-bold uppercase tracking-wider">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Zero Identity Exposure</span>
+              </div>
+              <span className="text-[11px] text-slate-400 font-mono">HMAC SHA-256 PIN</span>
+            </div>
+
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                Confidential Incident & Grievance Filing
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1.5 leading-relaxed max-w-xl">
+                File sensitive reports regarding ragging, harassment, academic stress, or hostile conditions. Your roll number or email is never requested or logged.
+              </p>
+            </div>
+
+            {/* Interactive Category Chips */}
+            <div className="pt-2">
+              <span className="text-[11px] font-semibold text-slate-400 block mb-2">Common Categories:</span>
+              <div className="flex flex-wrap gap-2">
+                {['Harassment', 'Ragging Prevention', 'Counseling & Mental Health', 'Hostel Welfare', 'Faculty Conduct'].map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTag(tag);
+                      onNavigate('report_safely');
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                      selectedTag === tag
+                        ? 'bg-campus-600 text-white shadow-sm'
+                        : 'bg-slate-800/70 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-700/50'
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 mt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-4 text-xs text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                No login required
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                Anonymous 2-way chat
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('report_safely')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-campus-600 hover:bg-campus-500 text-white text-xs font-bold transition-all shadow-sm group-hover:translate-x-0.5"
+            >
+              <span>Submit Report</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Bento 2: Emergency SOS Radar Beacon (1 col) */}
+        <motion.div
+          whileHover={{ y: -3 }}
+          className="p-6 rounded-3xl bg-gradient-to-b from-rose-950/30 via-slate-900/80 to-slate-950 border border-rose-500/20 hover:border-rose-500/50 transition-all backdrop-blur-xl flex flex-col justify-between shadow-lg relative overflow-hidden group"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-extrabold uppercase tracking-wider">
+                <Radio className="w-3 h-3 text-rose-400 animate-pulse" />
+                <span>Instant SOS</span>
+              </div>
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+            </div>
+
+            <h3 className="text-lg font-bold text-white">Emergency Dispatch</h3>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              Immediate alarm with sound beacon and location broadcast dispatched to Campus Security.
+            </p>
+
+            {/* Radar Pulsing Visual */}
+            <div className="my-5 flex items-center justify-center">
+              <div className="relative flex items-center justify-center">
+                <div className="w-24 h-24 rounded-full bg-rose-500/10 animate-ping pointer-events-none" />
+                <div className="w-16 h-16 rounded-full bg-rose-500/20 absolute pointer-events-none" />
+                <button
+                  type="button"
+                  onClick={() => onNavigate('emergency')}
+                  className="relative w-14 h-14 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-500 text-white flex items-center justify-center shadow-xl shadow-rose-950/60 hover:scale-105 transition-transform"
+                >
+                  <AlertTriangle className="w-7 h-7" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('emergency')}
+            className="w-full py-2.5 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-md"
+          >
+            <span>Activate Emergency Alert</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
-        </form>
-      </section>
+        </motion.div>
 
-      {/* 3 Simple Pillars (Clean, Human, Zero AI Jargon) */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800/80 flex items-start gap-3.5">
-          <div className="w-8 h-8 rounded-lg bg-campus-500/10 text-campus-400 flex items-center justify-center shrink-0 mt-0.5">
-            <ShieldCheck className="w-4 h-4" />
-          </div>
+        {/* Bento 3: Campus Maintenance & Repairs (1 col) */}
+        <motion.div
+          whileHover={{ y: -3 }}
+          className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800/80 hover:border-amber-500/50 transition-all backdrop-blur-xl flex flex-col justify-between shadow-lg group"
+        >
           <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Zero Identity Exposure</h4>
+            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mb-4">
+              <Wrench className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-white group-hover:text-amber-300 transition-colors">
+              Campus Maintenance
+            </h3>
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              No roll numbers or logins required. Report safely without fear of social or academic retaliation.
+              Report equipment failure, hostel issues, or facilities defects with photo evidence.
             </p>
-          </div>
-        </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800/80 flex items-start gap-3.5">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-            <Lock className="w-4 h-4" />
+            {/* Department Quick Grid */}
+            <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="p-2 rounded-xl bg-slate-800/50 border border-slate-700/40 text-[11px] text-slate-300 flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Electrical</span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-800/50 border border-slate-700/40 text-[11px] text-slate-300 flex items-center gap-1.5">
+                <Droplet className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                <span>Plumbing</span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-800/50 border border-slate-700/40 text-[11px] text-slate-300 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Furniture</span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-800/50 border border-slate-700/40 text-[11px] text-slate-300 flex items-center gap-1.5">
+                <Wifi className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                <span>IT & Labs</span>
+              </div>
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('maintenance')}
+            className="mt-5 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-white text-xs font-bold border border-slate-700 transition-colors flex items-center justify-center gap-1.5"
+          >
+            <span>Request Repair</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </motion.div>
+
+        {/* Bento 4: Lost & Found Community Hub (1 col) */}
+        <motion.div
+          whileHover={{ y: -3 }}
+          className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800/80 hover:border-teal-500/50 transition-all backdrop-blur-xl flex flex-col justify-between shadow-lg group"
+        >
           <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Private Access PIN</h4>
+            <div className="w-10 h-10 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center mb-4">
+              <Search className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-white group-hover:text-teal-300 transition-colors">
+              Lost & Found Hub
+            </h3>
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Only you hold the 6-digit access PIN generated during submission to view progress and message officers.
+              Misplaced your calculator, keys, or ID card? Search reported findings or list found belongings.
             </p>
-          </div>
-        </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900/50 border border-slate-800/80 flex items-start gap-3.5">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-            <CheckCircle2 className="w-4 h-4" />
+            {/* Micro Ticker */}
+            <div className="mt-4 space-y-1.5">
+              <div className="p-2 rounded-xl bg-slate-800/40 border border-slate-700/30 text-[11px] text-slate-300 flex items-center justify-between">
+                <span>Room 204 Keys</span>
+                <span className="text-[10px] text-emerald-400 font-mono">Found in Library</span>
+              </div>
+              <div className="p-2 rounded-xl bg-slate-800/40 border border-slate-700/30 text-[11px] text-slate-300 flex items-center justify-between">
+                <span>Calculus Notebook</span>
+                <span className="text-[10px] text-teal-400 font-mono">Canteen Block</span>
+              </div>
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('lost_found')}
+            className="mt-5 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 hover:text-white text-xs font-bold border border-slate-700 transition-colors flex items-center justify-center gap-1.5"
+          >
+            <span>Search or List Item</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </motion.div>
+
+        {/* Bento 5: Instant Live Case Tracker (1 col) */}
+        <motion.div
+          whileHover={{ y: -3 }}
+          className="p-6 rounded-3xl bg-slate-900/70 border border-slate-800/80 hover:border-campus-500/50 transition-all backdrop-blur-xl flex flex-col justify-between shadow-lg group"
+        >
           <div>
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Direct Department Action</h4>
+            <div className="w-10 h-10 rounded-2xl bg-campus-500/10 text-campus-400 flex items-center justify-center mb-4">
+              <ClipboardList className="w-5 h-5" />
+            </div>
+            <h3 className="text-lg font-bold text-white group-hover:text-campus-300 transition-colors">
+              Case Status Lookup
+            </h3>
             <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Incidents are categorized and dispatched directly to the responsible university committee.
+              Check live investigation progress and converse with committee officers securely.
             </p>
-          </div>
-        </div>
-      </section>
 
-      {/* Emergency Helplines Strip */}
-      <section className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs">
-        <div className="flex items-center gap-2 text-slate-400">
+            <form onSubmit={handleQuickTrack} className="mt-4 space-y-2">
+              <input
+                type="text"
+                placeholder="Case ID (e.g. CC-RSFNA3B)"
+                value={quickTrackId}
+                onChange={(e) => setQuickTrackId(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-campus-500 font-mono"
+              />
+              <button
+                type="submit"
+                className="w-full py-2 rounded-xl bg-campus-600 hover:bg-campus-500 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>Track Resolution</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          </div>
+
+          <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Encrypted PIN Access</span>
+            <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+          </div>
+        </motion.div>
+      </motion.section>
+
+      {/* Modern Compact Campus Helplines Strip */}
+      <motion.section variants={itemVariants} className="p-4 rounded-2xl bg-slate-900/40 border border-slate-800/70 flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div className="flex items-center gap-2 text-slate-300">
           <PhoneCall className="w-4 h-4 text-rose-400 shrink-0" />
-          <span className="font-semibold text-slate-200">Campus Helplines:</span>
+          <span className="font-semibold text-white">Campus 24/7 Helplines:</span>
         </div>
         <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-slate-400 font-mono text-[11px]">
-          <div><span className="text-slate-500">Security Control:</span> <span className="text-red-400 font-bold">Ext. 911</span></div>
-          <div><span className="text-slate-500">Student Counseling:</span> <span className="text-campus-400 font-bold">Ext. 402</span></div>
-          <div><span className="text-slate-500">Facilities Maintenance:</span> <span className="text-amber-400 font-bold">Ext. 210</span></div>
-          <div><span className="text-slate-500">Campus Medical:</span> <span className="text-emerald-400 font-bold">Ext. 108</span></div>
+          <div><span className="text-slate-500">Security:</span> <span className="text-rose-400 font-bold">Ext. 911</span></div>
+          <div><span className="text-slate-500">Counseling:</span> <span className="text-campus-400 font-bold">Ext. 402</span></div>
+          <div><span className="text-slate-500">Facilities:</span> <span className="text-amber-400 font-bold">Ext. 210</span></div>
+          <div><span className="text-slate-500">Medical:</span> <span className="text-emerald-400 font-bold">Ext. 108</span></div>
         </div>
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 };
