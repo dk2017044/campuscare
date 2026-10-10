@@ -138,11 +138,28 @@ export async function checkSupabaseHealth() {
   if (!supabase) return { connected: false, message: 'Supabase client not initialized' };
   try {
     const { error } = await supabase.from('cases').select('id').limit(1);
-    if (error && error.code !== 'PGRST116') {
+    if (error) {
+      if (error.code === 'PGRST116' || error.message?.includes('relation "cases" does not exist')) {
+        return { 
+          connected: true, 
+          tablesReady: false, 
+          message: 'Connected to Supabase! (Tables pending: please run supabase_schema.sql in Supabase SQL editor)' 
+        };
+      }
       return { connected: true, tablesReady: false, message: error.message };
     }
-    return { connected: true, tablesReady: true, message: 'Connected to Supabase PostgreSQL' };
+    return { connected: true, tablesReady: true, message: 'Connected & Active (Supabase Cloud PostgreSQL)' };
   } catch (e) {
+    const isPaused = e?.message?.includes('fetch failed') || 
+                     e?.code === 'ENOTFOUND' || 
+                     e?.cause?.code === 'ENOTFOUND';
+    if (isPaused) {
+      return { 
+        connected: false, 
+        paused: true, 
+        message: '⚠️ Supabase project is PAUSED on Free Tier (due to inactivity). Click "Restore Project" at https://supabase.com/dashboard/project/pvxgbrjzjrnwkocggqen to unpause.' 
+      };
+    }
     return { connected: false, message: e.message };
   }
 }

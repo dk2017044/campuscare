@@ -1,0 +1,41 @@
+name: CampusCare Anti-Pause Keep-Alive
+
+on:
+  schedule:
+    # Runs every 6 hours automatically (100% Free on GitHub Actions)
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions UI
+
+jobs:
+  keep-alive:
+    name: Ping Supabase & CampusCare Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase REST API (Anti-Pause Heartbeat)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://pvxgbrjzjrnwkocggqen.supabase.co' }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY || 'sb_publishable_Ktw2XK5d8x7wUMYs-E38UQ_0tvSWTUV' }}
+        run: |
+          echo "Sending Anti-Pause heartbeat to Supabase ($SUPABASE_URL)..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            "$SUPABASE_URL/rest/v1/cases?select=id&limit=1" || echo "FAILED")
+          echo "Supabase Response Code: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "404" ] || [ "$HTTP_STATUS" = "401" ]; then
+            echo "✅ Supabase is ACTIVE and refreshed! 7-day auto-pause prevented."
+          else
+            echo "⚠️ Notice: Supabase returned status $HTTP_STATUS (may be paused if project is sleeping)."
+          fi
+
+      - name: Ping Cloud Backend Server (Anti-Sleep Wakeup)
+        env:
+          SERVER_URL: ${{ secrets.SERVER_PUBLIC_URL }}
+        run: |
+          if [ -n "$SERVER_URL" ]; then
+            echo "Pinging Cloud Server at $SERVER_URL/api/keep-alive..."
+            curl -s -f "$SERVER_URL/api/keep-alive" || echo "Server ping failed or starting up."
+          else
+            echo "ℹ️ SERVER_PUBLIC_URL secret not set. Skipping server self-ping. (Set it in GitHub Repo Settings -> Secrets if deployed on Render/Railway)."
+          fi

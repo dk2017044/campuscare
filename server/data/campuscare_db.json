@@ -1,34 +1,6 @@
 {
   "departments": [
     {
-      "id": "dept-security",
-      "name": "Campus Security & Emergency Response",
-      "type": "safety",
-      "active": true,
-      "email": "security@campuscare.edu"
-    },
-    {
-      "id": "dept-welfare",
-      "name": "Student Welfare & Counseling Committee",
-      "type": "welfare",
-      "active": true,
-      "email": "welfare@campuscare.edu"
-    },
-    {
-      "id": "dept-electrical",
-      "name": "Electrical & Power Maintenance",
-      "type": "maintenance",
-      "active": true,
-      "email": "electrical@campuscare.edu"
-    },
-    {
-      "id": "dept-plumbing",
-      "name": "Plumbing & Water Systems",
-      "type": "maintenance",
-      "active": true,
-      "email": "plumbing@campuscare.edu"
-    },
-    {
       "id": "dept-civil",
       "name": "Civil & Infrastructure Maintenance",
       "type": "maintenance",
@@ -50,20 +22,7 @@
       "email": "itlabs@campuscare.edu"
     }
   ],
-  "users": [
-    {
-      "id": "staff-1791668597698-dhz6",
-      "staffId": "1234",
-      "name": "Dilip",
-      "email": "ghgf@g",
-      "password": "1234",
-      "role": "staff",
-      "departmentId": "dept-it-labs",
-      "departmentName": "IT Infrastructure & Labs",
-      "title": "Faculty Counselor",
-      "createdAt": "2026-10-10T21:43:17.699Z"
-    }
-  ],
+  "users": [],
   "cases": [
     {
       "id": "case-1791666801435-kzb0",
@@ -180,6 +139,93 @@
   ],
   "lostFoundItems": [],
   "auditLogs": [
+    {
+      "id": "audit-1791670017551-2qcn",
+      "timestamp": "2026-10-10T22:06:57.551Z",
+      "actorId": "admin",
+      "actorName": "University Administrator",
+      "action": "STAFF_ACCOUNT_REMOVED",
+      "metadata": {
+        "staffId": "1234",
+        "name": "Dilip"
+      }
+    },
+    {
+      "id": "audit-1791670015029-pkrz",
+      "timestamp": "2026-10-10T22:06:55.029Z",
+      "actorId": "admin",
+      "actorName": "University Administrator",
+      "action": "STAFF_ACCOUNT_REMOVED",
+      "metadata": {
+        "staffId": "2580",
+        "name": "dilip"
+      }
+    },
+    {
+      "id": "audit-1791670001939-fd9e",
+      "timestamp": "2026-10-10T22:06:41.940Z",
+      "actorId": "admin",
+      "actorName": "University Administrator",
+      "action": "STAFF_ACCOUNT_CREATED",
+      "metadata": {
+        "staffId": "2580",
+        "name": "dilip",
+        "department": "Civil & Infrastructure Maintenance",
+        "title": "Faculty Counselor",
+        "fieldScope": "all"
+      }
+    },
+    {
+      "id": "audit-1791669914076-pswe",
+      "timestamp": "2026-10-10T22:05:14.076Z",
+      "actorId": "admin",
+      "actorName": "University Administrator",
+      "action": "STAFF_ACCOUNT_REMOVED",
+      "metadata": {
+        "staffId": "STAFF-TEST-MAINT",
+        "name": "Ramesh Maintenance Officer"
+      }
+    },
+    {
+      "id": "audit-1791669908472-7b5d",
+      "timestamp": "2026-10-10T22:05:08.472Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-plumbing"
+      }
+    },
+    {
+      "id": "audit-1791669906716-nrts",
+      "timestamp": "2026-10-10T22:05:06.716Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-electrical"
+      }
+    },
+    {
+      "id": "audit-1791669904668-n21i",
+      "timestamp": "2026-10-10T22:05:04.668Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-welfare"
+      }
+    },
+    {
+      "id": "audit-1791669902069-lljv",
+      "timestamp": "2026-10-10T22:05:02.069Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-security"
+      }
+    },
     {
       "id": "audit-1791669697902-riz7",
       "timestamp": "2026-10-10T22:01:37.902Z",

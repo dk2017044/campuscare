@@ -9,6 +9,7 @@ import { triageReport, classifyMaintenanceImage, matchLostAndFoundItems } from '
 import { upload } from './upload.js';
 import { syncCaseToSupabase, syncMessageToSupabase, syncLostFoundToSupabase, checkSupabaseHealth } from './supabase.js';
 import { validateEmailAddress, generateEmailOtp, verifyEmailOtp } from './utils/emailValidator.js';
+import { startKeepAliveService, getKeepAliveStatus, pingSupabase, pingServerSelf } from './utils/keepAlive.js';
 
 dotenv.config();
 
@@ -34,7 +35,22 @@ app.get('/api/health', async (req, res) => {
     platform: 'CampusCare AI Privacy-First Engine',
     timestamp: new Date().toISOString(),
     geminiConfigured: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY'),
-    supabase: supabaseHealth
+    supabase: supabaseHealth,
+    keepAlive: getKeepAliveStatus()
+  });
+});
+
+// Anti-Pause & Anti-Sleep Keep-Alive Endpoint
+app.get('/api/keep-alive', async (req, res) => {
+  // Always trigger an active heartbeat to Supabase on request
+  const pingResult = await pingSupabase();
+  const supabaseHealth = await checkSupabaseHealth();
+  res.json({
+    status: 'alive',
+    timestamp: new Date().toISOString(),
+    heartbeat: pingResult,
+    supabase: supabaseHealth,
+    keepAlive: getKeepAliveStatus()
   });
 });
 
@@ -952,5 +968,7 @@ app.listen(PORT, () => {
   console.log(`🛡️  CampusCare Backend Server running on port ${PORT}`);
   console.log(`🔒  Privacy-First Anonymous Protection: ACTIVE`);
   console.log(`🤖  AI Triage Engine: READY (Gemini / Heuristic Engine)`);
+  console.log(`⚡  Anti-Pause & Keep-Alive Service: INITIALIZING...`);
   console.log(`=======================================================`);
+  startKeepAliveService();
 });
