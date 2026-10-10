@@ -67,7 +67,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col text-slate-100 font-sans selection:bg-sky-500 selection:text-white relative">
+    <div className="min-h-screen flex flex-col text-slate-900 font-sans selection:bg-[#0066FF] selection:text-white relative">
       {/* Global Command Palette */}
       <CommandPalette
         isOpen={isCommandOpen}

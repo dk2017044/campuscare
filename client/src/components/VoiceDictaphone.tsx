@@ -98,8 +98,8 @@ export const VoiceDictaphone: React.FC<Props> = ({
       recognition.start();
     } catch (e: any) {
       console.error('Failed to initialize Speech Recognition:', e);
+      setErrorMessage('Failed to start microphone recognition.');
       setIsListening(false);
-      setErrorMessage(e.message || 'Microphone start failed.');
     }
   };
 
@@ -110,38 +110,37 @@ export const VoiceDictaphone: React.FC<Props> = ({
     setIsListening(false);
   };
 
-  // Hackathon Preset Demonstrations (ensures 100% reliability during live presentation)
   const applyPreset = (text: string) => {
     onTranscript(text);
     setErrorMessage(null);
   };
 
   return (
-    <div className={`p-3 rounded-2xl transition-all ${
+    <div className={`p-3.5 rounded-2xl transition-all ${
       isEmergency
-        ? 'bg-rose-950/20 border border-rose-500/30'
-        : 'glass-panel'
+        ? 'bg-[#FFF1F0] border border-[#FED4D1]'
+        : 'bg-slate-50 border border-slate-200/80 shadow-2xs'
     } ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         {/* Mic Control Button */}
         <div className="flex items-center gap-2">
           <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.96 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             type="button"
             onClick={isListening ? stopListening : startListening}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs transition-all cursor-pointer ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs ${
               isListening
-                ? 'bg-rose-600 text-white animate-pulse ring-2 ring-rose-400'
+                ? 'bg-[#D92D20] text-white animate-pulse ring-2 ring-red-400'
                 : isEmergency
-                  ? 'bg-rose-500 hover:bg-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]'
-                  : 'bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-[0_0_15px_rgba(14,141,231,0.25)]'
+                  ? 'bg-[#D92D20] hover:bg-[#B42318] text-white shadow-md shadow-red-500/20'
+                  : 'bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-xs'
             }`}
           >
             {isListening ? (
               <>
                 <MicOff className="w-3.5 h-3.5 animate-bounce" />
-                <span>Stop</span>
+                <span>Stop Dictation</span>
               </>
             ) : (
               <>
@@ -152,28 +151,28 @@ export const VoiceDictaphone: React.FC<Props> = ({
           </motion.button>
 
           {isListening && (
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-rose-500/20 text-rose-300 text-[10px] font-mono">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-100 text-[#D92D20] text-[10px] font-mono font-bold">
               <span>LISTENING</span>
               <div className="flex items-end gap-0.5 h-2.5">
-                <span className="w-1 bg-rose-500 rounded-full animate-pulse h-full" />
-                <span className="w-1 bg-rose-500 rounded-full animate-pulse h-2" />
-                <span className="w-1 bg-rose-500 rounded-full animate-pulse h-1" />
+                <span className="w-1 bg-[#D92D20] rounded-full animate-pulse h-full" />
+                <span className="w-1 bg-[#D92D20] rounded-full animate-pulse h-2" />
+                <span className="w-1 bg-[#D92D20] rounded-full animate-pulse h-1" />
               </div>
             </div>
           )}
         </div>
 
         {/* Language Switcher */}
-        <div className="flex items-center gap-1">
-          <Globe className="w-3 h-3 text-slate-400" />
-          <div className="inline-flex p-0.5 rounded-xl glass-pill text-[11px]">
+        <div className="flex items-center gap-1.5">
+          <Globe className="w-3.5 h-3.5 text-slate-400" />
+          <div className="inline-flex p-0.5 rounded-xl bg-white border border-slate-200 text-[11px] shadow-2xs">
             <button
               type="button"
               onClick={() => setLanguage('en-IN')}
-              className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-0.5 rounded-lg font-semibold transition-all cursor-pointer ${
                 language === 'en-IN'
-                  ? 'bg-white/10 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               EN
@@ -181,10 +180,10 @@ export const VoiceDictaphone: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setLanguage('hi-IN')}
-              className={`px-2 py-0.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-2.5 py-0.5 rounded-lg font-semibold transition-all cursor-pointer ${
                 language === 'hi-IN'
-                  ? 'bg-white/10 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               हिन्दी
@@ -200,9 +199,9 @@ export const VoiceDictaphone: React.FC<Props> = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-2 p-2 rounded-xl glass-pill text-xs italic text-slate-300"
+            className="mt-2.5 p-2.5 rounded-xl bg-white border border-blue-200 text-xs italic text-slate-700 shadow-xs"
           >
-            <span className="font-semibold text-sky-400 not-italic mr-1.5">Hearing:</span>
+            <span className="font-bold text-[#0066FF] not-italic mr-1.5">Hearing:</span>
             "{interimText}"
           </motion.div>
         )}
@@ -210,14 +209,14 @@ export const VoiceDictaphone: React.FC<Props> = ({
 
       {/* Error Notice */}
       {errorMessage && (
-        <div className="mt-2 text-[11px] text-amber-300 bg-amber-500/10 p-2 rounded-xl border border-amber-500/20">
+        <div className="mt-2 text-[11px] text-amber-900 bg-amber-50 p-2.5 rounded-xl border border-amber-200 font-medium">
           {errorMessage}
         </div>
       )}
 
       {/* Quick Presets */}
-      <div className="mt-2 pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5 text-[10px]">
-        <span className="text-slate-400 font-medium">Quick Prompts:</span>
+      <div className="mt-2.5 pt-2 border-t border-slate-200/80 flex flex-wrap items-center gap-1.5 text-[10px]">
+        <span className="text-slate-500 font-semibold">Demo Prompts:</span>
         <button
           type="button"
           onClick={() =>
@@ -227,7 +226,7 @@ export const VoiceDictaphone: React.FC<Props> = ({
                 : 'Mechanical lab ke piche do log ladayi kar rahe hain aur threats de rahe hain.'
             )
           }
-          className="px-2 py-0.5 rounded-lg glass-pill text-slate-300 hover:text-white cursor-pointer hover:border-white/20 transition-all"
+          className="px-2.5 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium cursor-pointer transition-all shadow-2xs"
         >
           🇮🇳 Sample Hindi Prompt
         </button>
@@ -240,7 +239,7 @@ export const VoiceDictaphone: React.FC<Props> = ({
                 : 'Someone is repeatedly following female students near the hostel back gate after 6 PM.'
             )
           }
-          className="px-2 py-0.5 rounded-lg glass-pill text-slate-300 hover:text-white cursor-pointer hover:border-white/20 transition-all"
+          className="px-2.5 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium cursor-pointer transition-all shadow-2xs"
         >
           🇬🇧 Sample English Prompt
         </button>

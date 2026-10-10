@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Sparkles, MapPin, CheckCircle, ArrowRight, Check, Copy, Clock, Filter, Eye } from 'lucide-react';
+import { Search, Sparkles, MapPin, CheckCircle, ArrowRight, Check, Copy, Clock, Filter, Eye, Plus } from 'lucide-react';
 import { api } from '../../services/api';
 import { LostFoundItem, LostFoundMatch } from '../../types';
 
@@ -104,8 +104,8 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
   };
 
   const matchedPair = useMemo(() => {
-    const lostItems = items.filter(i => i.type === 'lost');
-    const foundItems = items.filter(i => i.type === 'found');
+    const lostItems = items.filter((i) => i.type === 'lost');
+    const foundItems = items.filter((i) => i.type === 'found');
     for (const l of lostItems) {
       for (const f of foundItems) {
         const lWords = `${l.title} ${l.itemType || ''}`.toLowerCase();
@@ -119,16 +119,20 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
   }, [items]);
 
   return (
-    <div className="max-w-4xl mx-auto py-6 px-4 space-y-6 relative z-10">
-      {/* Minimal Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20 flex items-center justify-center">
-            <Search className="w-4 h-4" />
+    <div className="max-w-4xl mx-auto py-8 px-4 space-y-6 relative z-10">
+      {/* Mint Header Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-6 rounded-3xl bg-[#F0FDF9] border border-[#CCFBEF] shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#CCFBEF] text-[#0E9384] border border-[#99F6E0] flex items-center justify-center shadow-xs">
+            <Search className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-white tracking-tight">Lost & Found Registry</h1>
-            <p className="text-[11px] text-slate-400">Smart correlation for misplaced campus property</p>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight font-heading">
+              Lost & Found Registry
+            </h1>
+            <p className="text-xs text-slate-600 font-medium">
+              Smart automated correlation for misplaced university property
+            </p>
           </div>
         </div>
 
@@ -136,22 +140,24 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
           <button
             type="button"
             onClick={() => setActiveSubTab('report_lost')}
-            className="text-xs font-medium px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 transition-all cursor-pointer"
+            className="text-xs font-semibold px-3.5 py-2 rounded-xl bg-white border border-[#FED4D1] text-[#D92D20] hover:bg-[#FFF0ED] shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
           >
-            + Report Lost
+            <Plus className="w-3.5 h-3.5" />
+            <span>Report Lost</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveSubTab('report_found')}
-            className="text-xs font-medium px-3 py-1.5 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-500/30 transition-all cursor-pointer"
+            className="text-xs font-semibold px-3.5 py-2 rounded-xl bg-white border border-[#99F6E0] text-[#0E9384] hover:bg-[#E6FAF4] shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
           >
-            + Report Found
+            <Plus className="w-3.5 h-3.5" />
+            <span>Report Found</span>
           </button>
         </div>
       </div>
 
-      {/* Sleek Segmented Glass Tabs */}
-      <div className="flex items-center gap-1.5 p-1 rounded-xl glass-panel">
+      {/* Sleek Segmented Pill Tabs */}
+      <div className="flex items-center gap-1.5 p-1 rounded-full bg-white border border-slate-200/80 shadow-xs max-w-md mx-auto">
         {[
           { id: 'browse', label: `Browse Registry (${items.length})` },
           { id: 'report_lost', label: 'Report Lost Item' },
@@ -164,10 +170,10 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
               setActiveSubTab(tab.id as any);
               setRecentReportResult(null);
             }}
-            className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer ${
+            className={`flex-1 py-2 text-xs font-semibold rounded-full transition-all cursor-pointer text-center ${
               activeSubTab === tab.id
-                ? 'bg-teal-500 text-slate-950 font-semibold shadow-xs'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-[#0066FF] text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             {tab.label}
@@ -177,41 +183,41 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
 
       {/* SUB-TAB 1: BROWSE */}
       {activeSubTab === 'browse' && (
-        <div className="space-y-5">
-          {/* AI Match Spotlight if detected */}
+        <div className="space-y-6">
+          {/* AI Match Spotlight */}
           {matchedPair && (
-            <div className="p-4 rounded-2xl glass-panel border border-teal-500/30 space-y-3">
+            <div className="p-5 rounded-3xl bg-[#F0FDF9] border border-[#99F6E0] space-y-3.5 shadow-xs">
               <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 text-teal-300 font-semibold">
-                  <Sparkles className="w-4 h-4 text-teal-400" />
+                <div className="flex items-center gap-2 text-[#0E9384] font-bold">
+                  <Sparkles className="w-4 h-4 text-[#0E9384]" />
                   <span>AI Match Correlation Detected</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full glass-pill text-[10px] text-teal-300 font-mono">
-                  High Confidence
+                <span className="px-2.5 py-0.5 rounded-full bg-white text-[10px] text-[#0E9384] font-bold border border-[#99F6E0] shadow-xs">
+                  High Confidence Match
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3 rounded-xl glass-pill space-y-1">
-                  <div className="flex justify-between text-[10px] text-rose-400 font-semibold">
-                    <span>LOST REPORT</span>
+                <div className="p-3.5 rounded-2xl bg-white border border-[#FED4D1] space-y-1 shadow-xs">
+                  <div className="flex justify-between text-[10px] text-[#D92D20] font-bold uppercase">
+                    <span>Lost Item</span>
                     <span className="font-mono">{matchedPair.lost.publicCaseId || 'Logged'}</span>
                   </div>
-                  <h4 className="font-semibold text-white">{matchedPair.lost.title}</h4>
-                  <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                    <MapPin className="w-3 h-3 text-rose-400" />
+                  <h4 className="font-bold text-slate-900 text-sm">{matchedPair.lost.title}</h4>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <MapPin className="w-3.5 h-3.5 text-[#D92D20]" />
                     <span>{matchedPair.lost.location}</span>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl glass-pill space-y-1">
-                  <div className="flex justify-between text-[10px] text-teal-400 font-semibold">
-                    <span>FOUND REPORT</span>
+                <div className="p-3.5 rounded-2xl bg-white border border-[#99F6E0] space-y-1 shadow-xs">
+                  <div className="flex justify-between text-[10px] text-[#0E9384] font-bold uppercase">
+                    <span>Found Item</span>
                     <span className="font-mono">{matchedPair.found.publicCaseId || 'Logged'}</span>
                   </div>
-                  <h4 className="font-semibold text-white">{matchedPair.found.title}</h4>
-                  <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                    <MapPin className="w-3 h-3 text-teal-400" />
+                  <h4 className="font-bold text-slate-900 text-sm">{matchedPair.found.title}</h4>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <MapPin className="w-3.5 h-3.5 text-[#0E9384]" />
                     <span>{matchedPair.found.location}</span>
                   </div>
                 </div>
@@ -219,19 +225,21 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
             </div>
           )}
 
-          {/* Filter Pills */}
+          {/* Filter Bar */}
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400">Filtered Registry</span>
-            <div className="flex items-center gap-1 text-xs">
+            <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+              Registered Items
+            </span>
+            <div className="flex items-center gap-1 text-xs bg-white border border-slate-200/80 p-1 rounded-full shadow-xs">
               {(['all', 'lost', 'found'] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setFilterType(t)}
-                  className={`px-2.5 py-1 rounded-lg capitalize text-xs font-medium transition-all cursor-pointer ${
+                  className={`px-3 py-1 rounded-full capitalize text-xs font-semibold transition-all cursor-pointer ${
                     filterType === t
-                      ? 'bg-white/10 text-white font-semibold'
-                      : 'text-slate-500 hover:text-slate-300'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   {t}
@@ -241,40 +249,40 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
           </div>
 
           {/* Items Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {items.map((item) => (
               <div
                 key={item.id}
-                className="p-4 rounded-2xl glass-panel-interactive flex flex-col justify-between"
+                className="p-5 rounded-3xl bg-white border border-slate-200/80 hover:border-slate-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
               >
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                         item.type === 'lost'
-                          ? 'bg-rose-500/15 text-rose-300 border border-rose-500/20'
-                          : 'bg-teal-500/15 text-teal-300 border border-teal-500/20'
+                          ? 'bg-[#FFF0ED] text-[#D92D20] border border-[#FED4D1]'
+                          : 'bg-[#F0FDF9] text-[#0E9384] border border-[#CCFBEF]'
                       }`}
                     >
                       {item.type}
                     </span>
-                    <span className="text-slate-500 font-mono text-[10px]">{item.publicCaseId || 'CC-LOG'}</span>
+                    <span className="text-slate-400 font-mono text-[10px] font-semibold">{item.publicCaseId || 'CC-LOG'}</span>
                   </div>
 
-                  <h4 className="font-semibold text-sm text-white">
+                  <h4 className="font-bold text-base text-slate-900">
                     {item.title}
                   </h4>
-                  <p className="text-xs text-slate-400 line-clamp-2">
+                  <p className="text-xs text-slate-600 line-clamp-2">
                     {item.description || 'No description provided.'}
                   </p>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                   <div className="flex items-center gap-1 text-[11px]">
-                    <MapPin className="w-3 h-3 text-teal-400" />
-                    <span className="truncate max-w-[130px]">{item.location}</span>
+                    <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="truncate max-w-[140px] font-medium">{item.location}</span>
                   </div>
-                  <span className="text-[11px]">{item.date}</span>
+                  <span className="text-[11px] font-medium">{item.date}</span>
                 </div>
               </div>
             ))}
@@ -284,84 +292,86 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
 
       {/* SUB-TAB 2 & 3: FORM */}
       {(activeSubTab === 'report_lost' || activeSubTab === 'report_found') && (
-        <div className="glass-panel rounded-3xl p-6 sm:p-7 space-y-4">
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">
-              {activeSubTab === 'report_lost' ? 'Log Lost Item' : 'Log Found Item'}
+            <h2 className="text-base font-bold text-slate-900 font-heading">
+              {activeSubTab === 'report_lost' ? 'Log a Lost Property Item' : 'Log a Found Property Item'}
             </h2>
-            <span className="text-[11px] text-slate-400">Automatic matching active</span>
+            <span className="text-xs font-semibold text-[#0E9384] bg-[#F0FDF9] px-2.5 py-1 rounded-full border border-[#CCFBEF]">
+              AI Auto-Matcher Enabled
+            </span>
           </div>
 
           {error && (
-            <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-xl text-xs">
+            <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-medium">
               {error}
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="sm:col-span-2">
-              <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Item Title</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Item Title</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Casio fx-991EX Scientific Calculator"
-                className="w-full p-2.5 rounded-xl glass-input text-white text-xs placeholder:text-slate-500"
+                placeholder="e.g. Casio fx-991EX Scientific Calculator, Blue Water Bottle, Black Leather Wallet"
+                className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Item Type</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Category</label>
               <input
                 type="text"
                 value={itemType}
                 onChange={(e) => setItemType(e.target.value)}
-                placeholder="Calculator, Wallet, ID Card, Keys, etc."
-                className="w-full p-2.5 rounded-xl glass-input text-white text-xs placeholder:text-slate-500"
+                placeholder="Calculator, Wallet, ID Card, Keys, Phone, Earbuds"
+                className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Color</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Color / Finish</label>
               <input
                 type="text"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                placeholder="Black, Silver, Blue, etc."
-                className="w-full p-2.5 rounded-xl glass-input text-white text-xs placeholder:text-slate-500"
+                placeholder="Black, Silver, Blue, Matte White"
+                className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Campus Location</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Campus Location</label>
               <input
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="Electronics Lab, Library, etc."
-                className="w-full p-2.5 rounded-xl glass-input text-white text-xs placeholder:text-slate-500"
+                placeholder="Electronics Lab, Library 2nd Floor, Canteen, Ground"
+                className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Date</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Date Incident Occurred</label>
               <input
                 type="text"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                placeholder="Today, Yesterday"
-                className="w-full p-2.5 rounded-xl glass-input text-white text-xs placeholder:text-slate-500"
+                placeholder="Today, Yesterday, Last Friday"
+                className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-1">Description / Marks</label>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">Distinctive Marks / Clues</label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Distinctive marks, stickers, model..."
+                placeholder="Distinctive stickers, scratch on the back, keychain charm, initials..."
                 rows={2}
-                className="w-full p-2.5 rounded-xl glass-input text-white text-xs placeholder:text-slate-500 resize-none"
+                className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 resize-none outline-none transition-all"
               />
             </div>
           </div>
@@ -370,13 +380,13 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
             type="button"
             onClick={() => handleReport(activeSubTab === 'report_lost' ? 'lost' : 'found')}
             disabled={submitting}
-            className={`w-full py-2.5 rounded-xl font-semibold text-xs transition-all cursor-pointer disabled:opacity-50 ${
+            className={`w-full py-3.5 rounded-xl font-bold text-xs transition-all cursor-pointer disabled:opacity-50 shadow-xs ${
               activeSubTab === 'report_lost'
-                ? 'bg-rose-500 hover:bg-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]'
-                : 'bg-teal-500 hover:bg-teal-400 text-slate-950 shadow-[0_0_15px_rgba(20,184,166,0.3)]'
+                ? 'bg-[#D92D20] hover:bg-[#B42318] text-white shadow-md shadow-red-500/20'
+                : 'bg-[#0066FF] hover:bg-[#0052CC] text-white shadow-md shadow-blue-500/20'
             }`}
           >
-            {submitting ? 'Registering...' : activeSubTab === 'report_lost' ? 'Submit Lost Item' : 'Submit Found Item'}
+            {submitting ? 'Registering in Index...' : activeSubTab === 'report_lost' ? 'Submit Lost Item Registry →' : 'Submit Found Item Registry →'}
           </button>
         </div>
       )}
@@ -384,63 +394,63 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
       {/* Match Result Modal */}
       <AnimatePresence>
         {recentReportResult && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="glass-panel bg-slate-900/90 rounded-3xl max-w-md w-full p-6 border border-white/10 shadow-2xl space-y-4"
+              className="bg-white rounded-3xl max-w-md w-full p-7 border border-slate-200 shadow-2xl space-y-5"
             >
-              <div className="text-center space-y-1">
-                <div className="w-12 h-12 rounded-2xl bg-teal-500/15 text-teal-400 flex items-center justify-center mx-auto border border-teal-500/20">
+              <div className="text-center space-y-1.5">
+                <div className="w-12 h-12 rounded-2xl bg-[#CCFBEF] text-[#0E9384] flex items-center justify-center mx-auto border border-[#99F6E0] shadow-xs">
                   <CheckCircle className="w-6 h-6" />
                 </div>
-                <h2 className="text-lg font-bold text-white">Item Registered</h2>
-                <p className="text-xs text-slate-400">Added to the AI matching index.</p>
+                <h2 className="text-xl font-bold text-slate-900 font-heading">Item Successfully Registered</h2>
+                <p className="text-xs text-slate-500">Indexed in real-time AI cross-match database.</p>
               </div>
 
-              <div className="p-4 rounded-2xl glass-card space-y-3">
-                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase">Case ID</span>
-                    <div className="text-xl font-mono font-bold text-teal-400">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Item Case ID</span>
+                    <div className="text-xl font-mono font-bold text-[#0E9384]">
                       {recentReportResult.publicCaseId}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(recentReportResult.publicCaseId, 'id')}
-                    className="px-2.5 py-1 rounded-lg glass-pill text-xs text-slate-200 inline-flex items-center gap-1 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 shadow-xs"
                   >
-                    {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedId ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pt-1">
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase">PIN</span>
-                    <div className="text-xl font-mono font-bold text-amber-400">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Private Tracking PIN</span>
+                    <div className="text-xl font-mono font-bold text-amber-700">
                       {recentReportResult.rawPin}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(recentReportResult.rawPin, 'pin')}
-                    className="px-2.5 py-1 rounded-lg glass-pill text-xs text-slate-200 inline-flex items-center gap-1 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 shadow-xs"
                   >
-                    {copiedPin ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedPin ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedPin ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
               </div>
 
               {recentReportResult.potentialMatches.length > 0 && (
-                <div className="p-3 rounded-xl bg-teal-500/10 border border-teal-500/25 text-xs text-teal-200 space-y-1">
-                  <span className="font-semibold flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-                    Match Found ({recentReportResult.potentialMatches[0].confidence}%)
+                <div className="p-4 rounded-2xl bg-[#F0FDF9] border border-[#99F6E0] text-xs text-slate-800 space-y-1 shadow-xs">
+                  <span className="font-bold text-[#0E9384] flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#0E9384]" />
+                    Potential Match Found ({recentReportResult.potentialMatches[0].confidence}%)
                   </span>
-                  <p className="text-[11px] text-slate-300">
+                  <p className="text-[11px] text-slate-600">
                     Matches: {recentReportResult.potentialMatches[0].candidateItem.title} at {recentReportResult.potentialMatches[0].candidateItem.location}
                   </p>
                 </div>
@@ -453,9 +463,9 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                     setRecentReportResult(null);
                     setActiveSubTab('browse');
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-semibold text-xs text-center cursor-pointer shadow-[0_0_15px_rgba(20,184,166,0.25)]"
+                  className="flex-1 py-3 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold text-xs text-center cursor-pointer shadow-xs"
                 >
-                  Done
+                  View in Registry →
                 </button>
               </div>
             </motion.div>

@@ -102,7 +102,7 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
         evidence: attachedImage ? [attachedImage] : []
       });
 
-      if (res.success) {
+      if (res.success && res.publicCaseId && res.rawPin) {
         setCreatedCase({
           publicCaseId: res.publicCaseId,
           rawPin: res.rawPin
@@ -112,7 +112,7 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to submit report');
+      setError(err.message || 'Submission failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -130,39 +130,43 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-6 px-4 space-y-6 relative z-10">
-      {/* Minimal Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
-            <Wrench className="w-4 h-4" />
+    <div className="max-w-2xl mx-auto py-8 px-4 space-y-6 relative z-10">
+      {/* Warm Amber Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-6 rounded-3xl bg-[#FFF9EE] border border-[#FEE8B7] shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#FEE8B7] text-[#B54708] border border-[#FED986] flex items-center justify-center shadow-xs">
+            <Wrench className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-white tracking-tight">Facilities Maintenance</h1>
-            <p className="text-[11px] text-slate-400">Report broken fixtures, plumbing, or classroom hardware</p>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight font-heading">
+              Facilities & Campus Services
+            </h1>
+            <p className="text-xs text-slate-600 font-medium">
+              Report broken fixtures, electrical sparks, plumbing, or classroom hardware
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full glass-pill text-[11px] text-amber-300 font-medium">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>AI Vision Diagnostic</span>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#FEE8B7] text-xs text-[#B54708] font-semibold shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-[#B54708]" />
+          <span>AI Vision Diagnostic Active</span>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2.5 shadow-xs">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Main Glass Form */}
-      <form onSubmit={handleSubmit} className="glass-panel rounded-3xl p-6 sm:p-7 space-y-5">
+      {/* Main Form */}
+      <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-6 shadow-sm">
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
-            Defect Category
+          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-3">
+            Select Defect Category
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {[
               'Broken Fan',
               'Lighting Fault',
@@ -177,10 +181,10 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
                 key={type}
                 type="button"
                 onClick={() => setIssueType(type)}
-                className={`p-2.5 text-xs text-left rounded-xl border transition-all cursor-pointer truncate ${
+                className={`p-3 text-xs text-left rounded-2xl border transition-all cursor-pointer truncate ${
                   issueType === type
-                    ? 'border-amber-400 bg-amber-500/15 text-white ring-1 ring-amber-400/50'
-                    : 'glass-pill text-slate-300 hover:text-white hover:border-white/15'
+                    ? 'border-[#B54708] bg-[#FFF9EE] text-[#B54708] ring-2 ring-amber-500/20 font-semibold shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                 }`}
               >
                 {type}
@@ -191,17 +195,17 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
 
         {/* Location */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">
-            Location (Room / Floor)
+          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
+            Location (Building / Room / Floor)
           </label>
           <div className="relative">
-            <MapPin className="w-4 h-4 text-amber-400 absolute left-3 top-3" />
+            <MapPin className="w-4 h-4 text-[#B54708] absolute left-3.5 top-3.5" />
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. Main Building - Room 304, Electronics Lab 2"
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-white text-xs placeholder:text-slate-500"
+              placeholder="e.g. Main Building - Room 304, Electronics Lab 2, Hostel A 1st Floor"
+              className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               required
             />
           </div>
@@ -209,34 +213,35 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
 
         {/* Description */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">
-            Defect Description
+          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
+            Defect Details & Urgency
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe what is defective or making noise..."
+            placeholder="Describe what is broken, making abnormal noise, or leaking..."
             rows={3}
-            className="w-full p-3 rounded-xl glass-input text-white text-xs placeholder:text-slate-500 resize-none"
+            className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 resize-none outline-none transition-all"
             required
           />
         </div>
 
         {/* Defect Photo & Gemini Vision */}
         <div>
-          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
-            Attach Defect Photo (AI Diagnosis)
+          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">
+            Attach Defect Photo (AI Vision Auto-Inspection)
           </label>
 
           {!attachedImage ? (
-            <div className="border border-dashed border-white/15 rounded-2xl p-5 text-center hover:border-amber-400/40 transition-colors">
-              <Camera className="w-6 h-6 text-amber-400 mx-auto mb-1.5" />
-              <p className="text-xs font-medium text-slate-200">
+            <div className="border-2 border-dashed border-slate-200 hover:border-[#B54708] bg-slate-50/50 rounded-3xl p-6 text-center transition-colors">
+              <Camera className="w-8 h-8 text-[#B54708] mx-auto mb-2 opacity-80" />
+              <p className="text-xs font-semibold text-slate-800">
                 Snap or upload defect photo
               </p>
-              <label className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 glass-panel hover:bg-white/[0.08] text-slate-200 rounded-xl text-xs font-medium cursor-pointer">
-                <Upload className="w-3.5 h-3.5 text-amber-400" />
-                <span>Upload Image</span>
+              <p className="text-[11px] text-slate-400 mt-0.5">AI automatically detects fixture defects</p>
+              <label className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-xs cursor-pointer">
+                <Upload className="w-3.5 h-3.5 text-[#B54708]" />
+                <span>Upload Defect Photo</span>
                 <input
                   type="file"
                   onChange={handleFileUpload}
@@ -244,13 +249,13 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
                   className="hidden"
                 />
               </label>
-              {uploading && <p className="text-xs text-amber-400 mt-2 animate-pulse">Uploading...</p>}
+              {uploading && <p className="text-xs text-[#B54708] mt-2 font-medium animate-pulse">Uploading photo...</p>}
             </div>
           ) : (
-            <div className="p-3 rounded-xl glass-pill flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <Camera className="w-4 h-4 text-amber-400" />
-                <span className="text-slate-200 truncate">{attachedImage.fileName}</span>
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 truncate">
+                <Camera className="w-4 h-4 text-[#B54708]" />
+                <span className="text-slate-800 font-medium truncate">{attachedImage.fileName}</span>
               </div>
               <button
                 type="button"
@@ -258,27 +263,27 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
                   setAttachedImage(null);
                   setAiAnalysis(null);
                 }}
-                className="text-rose-400 hover:text-rose-300 p-1 cursor-pointer"
+                className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           )}
 
           {analyzingAi && (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 mt-2 animate-pulse flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Gemini Vision inspecting image...</span>
+            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-800 mt-2.5 animate-pulse flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#B54708]" />
+              <span className="font-medium">Gemini Vision is inspecting photo to auto-categorize defect...</span>
             </div>
           )}
 
           {aiAnalysis && (
-            <div className="mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs text-amber-200 space-y-1">
+            <div className="mt-2.5 p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
               <div className="flex justify-between font-semibold">
-                <span>Issue: {aiAnalysis.detectedIssue || aiAnalysis.subcategory}</span>
-                <span className="font-mono text-amber-400">Priority: {aiAnalysis.priority}</span>
+                <span>Detected Defect: {aiAnalysis.detectedIssue || aiAnalysis.subcategory}</span>
+                <span className="font-mono text-[#B54708]">Priority: {aiAnalysis.priority}</span>
               </div>
-              <p className="text-[11px] text-slate-300">Department: {aiAnalysis.suggestedDepartment}</p>
+              <p className="text-[11px] text-slate-600">Suggested Dept: {aiAnalysis.suggestedDepartment}</p>
             </div>
           )}
         </div>
@@ -286,60 +291,60 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] cursor-pointer disabled:opacity-50"
+          className="w-full py-3.5 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold text-xs transition-all shadow-xs cursor-pointer disabled:opacity-50"
         >
-          {loading ? 'Submitting...' : 'Submit Maintenance Request'}
+          {loading ? 'Submitting Request...' : 'Submit Facilities Request →'}
         </button>
       </form>
 
       {/* Success Modal */}
       <AnimatePresence>
         {createdCase && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="glass-panel bg-slate-900/90 rounded-3xl max-w-md w-full p-6 border border-white/10 shadow-2xl space-y-4"
+              className="bg-white rounded-3xl max-w-md w-full p-7 border border-slate-200 shadow-2xl space-y-5"
             >
-              <div className="text-center space-y-1">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/20">
+              <div className="text-center space-y-1.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-[#B54708] flex items-center justify-center mx-auto border border-amber-200 shadow-xs">
                   <CheckCircle className="w-6 h-6" />
                 </div>
-                <h2 className="text-lg font-bold text-white">Maintenance Logged</h2>
-                <p className="text-xs text-slate-400">Request dispatched to campus facilities.</p>
+                <h2 className="text-xl font-bold text-slate-900 font-heading">Maintenance Request Dispatched</h2>
+                <p className="text-xs text-slate-500">Your repair ticket has been routed to Facilities & Estate Management.</p>
               </div>
 
-              <div className="p-4 rounded-2xl glass-card space-y-3">
-                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase">Case ID</span>
-                    <div className="text-xl font-mono font-bold text-amber-400">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Service Case ID</span>
+                    <div className="text-xl font-mono font-bold text-[#B54708]">
                       {createdCase.publicCaseId}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(createdCase.publicCaseId, 'id')}
-                    className="px-2.5 py-1 rounded-lg glass-pill text-xs text-slate-200 inline-flex items-center gap-1 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 shadow-xs"
                   >
-                    {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedId ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pt-1">
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase">Secret PIN</span>
-                    <div className="text-xl font-mono font-bold text-sky-400">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Private PIN</span>
+                    <div className="text-xl font-mono font-bold text-slate-800">
                       {createdCase.rawPin}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(createdCase.rawPin, 'pin')}
-                    className="px-2.5 py-1 rounded-lg glass-pill text-xs text-slate-200 inline-flex items-center gap-1 cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 shadow-xs"
                   >
-                    {copiedPin ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedPin ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedPin ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
@@ -348,9 +353,9 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
               <button
                 type="button"
                 onClick={() => onNavigate('track_report')}
-                className="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs text-center cursor-pointer shadow-[0_0_15px_rgba(14,141,231,0.25)]"
+                className="w-full py-3 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold text-xs text-center cursor-pointer shadow-xs"
               >
-                Track Status →
+                Track Service Ticket →
               </button>
             </motion.div>
           </div>

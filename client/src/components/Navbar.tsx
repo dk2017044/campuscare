@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Shield, 
-  AlertTriangle, 
-  Lock, 
-  Wrench, 
+  Home, 
+  FileText, 
+  LayoutGrid, 
   Search, 
   ClipboardList, 
-  LayoutDashboard,
-  Volume2,
-  VolumeX,
-  Command
+  ChevronDown, 
+  User, 
+  GraduationCap, 
+  Briefcase, 
+  ShieldAlert,
+  Check
 } from 'lucide-react';
-import { Role, Department } from '../types';
-import { api } from '../services/api';
-import { playTapSound, isSoundEnabled, toggleSound } from '../services/sound';
+import { Role } from '../types';
 
 interface Props {
   currentTab: string;
@@ -30,213 +30,172 @@ export const Navbar: React.FC<Props> = ({
   currentTab,
   setCurrentTab,
   userRole,
-  setUserRole,
-  staffDept,
-  setStaffDept,
-  onOpenCommand
+  setUserRole
 }) => {
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [soundActive, setSoundActive] = useState(() => isSoundEnabled());
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    api.getDepartments()
-      .then(res => setDepartments(res.departments || []))
-      .catch(() => setDepartments([]));
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSoundToggle = () => {
-    const newState = toggleSound();
-    setSoundActive(newState);
-  };
-
-  const studentNavTabs = [
-    { id: 'student_home', label: 'Overview', icon: LayoutDashboard },
-    { id: 'report_safely', label: 'Report Safely', icon: Lock },
-    { id: 'maintenance', label: 'Repairs', icon: Wrench },
+  const navTabs = [
+    { id: 'student_home', label: 'Home', icon: Home },
+    { id: 'report_safely', label: 'Report', icon: FileText },
+    { id: 'maintenance', label: 'Services', icon: LayoutGrid },
     { id: 'lost_found', label: 'Lost & Found', icon: Search },
     { id: 'track_report', label: 'Track Case', icon: ClipboardList }
   ];
 
-  const staffNavTabs = [
-    { id: 'staff_dashboard', label: 'Incident Queue', icon: LayoutDashboard },
-    { id: 'lost_found', label: 'Lost & Found', icon: Search }
-  ];
-
-  const adminNavTabs = [
-    { id: 'admin_dashboard', label: 'Admin Command', icon: LayoutDashboard }
-  ];
-
-  const currentNavTabs = userRole === 'student' 
-    ? studentNavTabs 
-    : userRole === 'staff' 
-    ? staffNavTabs 
-    : adminNavTabs;
-
-  const handleRoleChange = (role: Role) => {
-    playTapSound();
+  const handleRoleSelect = (role: Role) => {
     setUserRole(role);
     localStorage.setItem('campuscare_role', role);
     if (role === 'student') setCurrentTab('student_home');
     else if (role === 'staff') setCurrentTab('staff_dashboard');
     else setCurrentTab('admin_dashboard');
+    setRoleDropdownOpen(false);
   };
 
-  const handleTabClick = (tabId: string) => {
-    playTapSound();
-    setCurrentTab(tabId);
+  const getRoleLabel = () => {
+    if (userRole === 'student') return 'Student';
+    if (userRole === 'staff') return 'Staff';
+    return 'Admin';
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#080c16]/80 backdrop-blur-2xl border-b border-white/[0.08] shadow-[0_4px_24px_-8px_rgba(0,0,0,0.7)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
-        {/* Minimal Brand Emblem */}
+    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+        {/* Left: Brand Logo & Slogan */}
         <div
-          onClick={() => handleTabClick(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : 'admin_dashboard')}
-          className="flex items-center gap-2 cursor-pointer group shrink-0"
+          onClick={() => setCurrentTab(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : 'admin_dashboard')}
+          className="flex items-center gap-3 cursor-pointer group shrink-0"
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400/20 to-indigo-500/20 border border-sky-400/30 text-sky-400 flex items-center justify-center group-hover:border-sky-400/60 shadow-md shadow-sky-500/10 transition-all">
-            <Shield className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0066FF] to-[#0047BA] text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+            <Shield className="w-5 h-5 fill-white/20" />
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-bold tracking-tight text-white font-heading">CampusCare</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+          <div className="flex flex-col">
+            <div className="text-xl font-bold tracking-tight leading-none">
+              <span className="text-[#0F172A] font-heading font-extrabold">Campus</span>
+              <span className="text-[#0066FF] font-heading font-extrabold">Care</span>
+            </div>
+            <span className="text-[11px] font-medium text-slate-500 mt-1 leading-none tracking-tight">
+              Safe Campus. Support Always.
+            </span>
           </div>
         </div>
 
-        {/* Minimal Floating Glass Navigation Capsule */}
-        <nav className="hidden md:flex items-center gap-1 p-1 rounded-full glass-pill border border-white/10 shadow-lg">
-          {currentNavTabs.map((tab) => {
+        {/* Center: Clean Floating Pill Dock */}
+        <nav className="hidden md:flex items-center gap-1 bg-white border border-slate-200/80 rounded-full px-2 py-1 shadow-sm">
+          {navTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = currentTab === tab.id;
             return (
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => handleTabClick(tab.id)}
-                className={`relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-colors cursor-pointer ${
-                  isActive 
-                    ? 'text-white font-medium' 
-                    : 'text-slate-400 hover:text-slate-200'
+                onClick={() => setCurrentTab(tab.id)}
+                className={`relative inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-[#EBF3FF] text-[#0066FF] font-semibold shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                {isActive && (
-                  <motion.span
-                    layoutId="activeNavPill"
-                    className="absolute inset-0 bg-white/10 rounded-full border border-white/15 -z-10 shadow-xs"
-                    transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
-                  />
-                )}
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-sky-400' : 'text-slate-400'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#0066FF]' : 'text-slate-500'}`} />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* Tactical Actions Dock */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Spotlight Command Shortcut Pill (Ctrl+K) */}
-          {onOpenCommand && (
+        {/* Right: Role Switcher & User Profile */}
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="hidden sm:block text-slate-300 font-light text-lg">|</span>
+
+          {/* Role Dropdown */}
+          <div className="relative" ref={dropdownRef}>
             <button
               type="button"
-              onClick={() => {
-                playTapSound();
-                onOpenCommand();
-              }}
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full glass-pill border border-white/10 hover:border-sky-400/30 text-slate-300 hover:text-white text-xs transition-all cursor-pointer"
-              title="Open Command Palette (Ctrl+K)"
+              onClick={() => setRoleDropdownOpen(prev => !prev)}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EBF3FF] hover:bg-[#DCEBFF] text-[#0066FF] text-xs font-semibold border border-blue-200/60 shadow-xs transition-all cursor-pointer"
             >
-              <Command className="w-3 h-3 text-sky-400" />
-              <span className="text-[11px] font-mono text-slate-400">Ctrl K</span>
+              <GraduationCap className="w-4 h-4" />
+              <span>{getRoleLabel()}</span>
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${roleDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
-          )}
 
-          {/* Micro Audio Haptics Toggle */}
-          <button
-            type="button"
-            onClick={handleSoundToggle}
-            className={`p-1.5 rounded-full glass-pill border border-white/10 text-xs transition-all cursor-pointer ${
-              soundActive ? 'text-sky-300 hover:bg-sky-500/10' : 'text-slate-500 hover:bg-white/5'
-            }`}
-            title={soundActive ? 'Sound Haptics Enabled' : 'Sound Haptics Muted'}
-          >
-            {soundActive ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-          </button>
-
-          {/* Subtle SOS Beacon (Student Only) */}
-          {userRole === 'student' && (
-            <button
-              type="button"
-              onClick={() => handleTabClick('emergency')}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-rose-300 text-xs font-semibold shadow-[0_0_15px_rgba(244,63,94,0.2)] transition-all cursor-pointer"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-              <AlertTriangle className="w-3 h-3 text-rose-400" />
-              <span>SOS</span>
-            </button>
-          )}
-
-          {/* Department Filter (Staff Only) */}
-          {userRole === 'staff' && departments.length > 0 && (
-            <select
-              aria-label="Filter Department"
-              value={staffDept}
-              onChange={(e) => setStaffDept(e.target.value)}
-              className="glass-pill border border-white/10 text-slate-300 text-xs px-2.5 py-1 rounded-full focus:outline-none"
-            >
-              <option value="all">All Departments</option>
-              {departments.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
-            </select>
-          )}
-
-          {/* Minimal Segmented Role Capsule */}
-          <div className="p-0.5 rounded-full glass-pill border border-white/10 flex items-center text-xs">
-            {(['student', 'staff', 'super_admin'] as Role[]).map((r) => {
-              const active = userRole === r;
-              const label = r === 'student' ? 'Student' : r === 'staff' ? 'Staff' : 'Admin';
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => handleRoleChange(r)}
-                  className={`relative px-2.5 py-1 rounded-full text-xs transition-colors cursor-pointer ${
-                    active ? 'text-white font-medium' : 'text-slate-400 hover:text-slate-200'
-                  }`}
+            <AnimatePresence>
+              {roleDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-48 rounded-2xl bg-white border border-slate-200 shadow-xl p-1.5 z-50 text-xs"
                 >
-                  {active && (
-                    <motion.span
-                      layoutId="activeRoleCapsule"
-                      className="absolute inset-0 bg-sky-500/20 rounded-full border border-sky-400/30 -z-10 shadow-xs"
-                      transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
-                    />
-                  )}
-                  {label}
-                </button>
-              );
-            })}
+                  <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                    Switch Viewport
+                  </div>
+                  {[
+                    { id: 'student', label: 'Student Portal', icon: GraduationCap },
+                    { id: 'staff', label: 'Staff / Guard Portal', icon: Briefcase },
+                    { id: 'super_admin', label: 'Administrator Command', icon: ShieldAlert }
+                  ].map((roleItem) => {
+                    const isSelected = userRole === roleItem.id;
+                    const Icon = roleItem.icon;
+                    return (
+                      <button
+                        key={roleItem.id}
+                        type="button"
+                        onClick={() => handleRoleSelect(roleItem.id as Role)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer text-left ${
+                          isSelected
+                            ? 'bg-[#EBF3FF] text-[#0066FF] font-semibold'
+                            : 'text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Icon className="w-4 h-4 text-slate-500" />
+                          <span>{roleItem.label}</span>
+                        </div>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#0066FF]" />}
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* User Profile Avatar */}
+          <div className="w-9 h-9 rounded-full bg-[#EBF3FF] border border-blue-200/60 text-[#0066FF] flex items-center justify-center cursor-pointer hover:bg-[#DCEBFF] transition-colors shadow-xs">
+            <User className="w-4 h-4" />
           </div>
         </div>
       </div>
 
-      {/* Mobile Navigation Bar */}
-      <div className="md:hidden flex items-center gap-1 overflow-x-auto px-4 py-1.5 border-t border-white/5 bg-[#080c16]/95">
-        {currentNavTabs.map((tab) => {
+      {/* Mobile Navigation Strip */}
+      <div className="md:hidden flex items-center gap-1 overflow-x-auto px-4 py-2 border-t border-slate-100 bg-white">
+        {navTabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = currentTab === tab.id;
           return (
             <button
               key={tab.id}
               type="button"
-              onClick={() => handleTabClick(tab.id)}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs shrink-0 transition-colors cursor-pointer ${
+              onClick={() => setCurrentTab(tab.id)}
+              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs shrink-0 transition-colors cursor-pointer ${
                 isActive 
-                  ? 'bg-white/10 text-white font-medium border border-white/15' 
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#EBF3FF] text-[#0066FF] font-semibold' 
+                  : 'text-slate-600 hover:bg-slate-50'
               }`}
             >
-              <Icon className={`w-3 h-3 ${isActive ? 'text-sky-400' : 'text-slate-400'}`} />
+              <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
             </button>
           );
