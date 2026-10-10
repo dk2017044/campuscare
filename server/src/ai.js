@@ -227,7 +227,7 @@ Respond with ONLY valid JSON with this exact schema:
   "evidence_needed": boolean
 }`;
 
-    for (const model of ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite']) {
+    for (const model of ['gemini-2.5-flash', 'gemini-1.5-flash']) {
       try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
           method: 'POST',
@@ -238,7 +238,8 @@ Respond with ONLY valid JSON with this exact schema:
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { responseMimeType: 'application/json' }
-          })
+          }),
+          signal: AbortSignal.timeout(2500)
         });
 
         if (response.ok) {
@@ -250,7 +251,8 @@ Respond with ONLY valid JSON with this exact schema:
           }
         }
       } catch (innerErr) {
-        console.warn(`Model ${model} call failed:`, innerErr.message);
+        // Fast failover to next model or instant smart fallback
+        break;
       }
     }
   } catch (error) {

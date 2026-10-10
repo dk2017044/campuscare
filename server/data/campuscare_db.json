@@ -118,6 +118,21 @@
   "lostFoundItems": [],
   "auditLogs": [
     {
+      "id": "audit-1791673999110-ghyd",
+      "timestamp": "2026-10-10T23:13:19.110Z",
+      "actorId": "anonymous-student",
+      "actorName": "Anonymous Student",
+      "action": "CASE_CREATED",
+      "caseId": "case-1791673999100-t29r",
+      "publicCaseId": "CC-5AXBXLR",
+      "metadata": {
+        "isAnonymous": true,
+        "category": "Harassment / Intimidation",
+        "priority": "LOW",
+        "assignedDepartment": "Pending Department Creation"
+      }
+    },
+    {
       "id": "audit-1791670963710-3wy9",
       "timestamp": "2026-10-10T22:22:43.710Z",
       "actorId": "admin",
