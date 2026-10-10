@@ -86,35 +86,47 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
   const [newStaffEmail, setNewStaffEmail] = useState('');
   const [newStaffDept, setNewStaffDept] = useState('');
   const [newStaffFieldScope, setNewStaffFieldScope] = useState('all');
-  const [newStaffTitle, setNewStaffTitle] = useState('Faculty Counselor');
   const [savingStaff, setSavingStaff] = useState(false);
-  const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
-  const [emailCheckMessage, setEmailCheckMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadAdminData();
-  }, []);
+  // Admin Login Authentication Gate (Default: admin / admin@123)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('campuscare_admin_auth') === 'true';
+  });
+  const [adminLoginUser, setAdminLoginUser] = useState('admin');
+  const [adminLoginPass, setAdminLoginPass] = useState('admin@123');
+  const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
 
-  const handleVerifyEmail = async (emailToTest: string) => {
-    if (!emailToTest.trim()) {
-      setEmailCheckStatus('idle');
-      setEmailCheckMessage(null);
-      return;
-    }
-    setEmailCheckStatus('checking');
-    try {
-      const res = await api.verifyEmail(emailToTest.trim());
-      if (res.isValid) {
-        setEmailCheckStatus('valid');
-        setEmailCheckMessage(`✓ Valid ${res.details?.isGmail ? 'Gmail' : 'Domain'} Mail Server (${res.details?.domain})`);
-      } else {
-        setEmailCheckStatus('invalid');
-        setEmailCheckMessage(`⚠️ ${res.error || 'Domain not found'}`);
-      }
-    } catch {
-      setEmailCheckStatus('idle');
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminLoginUser.trim() === 'admin' && adminLoginPass === 'admin@123') {
+      setIsAdminAuthenticated(true);
+      localStorage.setItem('campuscare_admin_auth', 'true');
+      setAdminLoginError(null);
+    } else {
+      setAdminLoginError('Invalid Administrator credentials. Default: admin / admin@123');
     }
   };
+
+  const handleAdminLogout = () => {
+    localStorage.removeItem('campuscare_admin_auth');
+    setIsAdminAuthenticated(false);
+  };
+
+  const handleDeleteCase = async (publicCaseId: string) => {
+    if (!window.confirm(`Permanently delete case record ${publicCaseId}?`)) return;
+    try {
+      await api.deleteCase(publicCaseId);
+      setCases(prev => prev.filter(c => c.publicCaseId !== publicCaseId));
+    } catch (e: any) {
+      alert(e.message || 'Failed to delete case');
+    }
+  };
+
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      loadAdminData();
+    }
+  }, [isAdminAuthenticated]);
 
   const loadAdminData = async () => {
     try {
@@ -170,11 +182,6 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
       return;
     }
 
-    if (emailCheckStatus === 'invalid') {
-      alert(`Invalid email address: ${emailCheckMessage}`);
-      return;
-    }
-
     try {
       setSavingStaff(true);
       await api.createStaff({
@@ -184,16 +191,14 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
         password: newStaffPassword.trim(),
         departmentId: newStaffDept || (departments.length > 0 ? departments[0].id : ''),
         fieldScope: newStaffFieldScope,
-        title: newStaffTitle.trim() || 'Staff Officer'
+        title: 'Staff Officer'
       });
-      alert(`Staff Account provisioned successfully!\n\nName: ${newStaffName.trim()}\nStaff ID: ${newStaffId.trim().toUpperCase()}\nPassword: ${newStaffPassword.trim()}\nField Jurisdiction: ${newStaffFieldScope === 'all' ? 'All Unit Incidents' : newStaffFieldScope}\n\nThis officer will ONLY see cases within their assigned field/department.`);
+      alert(`Staff Account provisioned successfully!\n\nName: ${newStaffName.trim()}\nStaff ID: ${newStaffId.trim().toUpperCase()}\nPassword: ${newStaffPassword.trim()}\nField Jurisdiction: ${newStaffFieldScope === 'all' ? 'All Unit Incidents' : newStaffFieldScope}`);
       setNewStaffName('');
       setNewStaffId('');
       setNewStaffEmail('');
       setNewStaffPassword('');
       setNewStaffFieldScope('all');
-      setEmailCheckStatus('idle');
-      setEmailCheckMessage(null);
       setShowNewStaffModal(false);
       loadAdminData();
     } catch (e: any) {
@@ -245,6 +250,75 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
     return true;
   });
 
+  if (!isAdminAuthenticated) {
+    return (
+      <div className="max-w-md mx-auto py-16 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-xl space-y-6"
+        >
+          <div className="text-center space-y-2">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-[#0066FF] flex items-center justify-center mx-auto shadow-xs">
+              <Shield className="w-7 h-7" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight font-heading">
+              Executive Administration
+            </h2>
+            <p className="text-xs text-slate-500 font-medium">
+              Secure oversight portal for University Proctors & Command
+            </p>
+          </div>
+
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Admin User ID</label>
+              <input
+                type="text"
+                value={adminLoginUser}
+                onChange={(e) => setAdminLoginUser(e.target.value)}
+                placeholder="admin"
+                className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs font-mono font-bold outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Admin Password</label>
+              <input
+                type="password"
+                value={adminLoginPass}
+                onChange={(e) => setAdminLoginPass(e.target.value)}
+                placeholder="admin@123"
+                className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs font-medium outline-none"
+                required
+              />
+            </div>
+
+            {adminLoginError && (
+              <p className="text-xs text-rose-600 font-semibold p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-center">
+                {adminLoginError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full py-3.5 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-blue-500/20"
+            >
+              Sign In as Administrator →
+            </button>
+
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+              <p className="text-[11px] text-slate-600 font-medium">
+                Default Credentials: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-300 font-bold text-slate-900 font-mono">admin</code> / <code className="bg-white px-1.5 py-0.5 rounded border border-slate-300 font-bold text-slate-900 font-mono">admin@123</code>
+              </p>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 space-y-6">
       {/* Top Header */}
@@ -272,6 +346,15 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
           >
             <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin text-[#0066FF]' : ''}`} />
             <span>Sync Live Data</span>
+          </button>
+
+          <button
+            onClick={handleAdminLogout}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-xs transition-all cursor-pointer"
+            title="Log out of Admin Console"
+          >
+            <Lock className="w-3.5 h-3.5 text-rose-600" />
+            <span>Sign Out</span>
           </button>
         </div>
       </div>
@@ -495,10 +578,23 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                         )}
                       </div>
 
-                      <span className="inline-flex items-center gap-1 text-[#0066FF] text-xs font-semibold ml-auto">
-                        <span>Inspect Case</span>
-                        <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                      </span>
+                      <div className="flex items-center gap-2 ml-auto">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCase(c.publicCaseId);
+                          }}
+                          title="Delete Case Record"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="inline-flex items-center gap-1 text-[#0066FF] text-xs font-semibold">
+                          <span>Inspect Case</span>
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        </span>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -961,73 +1057,32 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Field Scope / Jurisdiction *</label>
-                    <select
-                      aria-label="Field Scope"
-                      value={newStaffFieldScope}
-                      onChange={(e) => setNewStaffFieldScope(e.target.value)}
-                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-xs outline-none font-medium"
-                    >
-                      <option value="all">All Department Cases (Full Scope)</option>
-                      <option value="safety">Student Safety, Anti-Ragging & Harassment</option>
-                      <option value="maintenance">Facilities, Electrical & Plumbing</option>
-                      <option value="hostel">Hostel Administration & Mess</option>
-                      <option value="it">IT Infrastructure & Labs</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Title / Designation</label>
-                    <input
-                      type="text"
-                      value={newStaffTitle}
-                      onChange={(e) => setNewStaffTitle(e.target.value)}
-                      placeholder="e.g. Chief Proctor, Warden"
-                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Field Scope / Category Jurisdiction *</label>
+                  <select
+                    aria-label="Field Scope"
+                    value={newStaffFieldScope}
+                    onChange={(e) => setNewStaffFieldScope(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-xs outline-none font-medium"
+                  >
+                    <option value="all">All Department Cases (Full Scope)</option>
+                    <option value="safety">Student Safety, Anti-Ragging & Harassment</option>
+                    <option value="maintenance">Facilities, Electrical & Plumbing</option>
+                    <option value="hostel">Hostel Administration & Mess</option>
+                    <option value="it">IT Infrastructure & Labs</option>
+                  </select>
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-slate-700 font-semibold">Official Email</label>
-                    {emailCheckStatus === 'checking' && (
-                      <span className="text-[10px] text-blue-600 font-semibold animate-pulse">Checking DNS MX records...</span>
-                    )}
-                    {emailCheckStatus === 'valid' && (
-                      <span className="text-[10px] text-emerald-600 font-bold">{emailCheckMessage}</span>
-                    )}
-                    {emailCheckStatus === 'invalid' && (
-                      <span className="text-[10px] text-rose-600 font-bold">{emailCheckMessage}</span>
-                    )}
-                  </div>
+                  <label className="block text-slate-700 font-semibold mb-1">Official Email</label>
                   <input
                     type="email"
                     value={newStaffEmail}
-                    onChange={(e) => {
-                      setNewStaffEmail(e.target.value);
-                      if (emailCheckStatus !== 'idle') setEmailCheckStatus('idle');
-                    }}
-                    onBlur={(e) => handleVerifyEmail(e.target.value)}
-                    placeholder="e.g. officer@campus.edu or name@gmail.com"
-                    className={`w-full p-3 rounded-xl bg-slate-50 border text-slate-900 text-xs outline-none transition-colors ${
-                      emailCheckStatus === 'valid'
-                        ? 'border-emerald-300 focus:border-emerald-500 bg-emerald-50/20'
-                        : emailCheckStatus === 'invalid'
-                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/20'
-                        : 'border-slate-200 focus:border-[#0066FF]'
-                    }`}
+                    onChange={(e) => setNewStaffEmail(e.target.value)}
+                    placeholder="e.g. staff@campus.edu or name@gmail.com"
+                    className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
                   />
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    Free live verification: automatically verifies real Gmail & domain MX records.
-                  </p>
                 </div>
-
-                <p className="text-[11px] text-slate-500 bg-blue-50/70 p-2.5 rounded-xl border border-blue-100">
-                  ℹ️ Provide the <strong>Staff Login ID</strong> and <strong>Password</strong> to the officer. They will use them to sign in at the Staff Portal.
-                </p>
 
                 <div className="flex gap-2 pt-2">
                   <button

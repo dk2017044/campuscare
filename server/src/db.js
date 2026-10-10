@@ -13,34 +13,17 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Initial campus departments for routing
-export const DEFAULT_DEPARTMENTS = [
-  { id: 'dept-security', name: 'Campus Security & Emergency Response', type: 'safety', active: true, email: 'security@campuscare.edu' },
-  { id: 'dept-welfare', name: 'Student Welfare & Counseling Committee', type: 'welfare', active: true, email: 'welfare@campuscare.edu' },
-  { id: 'dept-electrical', name: 'Electrical & Power Maintenance', type: 'maintenance', active: true, email: 'electrical@campuscare.edu' },
-  { id: 'dept-plumbing', name: 'Plumbing & Water Systems', type: 'maintenance', active: true, email: 'plumbing@campuscare.edu' },
-  { id: 'dept-civil', name: 'Civil & Infrastructure Maintenance', type: 'maintenance', active: true, email: 'civil@campuscare.edu' },
-  { id: 'dept-hostel', name: 'Hostel Administration', type: 'hostel', active: true, email: 'hostel@campuscare.edu' },
-  { id: 'dept-it-labs', name: 'IT Infrastructure & Labs', type: 'it', active: true, email: 'itlabs@campuscare.edu' }
-];
+// Zero dummy departments! Fully dynamic and created by Admin.
+export const DEFAULT_DEPARTMENTS = [];
 
 export function getCleanEmptyData() {
   return {
-    departments: [...DEFAULT_DEPARTMENTS],
+    departments: [],
     users: [], // Zero dummy staff! Purely dynamic, registered by University Admin.
     cases: [],
     messages: [],
     lostFoundItems: [],
-    auditLogs: [
-      {
-        id: `audit-${Date.now()}`,
-        actorId: 'system',
-        actorName: 'CampusCare System',
-        action: 'PLATFORM_INITIALIZED',
-        timestamp: new Date().toISOString(),
-        metadata: { message: 'Clean production database initialized. Zero dummy staff records.' }
-      }
-    ]
+    auditLogs: []
   };
 }
 
@@ -55,9 +38,9 @@ class Database {
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         this.data = JSON.parse(raw);
-        // Ensure clean structure
-        if (!this.data.departments || this.data.departments.length === 0) {
-          this.data.departments = [...DEFAULT_DEPARTMENTS];
+        // Ensure clean structure - Zero auto-reseeding of demo data
+        if (!Array.isArray(this.data.departments)) {
+          this.data.departments = [];
         }
         if (!this.data.users) {
           this.data.users = [];
@@ -135,6 +118,19 @@ class Database {
     };
     this.save();
     return this.data.cases[idx];
+  }
+
+  deleteCase(publicCaseId) {
+    if (!this.data.cases) this.data.cases = [];
+    const prevCount = this.data.cases.length;
+    this.data.cases = this.data.cases.filter(
+      c => c.publicCaseId !== publicCaseId && c.id !== publicCaseId
+    );
+    if (this.data.messages) {
+      this.data.messages = this.data.messages.filter(m => m.publicCaseId !== publicCaseId);
+    }
+    this.save();
+    return { success: true, deleted: this.data.cases.length < prevCount };
   }
 
   clearCases() {

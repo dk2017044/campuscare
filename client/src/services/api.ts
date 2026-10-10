@@ -81,6 +81,14 @@ export const api = {
     return res.json();
   },
 
+  async deleteCase(publicCaseId: string): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete case');
+    return res.json();
+  },
+
   async updateCaseStatus(publicCaseId: string, status: string, actorName = 'Staff Member', notes = ''): Promise<{ success: boolean; case: Case }> {
     const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/status`, {
       method: 'PATCH',

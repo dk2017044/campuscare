@@ -257,6 +257,20 @@ app.get('/api/cases', (req, res) => {
 });
 
 /**
+ * DELETE /api/cases/:publicCaseId - Delete a single case record
+ */
+app.delete('/api/cases/:publicCaseId', (req, res) => {
+  try {
+    const { publicCaseId } = req.params;
+    const result = db.deleteCase(publicCaseId);
+    return res.json({ success: true, message: `Case ${publicCaseId} deleted.`, result });
+  } catch (error) {
+    console.error('Error deleting case:', error);
+    return res.status(500).json({ error: 'Failed to delete case' });
+  }
+});
+
+/**
  * DELETE /api/cases - Clear all case and message records
  */
 app.delete('/api/cases', (req, res) => {
