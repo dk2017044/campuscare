@@ -7,10 +7,14 @@ import {
   Wrench, 
   Search, 
   ClipboardList, 
-  LayoutDashboard
+  LayoutDashboard,
+  Volume2,
+  VolumeX,
+  Command
 } from 'lucide-react';
 import { Role, Department } from '../types';
 import { api } from '../services/api';
+import { playTapSound, isSoundEnabled, toggleSound } from '../services/sound';
 
 interface Props {
   currentTab: string;
@@ -19,6 +23,7 @@ interface Props {
   setUserRole: (role: Role) => void;
   staffDept: string;
   setStaffDept: (dept: string) => void;
+  onOpenCommand?: () => void;
 }
 
 export const Navbar: React.FC<Props> = ({
@@ -27,15 +32,22 @@ export const Navbar: React.FC<Props> = ({
   userRole,
   setUserRole,
   staffDept,
-  setStaffDept
+  setStaffDept,
+  onOpenCommand
 }) => {
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [soundActive, setSoundActive] = useState(() => isSoundEnabled());
 
   useEffect(() => {
     api.getDepartments()
       .then(res => setDepartments(res.departments || []))
       .catch(() => setDepartments([]));
   }, []);
+
+  const handleSoundToggle = () => {
+    const newState = toggleSound();
+    setSoundActive(newState);
+  };
 
   const studentNavTabs = [
     { id: 'student_home', label: 'Overview', icon: LayoutDashboard },
@@ -61,6 +73,7 @@ export const Navbar: React.FC<Props> = ({
     : adminNavTabs;
 
   const handleRoleChange = (role: Role) => {
+    playTapSound();
     setUserRole(role);
     localStorage.setItem('campuscare_role', role);
     if (role === 'student') setCurrentTab('student_home');
@@ -68,25 +81,30 @@ export const Navbar: React.FC<Props> = ({
     else setCurrentTab('admin_dashboard');
   };
 
+  const handleTabClick = (tabId: string) => {
+    playTapSound();
+    setCurrentTab(tabId);
+  };
+
   return (
-    <header className="sticky top-0 z-50 bg-[#080c16]/80 backdrop-blur-xl border-b border-white/[0.08]">
+    <header className="sticky top-0 z-40 bg-[#080c16]/80 backdrop-blur-2xl border-b border-white/[0.08] shadow-[0_4px_24px_-8px_rgba(0,0,0,0.7)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
         {/* Minimal Brand Emblem */}
         <div
-          onClick={() => setCurrentTab(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : 'admin_dashboard')}
+          onClick={() => handleTabClick(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : 'admin_dashboard')}
           className="flex items-center gap-2 cursor-pointer group shrink-0"
         >
-          <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-400/20 text-sky-400 flex items-center justify-center group-hover:border-sky-400/50 transition-all">
-            <Shield className="w-3.5 h-3.5" />
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400/20 to-indigo-500/20 border border-sky-400/30 text-sky-400 flex items-center justify-center group-hover:border-sky-400/60 shadow-md shadow-sky-500/10 transition-all">
+            <Shield className="w-4 h-4" />
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold tracking-tight text-white">CampusCare</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-sm font-bold tracking-tight text-white font-heading">CampusCare</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
           </div>
         </div>
 
         {/* Minimal Floating Glass Navigation Capsule */}
-        <nav className="hidden md:flex items-center gap-1 p-1 rounded-full glass-pill border border-white/10">
+        <nav className="hidden md:flex items-center gap-1 p-1 rounded-full glass-pill border border-white/10 shadow-lg">
           {currentNavTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = currentTab === tab.id;
@@ -94,7 +112,7 @@ export const Navbar: React.FC<Props> = ({
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setCurrentTab(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 className={`relative inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs transition-colors cursor-pointer ${
                   isActive 
                     ? 'text-white font-medium' 
@@ -115,14 +133,42 @@ export const Navbar: React.FC<Props> = ({
           })}
         </nav>
 
-        {/* Minimal Actions & Role Switcher */}
+        {/* Tactical Actions Dock */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Spotlight Command Shortcut Pill (Ctrl+K) */}
+          {onOpenCommand && (
+            <button
+              type="button"
+              onClick={() => {
+                playTapSound();
+                onOpenCommand();
+              }}
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full glass-pill border border-white/10 hover:border-sky-400/30 text-slate-300 hover:text-white text-xs transition-all cursor-pointer"
+              title="Open Command Palette (Ctrl+K)"
+            >
+              <Command className="w-3 h-3 text-sky-400" />
+              <span className="text-[11px] font-mono text-slate-400">Ctrl K</span>
+            </button>
+          )}
+
+          {/* Micro Audio Haptics Toggle */}
+          <button
+            type="button"
+            onClick={handleSoundToggle}
+            className={`p-1.5 rounded-full glass-pill border border-white/10 text-xs transition-all cursor-pointer ${
+              soundActive ? 'text-sky-300 hover:bg-sky-500/10' : 'text-slate-500 hover:bg-white/5'
+            }`}
+            title={soundActive ? 'Sound Haptics Enabled' : 'Sound Haptics Muted'}
+          >
+            {soundActive ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+          </button>
+
           {/* Subtle SOS Beacon (Student Only) */}
           {userRole === 'student' && (
             <button
               type="button"
-              onClick={() => setCurrentTab('emergency')}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-medium transition-all cursor-pointer"
+              onClick={() => handleTabClick('emergency')}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-rose-300 text-xs font-semibold shadow-[0_0_15px_rgba(244,63,94,0.2)] transition-all cursor-pointer"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
               <AlertTriangle className="w-3 h-3 text-rose-400" />
@@ -162,7 +208,7 @@ export const Navbar: React.FC<Props> = ({
                   {active && (
                     <motion.span
                       layoutId="activeRoleCapsule"
-                      className="absolute inset-0 bg-sky-500/20 rounded-full border border-sky-400/30 -z-10"
+                      className="absolute inset-0 bg-sky-500/20 rounded-full border border-sky-400/30 -z-10 shadow-xs"
                       transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
                     />
                   )}
@@ -183,7 +229,7 @@ export const Navbar: React.FC<Props> = ({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setCurrentTab(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs shrink-0 transition-colors cursor-pointer ${
                 isActive 
                   ? 'bg-white/10 text-white font-medium border border-white/15' 

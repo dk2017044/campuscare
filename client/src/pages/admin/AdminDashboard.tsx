@@ -31,7 +31,7 @@ import { PriorityBadge } from '../../components/PriorityBadge';
 import { CategoryBadge, getCategoryMeta } from '../../components/CategoryBadge';
 
 interface Props {
-  currentTab: string;
+  currentTab?: string;
 }
 
 type AdminSubTab = 'queue' | 'analytics' | 'departments' | 'staff' | 'audit';

@@ -3,8 +3,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { StudentHome } from './pages/student/StudentHome';
+import { AuroraCanvas } from './components/AuroraCanvas';
+import { CommandPalette } from './components/CommandPalette';
 import { Role } from './types';
 import { CheckCircle2, Loader2 } from 'lucide-react';
+import { playSuccessChime } from './services/sound';
 
 // Code-Splitting: Lazy load secondary heavy dashboards & pages to maximize Lighthouse Performance & eliminate FCP delay
 const ReportSafely = lazy(() => import('./pages/student/ReportSafely').then(m => ({ default: m.ReportSafely })));
@@ -32,13 +35,27 @@ export function App() {
   });
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
 
   // Auto-fill state for Track Report after filing
   const [trackedCaseId, setTrackedCaseId] = useState<string>('');
   const [trackedPin, setTrackedPin] = useState<string>('');
 
+  // Global Ctrl+K / ⌘K listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
+    playSuccessChime();
     setTimeout(() => {
       setToastMessage(null);
     }, 4000);
@@ -51,15 +68,28 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100 font-sans selection:bg-campus-500 selection:text-white relative overflow-x-hidden">
-      {/* Ambient Cosmic VisionOS Glass Glows (Rich, Warm, Luminous) */}
+    <div className="min-h-screen flex flex-col bg-[#060912] text-slate-100 font-sans selection:bg-sky-500 selection:text-white relative overflow-x-hidden">
+      {/* Living GPU Aurora Stardust Canvas */}
+      <AuroraCanvas />
+
+      {/* Ambient Cosmic VisionOS Glass Glows */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Soft radial blooms behind frosted glass */}
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-gradient-to-b from-sky-500/20 via-indigo-500/15 to-transparent rounded-full blur-[150px]" />
         <div className="absolute top-1/4 -left-40 w-[600px] h-[600px] bg-indigo-600/15 rounded-full blur-[160px]" />
         <div className="absolute top-1/2 -right-40 w-[650px] h-[650px] bg-cyan-500/15 rounded-full blur-[160px]" />
         <div className="absolute bottom-10 left-1/3 w-[500px] h-[400px] bg-purple-500/10 rounded-full blur-[140px]" />
       </div>
+
+      {/* Global Command Palette */}
+      <CommandPalette
+        isOpen={isCommandOpen}
+        onClose={() => setIsCommandOpen(false)}
+        onNavigate={(tab) => {
+          if (tab === 'staff_dashboard') setUserRole('staff');
+          if (tab === 'admin_dashboard') setUserRole('super_admin');
+          setCurrentTab(tab);
+        }}
+      />
 
       {/* Toast Notification with Motion */}
       <AnimatePresence>
@@ -85,14 +115,15 @@ export function App() {
         setUserRole={setUserRole}
         staffDept={staffDept}
         setStaffDept={setStaffDept}
+        onOpenCommand={() => setIsCommandOpen(true)}
       />
 
       {/* Main Page Body with Motion Page Transitions */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         <Suspense
           fallback={
             <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 text-slate-400">
-              <Loader2 className="w-7 h-7 text-campus-400 animate-spin" />
+              <Loader2 className="w-7 h-7 text-sky-400 animate-spin" />
               <p className="text-xs font-mono tracking-widest uppercase text-slate-500">Loading module...</p>
             </div>
           }
@@ -110,7 +141,10 @@ export function App() {
               {userRole === 'student' && (
                 <>
                   {currentTab === 'student_home' && (
-                    <StudentHome onNavigate={setCurrentTab} />
+                    <StudentHome 
+                      onNavigate={setCurrentTab} 
+                      onOpenCommand={() => setIsCommandOpen(true)}
+                    />
                   )}
                   {currentTab === 'report_safely' && (
                     <ReportSafely onNavigate={setCurrentTab} onCaseCreated={handleCaseCreated} />
@@ -142,9 +176,9 @@ export function App() {
                 </>
               )}
 
-              {/* SUPER ADMIN PORTAL VIEWS */}
+              {/* ADMIN PORTAL VIEWS */}
               {userRole === 'super_admin' && (
-                <AdminDashboard currentTab={currentTab} />
+                <AdminDashboard />
               )}
             </motion.div>
           </AnimatePresence>
