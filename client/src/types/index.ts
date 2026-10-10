@@ -98,6 +98,7 @@ export interface StaffUser {
   role: 'staff';
   departmentId: string;
   departmentName?: string;
+  fieldScope?: string;
   title: string;
   createdAt: string;
 }

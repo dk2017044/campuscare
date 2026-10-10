@@ -13,6 +13,7 @@ interface Props {
   onClose: () => void;
   onCaseUpdated: (updated: Case) => void;
   actorName?: string;
+  staffDeptId?: string;
 }
 
 export const StaffCaseDetail: React.FC<Props> = ({
@@ -20,7 +21,8 @@ export const StaffCaseDetail: React.FC<Props> = ({
   departments,
   onClose,
   onCaseUpdated,
-  actorName = 'Staff Officer'
+  actorName = 'Staff Officer',
+  staffDeptId
 }) => {
   const [currentCase, setCurrentCase] = useState<Case>(caseItem);
   const [messages, setMessages] = useState<CaseMessage[]>([]);
@@ -30,6 +32,7 @@ export const StaffCaseDetail: React.FC<Props> = ({
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [selectedDeptId, setSelectedDeptId] = useState(caseItem.assignedDepartmentId || (departments.length > 0 ? departments[0].id : ''));
   const [escalating, setEscalating] = useState(false);
+  const [accessDeniedError, setAccessDeniedError] = useState<string | null>(null);
 
   useEffect(() => {
     loadCaseData();
@@ -37,7 +40,7 @@ export const StaffCaseDetail: React.FC<Props> = ({
       loadCaseData();
     }, 3500);
     return () => clearInterval(interval);
-  }, [caseItem.publicCaseId]);
+  }, [caseItem.publicCaseId, staffDeptId]);
 
   useEffect(() => {
     if (currentCase.assignedDepartmentId) {
@@ -49,7 +52,7 @@ export const StaffCaseDetail: React.FC<Props> = ({
 
   const loadCaseData = async () => {
     try {
-      const res = await api.getCaseDetails(caseItem.publicCaseId);
+      const res = await api.getCaseDetails(caseItem.publicCaseId, staffDeptId, 'staff');
       if (res.case) {
         setCurrentCase(res.case);
         if (res.case.assignedDepartmentId) {
@@ -57,8 +60,12 @@ export const StaffCaseDetail: React.FC<Props> = ({
         }
       }
       setMessages(res.messages || []);
-    } catch (e) {
-      console.error(e);
+      setAccessDeniedError(null);
+    } catch (e: any) {
+      console.error('Case detail access error:', e);
+      if (e?.message && e.message.includes('403')) {
+        setAccessDeniedError('Access Restricted: You are only authorized to view incidents assigned to your designated department & category scope.');
+      }
     }
   };
 
@@ -171,6 +178,15 @@ export const StaffCaseDetail: React.FC<Props> = ({
 
         {/* Modal Body */}
         <div className="p-6 overflow-y-auto space-y-5">
+          {accessDeniedError && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center gap-3">
+              <AlertOctagon className="w-5 h-5 text-amber-600 shrink-0" />
+              <div>
+                <p className="font-bold">Restricted Officer Jurisdiction</p>
+                <p className="text-amber-700">{accessDeniedError}</p>
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Left 2 Cols: Details, AI, Chat */}
             <div className="lg:col-span-2 space-y-4">

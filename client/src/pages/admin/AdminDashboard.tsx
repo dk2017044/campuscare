@@ -85,12 +85,36 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
   const [showStaffPassword, setShowStaffPassword] = useState(false);
   const [newStaffEmail, setNewStaffEmail] = useState('');
   const [newStaffDept, setNewStaffDept] = useState('');
+  const [newStaffFieldScope, setNewStaffFieldScope] = useState('all');
   const [newStaffTitle, setNewStaffTitle] = useState('Faculty Counselor');
   const [savingStaff, setSavingStaff] = useState(false);
+  const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+  const [emailCheckMessage, setEmailCheckMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadAdminData();
   }, []);
+
+  const handleVerifyEmail = async (emailToTest: string) => {
+    if (!emailToTest.trim()) {
+      setEmailCheckStatus('idle');
+      setEmailCheckMessage(null);
+      return;
+    }
+    setEmailCheckStatus('checking');
+    try {
+      const res = await api.verifyEmail(emailToTest.trim());
+      if (res.isValid) {
+        setEmailCheckStatus('valid');
+        setEmailCheckMessage(`✓ Valid ${res.details?.isGmail ? 'Gmail' : 'Domain'} Mail Server (${res.details?.domain})`);
+      } else {
+        setEmailCheckStatus('invalid');
+        setEmailCheckMessage(`⚠️ ${res.error || 'Domain not found'}`);
+      }
+    } catch {
+      setEmailCheckStatus('idle');
+    }
+  };
 
   const loadAdminData = async () => {
     try {
@@ -142,7 +166,12 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStaffName.trim() || !newStaffId.trim() || !newStaffPassword.trim()) {
-      alert('Staff Full Name, Staff ID, and Login Password are required.');
+      alert('Staff Full Name, Staff Login ID, and Password are required.');
+      return;
+    }
+
+    if (emailCheckStatus === 'invalid') {
+      alert(`Invalid email address: ${emailCheckMessage}`);
       return;
     }
 
@@ -150,17 +179,21 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
       setSavingStaff(true);
       await api.createStaff({
         name: newStaffName.trim(),
-        staffId: newStaffId.trim(),
+        staffId: newStaffId.trim().toUpperCase(),
         email: newStaffEmail.trim() || undefined,
         password: newStaffPassword.trim(),
         departmentId: newStaffDept || (departments.length > 0 ? departments[0].id : ''),
+        fieldScope: newStaffFieldScope,
         title: newStaffTitle.trim() || 'Staff Officer'
       });
-      alert(`Staff Account provisioned successfully!\n\nName: ${newStaffName.trim()}\nStaff ID: ${newStaffId.trim()}\nPassword: ${newStaffPassword.trim()}\n\nShare these credentials with the officer to log in to the Staff Portal.`);
+      alert(`Staff Account provisioned successfully!\n\nName: ${newStaffName.trim()}\nStaff ID: ${newStaffId.trim().toUpperCase()}\nPassword: ${newStaffPassword.trim()}\nField Jurisdiction: ${newStaffFieldScope === 'all' ? 'All Unit Incidents' : newStaffFieldScope}\n\nThis officer will ONLY see cases within their assigned field/department.`);
       setNewStaffName('');
       setNewStaffId('');
       setNewStaffEmail('');
       setNewStaffPassword('');
+      setNewStaffFieldScope('all');
+      setEmailCheckStatus('idle');
+      setEmailCheckMessage(null);
       setShowNewStaffModal(false);
       loadAdminData();
     } catch (e: any) {
@@ -687,6 +720,11 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                         </span>
                       </div>
                       <span className="text-slate-500 block text-[11px] font-medium">{staff.title}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          Scope: {staff.fieldScope === 'all' ? 'All Unit Incidents' : staff.fieldScope || 'all'}
+                        </span>
+                      </div>
                       <span className="text-[10px] text-slate-400 font-mono block">
                         {staff.email}
                       </span>
@@ -925,6 +963,22 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
+                    <label className="block text-slate-700 font-semibold mb-1">Field Scope / Jurisdiction *</label>
+                    <select
+                      aria-label="Field Scope"
+                      value={newStaffFieldScope}
+                      onChange={(e) => setNewStaffFieldScope(e.target.value)}
+                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 text-xs outline-none font-medium"
+                    >
+                      <option value="all">All Department Cases (Full Scope)</option>
+                      <option value="safety">Student Safety, Anti-Ragging & Harassment</option>
+                      <option value="maintenance">Facilities, Electrical & Plumbing</option>
+                      <option value="hostel">Hostel Administration & Mess</option>
+                      <option value="it">IT Infrastructure & Labs</option>
+                    </select>
+                  </div>
+
+                  <div>
                     <label className="block text-slate-700 font-semibold mb-1">Title / Designation</label>
                     <input
                       type="text"
@@ -934,17 +988,41 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                       className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
                     />
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-slate-700 font-semibold mb-1">Official Email</label>
-                    <input
-                      type="email"
-                      value={newStaffEmail}
-                      onChange={(e) => setNewStaffEmail(e.target.value)}
-                      placeholder="e.g. officer@campus.edu"
-                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
-                    />
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-slate-700 font-semibold">Official Email</label>
+                    {emailCheckStatus === 'checking' && (
+                      <span className="text-[10px] text-blue-600 font-semibold animate-pulse">Checking DNS MX records...</span>
+                    )}
+                    {emailCheckStatus === 'valid' && (
+                      <span className="text-[10px] text-emerald-600 font-bold">{emailCheckMessage}</span>
+                    )}
+                    {emailCheckStatus === 'invalid' && (
+                      <span className="text-[10px] text-rose-600 font-bold">{emailCheckMessage}</span>
+                    )}
                   </div>
+                  <input
+                    type="email"
+                    value={newStaffEmail}
+                    onChange={(e) => {
+                      setNewStaffEmail(e.target.value);
+                      if (emailCheckStatus !== 'idle') setEmailCheckStatus('idle');
+                    }}
+                    onBlur={(e) => handleVerifyEmail(e.target.value)}
+                    placeholder="e.g. officer@campus.edu or name@gmail.com"
+                    className={`w-full p-3 rounded-xl bg-slate-50 border text-slate-900 text-xs outline-none transition-colors ${
+                      emailCheckStatus === 'valid'
+                        ? 'border-emerald-300 focus:border-emerald-500 bg-emerald-50/20'
+                        : emailCheckStatus === 'invalid'
+                        ? 'border-rose-300 focus:border-rose-500 bg-rose-50/20'
+                        : 'border-slate-200 focus:border-[#0066FF]'
+                    }`}
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Free live verification: automatically verifies real Gmail & domain MX records.
+                  </p>
                 </div>
 
                 <p className="text-[11px] text-slate-500 bg-blue-50/70 p-2.5 rounded-xl border border-blue-100">

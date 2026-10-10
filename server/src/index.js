@@ -8,6 +8,7 @@ import { generateCaseId, generatePin, hashPin, verifyPin } from './crypto.js';
 import { triageReport, classifyMaintenanceImage, matchLostAndFoundItems } from './ai.js';
 import { upload } from './upload.js';
 import { syncCaseToSupabase, syncMessageToSupabase, syncLostFoundToSupabase, checkSupabaseHealth } from './supabase.js';
+import { validateEmailAddress, generateEmailOtp, verifyEmailOtp } from './utils/emailValidator.js';
 
 dotenv.config();
 
@@ -211,8 +212,8 @@ app.post('/api/cases', async (req, res) => {
  */
 app.get('/api/cases', (req, res) => {
   try {
-    const { category, priority, status, departmentId, isAnonymous, role } = req.query;
-    const cases = db.getCases({ category, priority, status, departmentId, isAnonymous });
+    const { category, priority, status, departmentId, fieldScope, isAnonymous, role } = req.query;
+    const cases = db.getCases({ category, priority, status, departmentId, fieldScope, isAnonymous });
 
     // Sanitize cases: remove pin hashes, mask anonymous student info for general staff
     const sanitized = cases.map(c => {
@@ -301,14 +302,20 @@ app.post('/api/cases/:publicCaseId/verify-pin', (req, res) => {
 });
 
 /**
- * GET /api/cases/:publicCaseId - Get case details for staff/admin
+ * GET /api/cases/:publicCaseId - Get case details for staff/admin with jurisdiction protection
  */
 app.get('/api/cases/:publicCaseId', (req, res) => {
   try {
     const { publicCaseId } = req.params;
+    const { staffDeptId, role } = req.query;
     const c = db.getCaseByPublicId(publicCaseId);
     if (!c) {
       return res.status(404).json({ error: 'Case not found' });
+    }
+
+    // Role-based jurisdiction protection: Staff cannot inspect cases assigned to other departments
+    if (role === 'staff' && staffDeptId && c.assignedDepartmentId && c.assignedDepartmentId !== staffDeptId) {
+      return res.status(403).json({ error: 'Access Denied: This incident is restricted to its assigned department officers.' });
     }
 
     const copy = { ...c };
@@ -858,13 +865,13 @@ app.post('/api/staff/login', (req, res) => {
   }
 });
 
-app.post('/api/staff/create', (req, res) => {
+app.post('/api/staff/create', async (req, res) => {
   try {
-    const { name, staffId, email, password, departmentId, title } = req.body;
+    const { name, staffId, email, password, departmentId, title, fieldScope } = req.body;
     if (!name || !staffId || !password) {
       return res.status(400).json({ error: 'Staff Name, Staff ID, and Login Password are required.' });
     }
-    const user = db.createStaffUser({ name, staffId, email, password, departmentId, title });
+    const user = await db.createStaffUser({ name, staffId, email, password, departmentId, title, fieldScope });
     return res.json({ success: true, user });
   } catch (error) {
     return res.status(400).json({ error: error.message || 'Failed to create staff account' });
@@ -878,6 +885,55 @@ app.get('/api/staff', (req, res) => {
 app.delete('/api/staff/:id', (req, res) => {
   const success = db.deleteUser(req.params.id);
   res.json({ success });
+});
+
+// 100% Free Email & Gmail Verification Endpoints (DNS MX lookup + OTP)
+app.post('/api/verify-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const result = await validateEmailAddress(email);
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({ isValid: false, error: 'Email validation error' });
+  }
+});
+
+app.post('/api/send-email-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const validation = await validateEmailAddress(email);
+    if (!validation.isValid) {
+      return res.status(400).json({ success: false, error: validation.error });
+    }
+    const otp = generateEmailOtp(email);
+    // In production, an SMTP transport (Nodemailer with free Gmail App Password) delivers the email.
+    // For local development and demonstration, the OTP is returned directly:
+    console.log(`[CampusCare Verification] Free OTP for ${email}: ${otp}`);
+    return res.json({
+      success: true,
+      message: `Verification code generated for ${email}.`,
+      demoOtp: otp, // Provided for instant free interactive demo
+      domainInfo: validation.details
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Failed to generate verification code' });
+  }
+});
+
+app.post('/api/verify-email-otp', (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ verified: false, error: 'Email and OTP code are required.' });
+    }
+    const result = verifyEmailOtp(email, otp);
+    if (!result.verified) {
+      return res.status(400).json({ verified: false, error: result.error });
+    }
+    return res.json({ verified: true, message: 'Email address successfully verified!' });
+  } catch (error) {
+    return res.status(500).json({ verified: false, error: 'Verification failed' });
+  }
 });
 
 // Reset demo data back to clean sample scenario

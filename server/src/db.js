@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { validateEmailAddress } from './utils/emailValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -103,6 +104,9 @@ class Database {
     if (filters.departmentId && filters.departmentId !== 'all') {
       list = list.filter(c => c.assignedDepartmentId === filters.departmentId);
     }
+    if (filters.fieldScope && filters.fieldScope !== 'all') {
+      list = list.filter(c => c.reportType === filters.fieldScope || c.category.toLowerCase().includes(filters.fieldScope.toLowerCase()));
+    }
     if (filters.isAnonymous !== undefined && filters.isAnonymous !== null && filters.isAnonymous !== 'all') {
       const isAnon = filters.isAnonymous === true || filters.isAnonymous === 'true';
       list = list.filter(c => c.isAnonymous === isAnon);
@@ -168,13 +172,14 @@ class Database {
       const { password, ...safeUser } = u;
       return {
         ...safeUser,
+        fieldScope: u.fieldScope || 'all',
         departmentName: dept ? dept.name : (u.departmentName || 'General Administration')
       };
     });
   }
 
-  // Admin creates a new staff account with Staff ID and Password
-  createStaffUser({ name, staffId, email, password, departmentId, title }) {
+  // Admin creates a new staff account with Staff ID, Password, and Field Scope
+  async createStaffUser({ name, staffId, email, password, departmentId, title, fieldScope }) {
     if (!this.data.users) this.data.users = [];
     const normalizedStaffId = (staffId || '').trim();
     const normalizedEmail = (email || '').trim().toLowerCase();
@@ -196,6 +201,12 @@ class Database {
     }
 
     if (normalizedEmail) {
+      // Validate email syntax, domain MX records
+      const emailCheck = await validateEmailAddress(normalizedEmail);
+      if (!emailCheck.isValid) {
+        throw new Error(emailCheck.error || 'Invalid official email address.');
+      }
+
       const duplicateEmail = this.data.users.find(u => 
         u.email && u.email.toLowerCase() === normalizedEmail
       );
@@ -215,6 +226,7 @@ class Database {
       role: 'staff',
       departmentId: departmentId || '',
       departmentName: dept ? dept.name : 'General Administration',
+      fieldScope: (fieldScope || 'all').trim(),
       title: (title || 'Staff Officer').trim(),
       createdAt: new Date().toISOString()
     };
@@ -226,7 +238,7 @@ class Database {
       actorId: 'admin',
       actorName: 'University Administrator',
       action: 'STAFF_ACCOUNT_CREATED',
-      metadata: { staffId: newUser.staffId, name: newUser.name, department: newUser.departmentName, title: newUser.title }
+      metadata: { staffId: newUser.staffId, name: newUser.name, department: newUser.departmentName, title: newUser.title, fieldScope: newUser.fieldScope }
     });
 
     const { password: _, ...safeUser } = newUser;
@@ -263,6 +275,7 @@ class Database {
     const { password: _, ...safeUser } = user;
     return {
       ...safeUser,
+      fieldScope: user.fieldScope || 'all',
       departmentName: dept ? dept.name : (user.departmentName || 'General Administration')
     };
   }

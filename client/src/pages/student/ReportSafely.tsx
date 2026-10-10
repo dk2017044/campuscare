@@ -56,6 +56,35 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [reporterName, setReporterName] = useState('');
   const [reporterContact, setReporterContact] = useState('');
+  const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+  const [emailCheckMessage, setEmailCheckMessage] = useState<string>('');
+
+  const handleVerifyContactEmail = async (contactVal: string) => {
+    if (!contactVal || !contactVal.includes('@')) {
+      setEmailCheckStatus('idle');
+      setEmailCheckMessage('');
+      return;
+    }
+    try {
+      setEmailCheckStatus('checking');
+      setEmailCheckMessage('Checking mail server (Free DNS MX check)...');
+      const res = await api.verifyEmail(contactVal.trim());
+      if (res.isValid) {
+        setEmailCheckStatus('valid');
+        setEmailCheckMessage(
+          res.details?.isGmail 
+            ? '✓ Valid Google Gmail address' 
+            : `✓ Active mail server found (${res.details?.domain})`
+        );
+      } else {
+        setEmailCheckStatus('invalid');
+        setEmailCheckMessage(`⚠️ ${res.error || 'Invalid email address'}`);
+      }
+    } catch {
+      setEmailCheckStatus('idle');
+      setEmailCheckMessage('');
+    }
+  };
 
   // Evidence upload
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
@@ -564,21 +593,50 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
             </div>
 
             {!isAnonymous && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  value={reporterName}
-                  onChange={(e) => setReporterName(e.target.value)}
-                  placeholder="Your Name (Optional)"
-                  className="p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none"
-                />
-                <input
-                  type="text"
-                  value={reporterContact}
-                  onChange={(e) => setReporterContact(e.target.value)}
-                  placeholder="Email or Phone Number"
-                  className="p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none"
-                />
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={reporterName}
+                    onChange={(e) => setReporterName(e.target.value)}
+                    placeholder="Your Name (Optional)"
+                    className="p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none"
+                  />
+                  <div className="space-y-1">
+                    <input
+                      type="text"
+                      value={reporterContact}
+                      onChange={(e) => {
+                        setReporterContact(e.target.value);
+                        if (emailCheckStatus !== 'idle') {
+                          setEmailCheckStatus('idle');
+                          setEmailCheckMessage('');
+                        }
+                      }}
+                      onBlur={() => handleVerifyContactEmail(reporterContact)}
+                      placeholder="Student Email or Phone Number"
+                      className={`w-full p-3.5 rounded-2xl bg-slate-50/60 border text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all ${
+                        emailCheckStatus === 'valid'
+                          ? 'border-emerald-500 bg-emerald-50/20'
+                          : emailCheckStatus === 'invalid'
+                          ? 'border-rose-400 bg-rose-50/30'
+                          : 'border-slate-200 focus:bg-white focus:border-[#0066FF]'
+                      }`}
+                    />
+                    {emailCheckMessage && (
+                      <p className={`text-[11px] font-medium px-1 flex items-center gap-1 ${
+                        emailCheckStatus === 'valid' 
+                          ? 'text-emerald-700' 
+                          : emailCheckStatus === 'invalid' 
+                          ? 'text-rose-600' 
+                          : 'text-slate-500'
+                      }`}>
+                        {emailCheckStatus === 'checking' && <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping inline-block" />}
+                        {emailCheckMessage}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

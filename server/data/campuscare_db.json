@@ -50,7 +50,20 @@
       "email": "itlabs@campuscare.edu"
     }
   ],
-  "users": [],
+  "users": [
+    {
+      "id": "staff-1791668597698-dhz6",
+      "staffId": "1234",
+      "name": "Dilip",
+      "email": "ghgf@g",
+      "password": "1234",
+      "role": "staff",
+      "departmentId": "dept-it-labs",
+      "departmentName": "IT Infrastructure & Labs",
+      "title": "Faculty Counselor",
+      "createdAt": "2026-10-10T21:43:17.699Z"
+    }
+  ],
   "cases": [
     {
       "id": "case-1791666801435-kzb0",
@@ -167,6 +180,33 @@
   ],
   "lostFoundItems": [],
   "auditLogs": [
+    {
+      "id": "audit-1791669697902-riz7",
+      "timestamp": "2026-10-10T22:01:37.902Z",
+      "actorId": "admin",
+      "actorName": "University Administrator",
+      "action": "STAFF_ACCOUNT_CREATED",
+      "metadata": {
+        "staffId": "STAFF-TEST-MAINT",
+        "name": "Ramesh Maintenance Officer",
+        "department": "General Administration",
+        "title": "Facility Head",
+        "fieldScope": "Campus Maintenance & Facilities"
+      }
+    },
+    {
+      "id": "audit-1791668597702-gss6",
+      "timestamp": "2026-10-10T21:43:17.702Z",
+      "actorId": "admin",
+      "actorName": "University Administrator",
+      "action": "STAFF_ACCOUNT_CREATED",
+      "metadata": {
+        "staffId": "1234",
+        "name": "Dilip",
+        "department": "IT Infrastructure & Labs",
+        "title": "Faculty Counselor"
+      }
+    },
     {
       "id": "audit-1791668058395-x66s",
       "timestamp": "2026-10-10T21:34:18.395Z",

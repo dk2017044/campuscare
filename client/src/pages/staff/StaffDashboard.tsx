@@ -58,17 +58,21 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
       clearInterval(interval);
       stopEmergencySiren();
     };
-  }, [filterCategory, filterPriority, filterStatus, filterDept]);
+  }, [filterCategory, filterPriority, filterStatus, filterDept, activeStaffUser]);
 
   const loadData = async (showIndicator = true) => {
     try {
       if (showIndicator) setLoading(true);
+      const assignedDept = activeStaffUser?.departmentId || (filterDept === 'all' ? undefined : filterDept);
+      const assignedScope = activeStaffUser?.fieldScope && activeStaffUser.fieldScope !== 'all' ? activeStaffUser.fieldScope : undefined;
+      
       const [casesRes, deptsRes, staffRes] = await Promise.all([
         api.getCases({
           category: filterCategory,
           priority: filterPriority,
           status: filterStatus,
-          departmentId: filterDept === 'all' ? undefined : filterDept,
+          departmentId: assignedDept,
+          fieldScope: assignedScope,
           role: 'staff'
         }),
         api.getDepartments(),
@@ -299,6 +303,34 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
         </div>
       </div>
 
+      {/* Officer Scope & Jurisdiction Banner */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-sky-50/70 to-indigo-50/90 border border-blue-200/80 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+            🔒
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-blue-950 uppercase tracking-wider font-mono">
+                Assigned Officer Jurisdiction
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100/90 text-blue-700 font-bold border border-blue-200">
+                RBAC Enforced
+              </span>
+            </div>
+            <p className="text-xs text-slate-700 mt-0.5 font-medium">
+              Assigned Department: <strong className="text-slate-900">{activeStaffUser.departmentName || 'All Units'}</strong>
+              {activeStaffUser.fieldScope && activeStaffUser.fieldScope !== 'all' && (
+                <> • Field Scope: <strong className="text-blue-700 bg-blue-100/70 px-1.5 py-0.5 rounded text-[11px] font-semibold">{activeStaffUser.fieldScope}</strong></>
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="text-[11px] font-semibold text-blue-700 bg-white/90 px-3 py-1.5 rounded-xl border border-blue-200/70 shadow-2xs">
+          Cross-Department Access Blocked
+        </div>
+      </div>
+
       {/* Bento Pastel KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <motion.div whileHover={{ y: -2 }} className="p-5 rounded-3xl bg-[#F0F7FF] border border-[#DCEBFF] space-y-1 shadow-xs">
@@ -449,6 +481,7 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
           caseItem={selectedCase}
           departments={departments}
           actorName={activeStaffUser ? `${activeStaffUser.name} (${activeStaffUser.title})` : 'Duty Staff Officer'}
+          staffDeptId={activeStaffUser.departmentId}
           onClose={() => setSelectedCase(null)}
           onCaseUpdated={(updated) => {
             setSelectedCase(updated);

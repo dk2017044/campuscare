@@ -35,6 +35,7 @@ export const api = {
     priority?: string;
     status?: string;
     departmentId?: string;
+    fieldScope?: string;
     isAnonymous?: string | boolean;
     role?: string;
   } = {}): Promise<{ success: boolean; cases: Case[]; total: number }> {
@@ -43,6 +44,7 @@ export const api = {
     if (filters.priority && filters.priority !== 'all') params.append('priority', filters.priority);
     if (filters.status && filters.status !== 'all') params.append('status', filters.status);
     if (filters.departmentId && filters.departmentId !== 'all') params.append('departmentId', filters.departmentId);
+    if (filters.fieldScope && filters.fieldScope !== 'all') params.append('fieldScope', filters.fieldScope);
     if (filters.isAnonymous !== undefined && filters.isAnonymous !== 'all') params.append('isAnonymous', String(filters.isAnonymous));
     if (filters.role) params.append('role', filters.role);
 
@@ -51,9 +53,16 @@ export const api = {
     return res.json();
   },
 
-  async getCaseDetails(publicCaseId: string): Promise<{ success: boolean; case: Case; messages: CaseMessage[] }> {
-    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}`);
-    if (!res.ok) throw new Error('Case not found');
+  async getCaseDetails(publicCaseId: string, staffDeptId?: string, role?: string): Promise<{ success: boolean; case: Case; messages: CaseMessage[] }> {
+    const params = new URLSearchParams();
+    if (staffDeptId) params.append('staffDeptId', staffDeptId);
+    if (role) params.append('role', role);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}${qs}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Case not found' }));
+      throw new Error(err.error || 'Case not found or access restricted.');
+    }
     return res.json();
   },
 
@@ -221,6 +230,7 @@ export const api = {
     email?: string;
     password: string;
     departmentId: string;
+    fieldScope?: string;
     title: string;
   }): Promise<{ success: boolean; user: StaffUser }> {
     const res = await fetch(`${API_BASE}/staff/create`, {
@@ -257,6 +267,45 @@ export const api = {
   async deleteStaff(id: string): Promise<{ success: boolean }> {
     const res = await fetch(`${API_BASE}/staff/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete staff member');
+    return res.json();
+  },
+
+  // 100% Free Email & Gmail Verification
+  async verifyEmail(email: string): Promise<{
+    isValid: boolean;
+    cleanEmail?: string;
+    error?: string;
+    details?: {
+      domain?: string;
+      isGmail?: boolean;
+      mxRecordsCount?: number;
+      primaryServer?: string;
+      warning?: string;
+    };
+  }> {
+    const res = await fetch(`${API_BASE}/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    return res.json();
+  },
+
+  async sendEmailOtp(email: string): Promise<{ success: boolean; message: string; demoOtp?: string; error?: string }> {
+    const res = await fetch(`${API_BASE}/send-email-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    return res.json();
+  },
+
+  async verifyEmailOtp(email: string, otp: string): Promise<{ verified: boolean; message?: string; error?: string }> {
+    const res = await fetch(`${API_BASE}/verify-email-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp })
+    });
     return res.json();
   },
 
