@@ -29,7 +29,7 @@ export function App() {
   const [currentTab, setCurrentTab] = useState<string>(() => {
     const savedRole = localStorage.getItem('campuscare_role');
     if (savedRole === 'staff') return 'staff_dashboard';
-    if (savedRole === 'super_admin') return 'admin_dashboard';
+    if (savedRole === 'super_admin') return 'admin_queue';
     return 'student_home';
   });
 
@@ -74,7 +74,7 @@ export function App() {
         onClose={() => setIsCommandOpen(false)}
         onNavigate={(tab) => {
           if (tab === 'staff_dashboard') setUserRole('staff');
-          if (tab === 'admin_dashboard') setUserRole('super_admin');
+          if (tab === 'admin_dashboard' || tab.startsWith('admin_')) setUserRole('super_admin');
           setCurrentTab(tab);
         }}
       />
@@ -161,12 +161,15 @@ export function App() {
                   {currentTab === 'lost_found' && (
                     <LostAndFound onNavigate={setCurrentTab} />
                   )}
+                  {currentTab !== 'staff_dashboard' && currentTab !== 'lost_found' && (
+                    <StaffDashboard staffDept={staffDept} />
+                  )}
                 </>
               )}
 
               {/* ADMIN PORTAL VIEWS */}
               {userRole === 'super_admin' && (
-                <AdminDashboard />
+                <AdminDashboard currentTab={currentTab} onNavigateTab={setCurrentTab} />
               )}
             </motion.div>
           </AnimatePresence>

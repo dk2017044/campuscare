@@ -12,7 +12,10 @@ import {
   GraduationCap, 
   Briefcase, 
   ShieldAlert,
-  Check
+  Check,
+  BarChart3,
+  Building2,
+  Users
 } from 'lucide-react';
 import { Role } from '../types';
 
@@ -45,20 +48,41 @@ export const Navbar: React.FC<Props> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const navTabs = [
-    { id: 'student_home', label: 'Home', icon: Home },
-    { id: 'report_safely', label: 'Report', icon: FileText },
-    { id: 'maintenance', label: 'Services', icon: LayoutGrid },
-    { id: 'lost_found', label: 'Lost & Found', icon: Search },
-    { id: 'track_report', label: 'Track Case', icon: ClipboardList }
-  ];
+  // Dynamically compute tabs based on current active user role
+  const getNavTabs = () => {
+    if (userRole === 'student') {
+      return [
+        { id: 'student_home', label: 'Home', icon: Home },
+        { id: 'report_safely', label: 'Report', icon: FileText },
+        { id: 'maintenance', label: 'Services', icon: LayoutGrid },
+        { id: 'lost_found', label: 'Lost & Found', icon: Search },
+        { id: 'track_report', label: 'Track Case', icon: ClipboardList }
+      ];
+    }
+    if (userRole === 'staff') {
+      return [
+        { id: 'staff_dashboard', label: 'Incident Queue', icon: ClipboardList },
+        { id: 'lost_found', label: 'Lost & Found', icon: Search }
+      ];
+    }
+    // super_admin
+    return [
+      { id: 'admin_queue', label: 'Incident Queue', icon: ClipboardList },
+      { id: 'admin_analytics', label: 'Analytics', icon: BarChart3 },
+      { id: 'admin_departments', label: 'Departments', icon: Building2 },
+      { id: 'admin_staff', label: 'Faculty & Staff', icon: Users },
+      { id: 'admin_audit', label: 'Audit Trail', icon: FileText }
+    ];
+  };
+
+  const navTabs = getNavTabs();
 
   const handleRoleSelect = (role: Role) => {
     setUserRole(role);
     localStorage.setItem('campuscare_role', role);
     if (role === 'student') setCurrentTab('student_home');
     else if (role === 'staff') setCurrentTab('staff_dashboard');
-    else setCurrentTab('admin_dashboard');
+    else setCurrentTab('admin_queue');
     setRoleDropdownOpen(false);
   };
 
@@ -68,12 +92,14 @@ export const Navbar: React.FC<Props> = ({
     return 'Admin';
   };
 
+  const RoleIcon = userRole === 'student' ? GraduationCap : userRole === 'staff' ? Briefcase : ShieldAlert;
+
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Left: Brand Logo & Slogan */}
         <div
-          onClick={() => setCurrentTab(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : 'admin_dashboard')}
+          onClick={() => setCurrentTab(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : 'admin_queue')}
           className="flex items-center gap-3 cursor-pointer group shrink-0"
         >
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0066FF] to-[#0047BA] text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
@@ -90,11 +116,11 @@ export const Navbar: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Center: Clean Floating Pill Dock */}
+        {/* Center: Role-Aware Floating Pill Dock */}
         <nav className="hidden md:flex items-center gap-1 bg-white border border-slate-200/80 rounded-full px-2 py-1 shadow-sm">
           {navTabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = currentTab === tab.id;
+            const isActive = currentTab === tab.id || (userRole === 'super_admin' && currentTab === 'admin_dashboard' && tab.id === 'admin_queue');
             return (
               <button
                 key={tab.id}
@@ -124,7 +150,7 @@ export const Navbar: React.FC<Props> = ({
               onClick={() => setRoleDropdownOpen(prev => !prev)}
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EBF3FF] hover:bg-[#DCEBFF] text-[#0066FF] text-xs font-semibold border border-blue-200/60 shadow-xs transition-all cursor-pointer"
             >
-              <GraduationCap className="w-4 h-4" />
+              <RoleIcon className="w-4 h-4" />
               <span>{getRoleLabel()}</span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${roleDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -136,15 +162,15 @@ export const Navbar: React.FC<Props> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.96 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-2 w-48 rounded-2xl bg-white border border-slate-200 shadow-xl p-1.5 z-50 text-xs"
+                  className="absolute right-0 mt-2 w-52 rounded-2xl bg-white border border-slate-200 shadow-xl p-1.5 z-50 text-xs"
                 >
                   <div className="px-3 py-1.5 text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                    Switch Viewport
+                    Institutional Role
                   </div>
                   {[
                     { id: 'student', label: 'Student Portal', icon: GraduationCap },
                     { id: 'staff', label: 'Staff / Guard Portal', icon: Briefcase },
-                    { id: 'super_admin', label: 'Administrator Command', icon: ShieldAlert }
+                    { id: 'super_admin', label: 'Executive Admin', icon: ShieldAlert }
                   ].map((roleItem) => {
                     const isSelected = userRole === roleItem.id;
                     const Icon = roleItem.icon;
@@ -183,7 +209,7 @@ export const Navbar: React.FC<Props> = ({
       <div className="md:hidden flex items-center gap-1 overflow-x-auto px-4 py-2 border-t border-slate-100 bg-white">
         {navTabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive = currentTab === tab.id;
+          const isActive = currentTab === tab.id || (userRole === 'super_admin' && currentTab === 'admin_dashboard' && tab.id === 'admin_queue');
           return (
             <button
               key={tab.id}

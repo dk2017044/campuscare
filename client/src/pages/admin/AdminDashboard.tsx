@@ -32,11 +32,12 @@ import { CategoryBadge, getCategoryMeta } from '../../components/CategoryBadge';
 
 interface Props {
   currentTab?: string;
+  onNavigateTab?: (tab: string) => void;
 }
 
 type AdminSubTab = 'queue' | 'analytics' | 'departments' | 'staff' | 'audit';
 
-export const AdminDashboard: React.FC<Props> = () => {
+export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', onNavigateTab }) => {
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffUser[]>([]);
@@ -45,8 +46,20 @@ export const AdminDashboard: React.FC<Props> = () => {
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Active view tab
-  const [subTab, setSubTab] = useState<AdminSubTab>('queue');
+  const getSubTabFromTab = (tab?: string): AdminSubTab => {
+    if (tab === 'admin_analytics') return 'analytics';
+    if (tab === 'admin_departments') return 'departments';
+    if (tab === 'admin_staff') return 'staff';
+    if (tab === 'admin_audit') return 'audit';
+    return 'queue';
+  };
+
+  // Active view tab synced with Navbar tab
+  const [subTab, setSubTab] = useState<AdminSubTab>(() => getSubTabFromTab(currentTab));
+
+  useEffect(() => {
+    setSubTab(getSubTabFromTab(currentTab));
+  }, [currentTab]);
 
   // Case Filters
   const [searchCaseQuery, setSearchCaseQuery] = useState('');
@@ -269,7 +282,12 @@ export const AdminDashboard: React.FC<Props> = () => {
             <button
               key={tab.id}
               type="button"
-              onClick={() => setSubTab(tab.id as AdminSubTab)}
+              onClick={() => {
+                setSubTab(tab.id as AdminSubTab);
+                if (onNavigateTab) {
+                  onNavigateTab('admin_' + tab.id);
+                }
+              }}
               className={`relative px-4 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
                 isActive ? 'bg-[#0066FF] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
               }`}
