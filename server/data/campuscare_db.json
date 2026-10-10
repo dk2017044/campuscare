@@ -1,27 +1,5 @@
 {
-  "departments": [
-    {
-      "id": "dept-civil",
-      "name": "Civil & Infrastructure Maintenance",
-      "type": "maintenance",
-      "active": true,
-      "email": "civil@campuscare.edu"
-    },
-    {
-      "id": "dept-hostel",
-      "name": "Hostel Administration",
-      "type": "hostel",
-      "active": true,
-      "email": "hostel@campuscare.edu"
-    },
-    {
-      "id": "dept-it-labs",
-      "name": "IT Infrastructure & Labs",
-      "type": "it",
-      "active": true,
-      "email": "itlabs@campuscare.edu"
-    }
-  ],
+  "departments": [],
   "users": [],
   "cases": [
     {
@@ -139,6 +117,36 @@
   ],
   "lostFoundItems": [],
   "auditLogs": [
+    {
+      "id": "audit-1791670963710-3wy9",
+      "timestamp": "2026-10-10T22:22:43.710Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-it-labs"
+      }
+    },
+    {
+      "id": "audit-1791670961334-xrn1",
+      "timestamp": "2026-10-10T22:22:41.334Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-hostel"
+      }
+    },
+    {
+      "id": "audit-1791670958077-b22z",
+      "timestamp": "2026-10-10T22:22:38.077Z",
+      "actorId": "admin",
+      "actorName": "Super Admin",
+      "action": "DEPARTMENT_DELETED",
+      "metadata": {
+        "departmentId": "dept-civil"
+      }
+    },
     {
       "id": "audit-1791670017551-2qcn",
       "timestamp": "2026-10-10T22:06:57.551Z",
