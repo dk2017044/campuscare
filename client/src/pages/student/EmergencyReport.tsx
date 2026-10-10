@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AlertTriangle, PhoneCall, ShieldAlert, MapPin, Upload, ArrowRight, CheckCircle, Copy, Check } from 'lucide-react';
+import { AlertTriangle, PhoneCall, Volume2, VolumeX, ShieldAlert, CheckCircle, Copy, Check } from 'lucide-react';
 import { api } from '../../services/api';
 import { VoiceDictaphone } from '../../components/VoiceDictaphone';
+import { playEmergencySiren, stopEmergencySiren } from '../../services/sound';
 
 interface Props {
   onNavigate: (tab: string) => void;
@@ -10,11 +11,12 @@ interface Props {
 }
 
 export const EmergencyReport: React.FC<Props> = ({ onNavigate, onCaseCreated }) => {
-  const [incidentType, setIncidentType] = useState('Immediate Danger / Threat');
+  const [incidentType, setIncidentType] = useState('Immediate Threat');
   const [location, setLocation] = useState('Campus Premises');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sirenPlaying, setSirenPlaying] = useState(false);
 
   const [createdCase, setCreatedCase] = useState<{
     publicCaseId: string;
@@ -24,10 +26,20 @@ export const EmergencyReport: React.FC<Props> = ({ onNavigate, onCaseCreated }) 
   const [copiedId, setCopiedId] = useState(false);
   const [copiedPin, setCopiedPin] = useState(false);
 
+  const toggleSiren = () => {
+    if (sirenPlaying) {
+      stopEmergencySiren();
+      setSirenPlaying(false);
+    } else {
+      playEmergencySiren(8);
+      setSirenPlaying(true);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) {
-      setError('Please provide immediate details regarding the emergency.');
+      setError('Please provide quick details regarding the emergency.');
       return;
     }
 
@@ -35,11 +47,15 @@ export const EmergencyReport: React.FC<Props> = ({ onNavigate, onCaseCreated }) 
       setLoading(true);
       setError(null);
 
+      // Play emergency siren to signal alert
+      playEmergencySiren(6);
+      setSirenPlaying(true);
+
       const res = await api.createCase({
         reportType: 'safety',
         category: 'Immediate Danger',
         subcategory: incidentType,
-        description: `🚨 IMMEDIATE DANGER ALERT: ${description}`,
+        description: `🚨 EMERGENCY ALERT: ${description}`,
         location,
         incidentDate: 'Right Now',
         incidentTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -75,212 +91,186 @@ export const EmergencyReport: React.FC<Props> = ({ onNavigate, onCaseCreated }) 
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
-      {/* High Visibility Disclaimer Banner */}
-      <div className="rounded-3xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 p-6 sm:p-8 text-white shadow-xl shadow-red-950/20 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-white/20 rounded-2xl backdrop-blur-md">
-            <AlertTriangle className="w-8 h-8 text-white animate-bounce" />
+    <div className="max-w-xl mx-auto py-6 px-4 space-y-6 relative z-10">
+      {/* Minimal Urgent Glass Banner */}
+      <div className="rounded-3xl glass-panel border border-rose-500/30 p-5 bg-rose-950/20 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center animate-pulse">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-white tracking-tight">Emergency SOS Beacon</h1>
+              <p className="text-[11px] text-rose-300">Direct critical alert to Campus Security</p>
+            </div>
           </div>
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-widest text-red-200">Emergency Protocol</span>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">🚨 IMMEDIATE DANGER</h1>
-          </div>
+
+          {/* Test Siren Button */}
+          <button
+            type="button"
+            onClick={toggleSiren}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer ${
+              sirenPlaying
+                ? 'bg-rose-500 text-white animate-bounce shadow-[0_0_20px_rgba(244,63,94,0.5)]'
+                : 'glass-pill text-rose-300 hover:bg-rose-500/10'
+            }`}
+          >
+            {sirenPlaying ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+            <span>{sirenPlaying ? 'Stop Siren' : 'Test Siren'}</span>
+          </button>
         </div>
 
-        <div className="p-4 rounded-2xl bg-black/25 border border-white/20 text-xs sm:text-sm leading-relaxed space-y-2">
-          <p className="font-semibold text-white">
-            “This portal may not provide instant physical emergency response. If you are in immediate personal danger, contact campus security or external emergency services directly:”
-          </p>
-          <div className="flex flex-wrap items-center gap-4 pt-2">
-            <a
-              href="tel:911"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-red-700 font-bold text-xs shadow-md hover:bg-red-50 transition-colors"
-            >
-              <PhoneCall className="w-4 h-4" />
-              <span>Call Campus Emergency (Ext 911)</span>
-            </a>
-            <span className="text-xs text-red-100 font-mono">Local Police: 100 / 911</span>
-          </div>
+        {/* Quick Dial Helplines */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-rose-500/20 text-xs">
+          <a
+            href="tel:911"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 text-[11px] font-semibold"
+          >
+            <PhoneCall className="w-3 h-3 text-rose-400" />
+            <span>Campus Security: Ext 911</span>
+          </a>
+          <span className="text-[11px] text-slate-400 font-mono">Police: 100</span>
         </div>
       </div>
 
-      {/* Emergency Fast Dispatch Form */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-red-200 dark:border-red-900/50 shadow-md p-6 sm:p-8 space-y-5">
-        <div>
-          <h2 className="text-base font-bold text-slate-900 dark:text-white">
-            Rapid Security Incident Report
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Submissions here are flagged <span className="font-bold text-red-600 font-mono">Priority: CRITICAL</span> and routed instantly to the Campus Security Command Center.
-          </p>
-        </div>
-
+      {/* Main Glass Form */}
+      <form onSubmit={handleSubmit} className="glass-panel rounded-3xl p-6 space-y-4">
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs">
+          <div className="p-3 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-xl text-xs">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-              Incident Nature
+        <div>
+          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+            Emergency Nature
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {['Immediate Threat', 'Physical Violence', 'Fire or Severe Hazard', 'Medical Distress'].map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setIncidentType(t)}
+                className={`p-2.5 rounded-xl border text-xs font-medium text-left transition-all cursor-pointer ${
+                  incidentType === t
+                    ? 'border-rose-500 bg-rose-500/20 text-rose-200 ring-1 ring-rose-500/40'
+                    : 'glass-pill text-slate-300 hover:text-white hover:border-white/15'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">
+            Current Location
+          </label>
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g. Near Library stairs, Hostel Block A Ground floor"
+            className="w-full p-3 rounded-xl glass-input text-white text-xs placeholder:text-slate-500"
+          />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              Immediate Details
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                'Physical Threat / Violence',
-                'Stalking / Active Following',
-                'Suspicious Intruder / Weapon',
-                'Medical / Severe Distress'
-              ].map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setIncidentType(type)}
-                  className={`p-3 text-xs font-semibold rounded-xl border text-left transition-all ${
-                    incidentType === type
-                      ? 'bg-red-50 dark:bg-red-950/40 border-red-500 text-red-800 dark:text-red-200 ring-1 ring-red-500'
-                      : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
+            <span className="text-[11px] text-rose-400">Speak or Type</span>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-              Current Location
-            </label>
-            <div className="relative">
-              <MapPin className="w-4 h-4 text-red-500 absolute left-3 top-3.5" />
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Near Electronics Lab entrance, Hostel Block A stairs, Parking lot"
-                className="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Emergency Description
-              </label>
-              <span className="text-[11px] font-semibold text-red-600 dark:text-red-400">
-                🎙️ Speak in Hindi or English
-              </span>
-            </div>
-
-            {/* Voice-to-Text Dictaphone */}
-            <div className="mb-2.5">
-              <VoiceDictaphone
-                isEmergency={true}
-                onTranscript={(text) => {
-                  setDescription((prev) => (prev ? `${prev} ${text}` : text));
-                }}
-              />
-            </div>
-
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe what is occurring right now, or click 'Live Voice Dictate' above to speak..."
-              rows={4}
-              className="w-full p-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
-              required
+          <div className="mb-2">
+            <VoiceDictaphone
+              isEmergency
+              onTranscript={(text) => {
+                setDescription((prev) => (prev ? `${prev} ${text}` : text));
+              }}
             />
           </div>
 
-          <div className="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl text-[11px] text-slate-600 dark:text-slate-400 flex items-center justify-between">
-            <span>Identity Shield: <strong>ACTIVE</strong> (No name/phone recorded)</span>
-            <span className="font-mono text-red-600 font-bold">Auto-Routed: Campus Security</span>
-          </div>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Briefly state what is happening right now..."
+            rows={3}
+            className="w-full p-3 rounded-xl glass-input text-white text-xs placeholder:text-slate-500 resize-none"
+          />
+        </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-sm shadow-lg shadow-red-900/30 flex items-center justify-center gap-2 transition-all"
-          >
-            {loading ? 'Transmitting Alert...' : '🚨 Send Critical Alert Now'}
-          </button>
-        </form>
-      </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full py-3.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-[0_0_25px_rgba(244,63,94,0.4)] cursor-pointer disabled:opacity-50"
+        >
+          {loading ? 'Transmitting Alert...' : '🚨 Dispatch Emergency Beacon'}
+        </button>
+      </form>
 
-      {/* Post Submission Success */}
+      {/* Success Modal */}
       <AnimatePresence>
         {createdCase && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.93, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.93, y: 15 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 border border-red-300 dark:border-red-900 shadow-2xl space-y-5"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass-panel bg-slate-900/90 rounded-3xl max-w-md w-full p-6 border border-white/10 shadow-2xl space-y-4"
             >
-              <div className="text-center space-y-2">
-                <div className="w-14 h-14 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
-                  <CheckCircle className="w-8 h-8" />
+              <div className="text-center space-y-1">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto border border-rose-500/30">
+                  <ShieldAlert className="w-6 h-6" />
                 </div>
-                <h2 className="text-xl font-black text-slate-900 dark:text-white">
-                  Critical Alert Broadcasted
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Routed to Campus Security Command. Status: CRITICAL PRIORITY.
-                </p>
+                <h2 className="text-lg font-bold text-white">Emergency Dispatched</h2>
+                <p className="text-xs text-rose-300">Case routed to Campus Security Command.</p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900 text-white space-y-3">
-                <div className="flex items-center justify-between">
+              <div className="p-4 rounded-2xl glass-card space-y-3">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
                   <div>
-                    <span className="text-[10px] uppercase text-slate-400 font-bold">Case ID</span>
-                    <div className="text-xl font-mono font-bold text-campus-400">{createdCase.publicCaseId}</div>
+                    <span className="text-[10px] text-slate-400 uppercase">Emergency Case ID</span>
+                    <div className="text-xl font-mono font-bold text-rose-400">
+                      {createdCase.publicCaseId}
+                    </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(createdCase.publicCaseId, 'id')}
-                    className="px-2.5 py-1 rounded bg-slate-800 text-xs font-medium"
+                    className="px-2.5 py-1 rounded-lg glass-pill text-xs text-slate-200 inline-flex items-center gap-1 cursor-pointer"
                   >
-                    {copiedId ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedId ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-slate-800 pt-2">
+                <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] uppercase text-slate-400 font-bold">Private PIN</span>
-                    <div className="text-xl font-mono font-bold text-amber-400">{createdCase.rawPin}</div>
+                    <span className="text-[10px] text-slate-400 uppercase">Secret PIN</span>
+                    <div className="text-xl font-mono font-bold text-amber-400">
+                      {createdCase.rawPin}
+                    </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(createdCase.rawPin, 'pin')}
-                    className="px-2.5 py-1 rounded bg-slate-800 text-xs font-medium"
+                    className="px-2.5 py-1 rounded-lg glass-pill text-xs text-slate-200 inline-flex items-center gap-1 cursor-pointer"
                   >
-                    {copiedPin ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    {copiedPin ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedPin ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => onNavigate('track_report')}
-                  className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm text-center shadow-md transition-colors"
-                >
-                  Track Alert Responses →
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCreatedCase(null)}
-                  className="w-full py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600"
-                >
-                  Close
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate('track_report')}
+                className="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs text-center cursor-pointer shadow-[0_0_15px_rgba(14,141,231,0.25)]"
+              >
+                Track Status →
+              </button>
             </motion.div>
           </div>
         )}

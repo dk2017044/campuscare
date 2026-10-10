@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, ShieldCheck, MapPin, Clock, AlertTriangle, Send, Sparkles, UserCheck, CheckCircle2, AlertOctagon, FileText, ArrowUpRight, Lock, Eye, MessageSquare } from 'lucide-react';
+import { motion } from 'motion/react';
+import { X, ShieldCheck, MapPin, Clock, Sparkles, AlertOctagon, FileText, MessageSquare, Send } from 'lucide-react';
 import { Case, Department, CaseMessage } from '../../types';
 import { api } from '../../services/api';
 import { StatusBadge } from '../../components/StatusBadge';
 import { PriorityBadge } from '../../components/PriorityBadge';
-import { CategoryBadge, getCategoryMeta } from '../../components/CategoryBadge';
-import { AIDisclaimer } from '../../components/AIDisclaimer';
+import { CategoryBadge } from '../../components/CategoryBadge';
 
 interface Props {
   caseItem: Case;
@@ -53,7 +52,7 @@ export const StaffCaseDetail: React.FC<Props> = ({
   const handleStatusChange = async (newStatus: string) => {
     try {
       setUpdatingStatus(true);
-      const res = await api.updateCaseStatus(currentCase.publicCaseId, newStatus, actorName, `Status transitioned to ${newStatus}`);
+      const res = await api.updateCaseStatus(currentCase.publicCaseId, newStatus, actorName, `Status updated to ${newStatus}`);
       if (res.case) {
         setCurrentCase(res.case);
         onCaseUpdated(res.case);
@@ -79,7 +78,7 @@ export const StaffCaseDetail: React.FC<Props> = ({
   };
 
   const handleEscalate = async () => {
-    const reason = prompt('Please specify reason for escalating this case to Leadership / Security Command:');
+    const reason = prompt('Specify escalation reason:');
     if (!reason) return;
 
     try {
@@ -121,311 +120,213 @@ export const StaffCaseDetail: React.FC<Props> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
       <motion.div
-        initial={{ opacity: 0, scale: 0.93, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.93, y: 15 }}
-        transition={{ type: 'spring', damping: 26, stiffness: 360 }}
-        className="bg-white dark:bg-slate-900 rounded-3xl max-w-5xl w-full my-auto border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        className="glass-panel bg-slate-900/95 rounded-3xl max-w-4xl w-full my-auto border border-white/10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
       >
-        {/* Top Header */}
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60">
+        {/* Header */}
+        <div className="p-4 sm:p-5 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-campus-600 text-white font-mono font-bold flex items-center justify-center text-sm shadow-xs">
-              CC
-            </div>
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-lg font-mono font-extrabold text-slate-900 dark:text-white">
-                  {currentCase.publicCaseId}
-                </h2>
-                <CategoryBadge category={currentCase.category || currentCase.reportType} sublabel={currentCase.subcategory || currentCase.category} size="sm" />
-                <StatusBadge status={currentCase.status} />
-                <PriorityBadge priority={currentCase.priority} />
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Submitted on {new Date(currentCase.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-              </p>
-            </div>
+            <span className="font-mono text-base font-bold text-sky-400">
+              {currentCase.publicCaseId}
+            </span>
+            <CategoryBadge category={currentCase.category || currentCase.reportType} size="sm" />
+            <PriorityBadge priority={currentCase.priority} size="sm" />
+            <StatusBadge status={currentCase.status} size="sm" />
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleEscalate}
               disabled={escalating || currentCase.status === 'ESCALATED'}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 font-semibold text-xs transition-colors disabled:opacity-50"
+              className="px-2.5 py-1 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-40"
             >
               <AlertOctagon className="w-3.5 h-3.5" />
-              <span>{currentCase.status === 'ESCALATED' ? 'Escalated' : 'Escalate Case'}</span>
+              <span>{currentCase.status === 'ESCALATED' ? 'Escalated' : 'Escalate'}</span>
             </button>
-
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              className="p-1.5 rounded-xl glass-pill text-slate-400 hover:text-white cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
-          {/* Identity Shielding Banner */}
-          <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span className="font-semibold text-slate-800 dark:text-slate-200">
-                Reporter Identity: {currentCase.isAnonymous ? 'Protected Anonymous Reporter' : currentCase.reporterName || 'Identified Student'}
-              </span>
-            </div>
-            <span className="text-slate-500 font-mono text-[11px]">
-              {currentCase.isAnonymous ? 'Zero PII Disclosed to Staff' : currentCase.reporterContact || 'Contact on File'}
-            </span>
-          </div>
+        <div className="p-5 overflow-y-auto space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Left 2 Cols: Details, AI, Chat */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Description Card */}
+              <div className="glass-panel rounded-2xl p-4 space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-sky-400" />
+                    <span>{currentCase.location}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[11px]">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{currentCase.isAnonymous ? 'Protected Identity' : currentCase.reporterName}</span>
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left 2 Cols: Report, AI Analysis, Evidence */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Description */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Student's Incident Report
-                </span>
-                <p className="text-sm text-slate-900 dark:text-slate-100 leading-relaxed italic bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-xs text-slate-200 leading-relaxed italic glass-pill p-3 rounded-xl">
                   "{currentCase.description}"
                 </p>
 
-                <div className="grid grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-400 pt-1">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-campus-600 shrink-0" />
-                    <span>Location: {currentCase.location}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-campus-600 shrink-0" />
-                    <span>Time: {currentCase.incidentDate} - {currentCase.incidentTime}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Triage Analysis (Section 9 & 13) */}
-              <div className="p-5 rounded-2xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-purple-600" />
-                    <span className="text-xs font-bold text-purple-900 dark:text-purple-200 uppercase tracking-wider">
-                      AI Assistive Triage Engine
-                    </span>
-                  </div>
-                  {currentCase.aiAnalysis && (
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-purple-200 text-purple-900">
-                      Confidence: {Math.round(currentCase.aiAnalysis.confidence * 100)}%
-                    </span>
-                  )}
-                </div>
-
-                {currentCase.aiAnalysis ? (
-                  <div className="space-y-3 text-xs">
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800 border border-purple-100 dark:border-purple-900">
-                        <span className="text-[10px] text-slate-500 block">Category Suggestion</span>
-                        <strong className="text-slate-900 dark:text-white">{currentCase.aiAnalysis.subcategory_label || currentCase.aiAnalysis.subcategory}</strong>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800 border border-purple-100 dark:border-purple-900">
-                        <span className="text-[10px] text-slate-500 block">Priority Suggestion</span>
-                        <strong className="text-red-700 font-bold">{currentCase.aiAnalysis.priority_suggestion}</strong>
-                      </div>
-                      <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800 border border-purple-100 dark:border-purple-900">
-                        <span className="text-[10px] text-slate-500 block">Suggested Department</span>
-                        <strong className="text-slate-900 dark:text-white">{currentCase.aiAnalysis.suggested_department_name}</strong>
-                      </div>
-                    </div>
-
-                    <p className="text-purple-900 dark:text-purple-300 italic bg-white/60 dark:bg-slate-800/60 p-2.5 rounded-lg border border-purple-100">
-                      "{currentCase.aiAnalysis.reasoning}"
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-500 italic">No automated AI analysis attached.</p>
-                )}
-
-                <AIDisclaimer />
-              </div>
-
-              {/* Secure Evidence Preview */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-                  Secure Evidence Attachments ({currentCase.evidence ? currentCase.evidence.length : 0})
-                </span>
-
-                {currentCase.evidence && currentCase.evidence.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {currentCase.evidence && currentCase.evidence.length > 0 && (
+                  <div className="pt-2 flex flex-wrap gap-2">
                     {currentCase.evidence.map((ev, i) => (
-                      <div
-                        key={ev.id || i}
-                        className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 space-y-2"
-                      >
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px]">
-                            {ev.fileName}
-                          </span>
-                          <span className="text-[10px] text-emerald-600 font-medium">✓ Sanitized</span>
-                        </div>
-
-                        {/* Image Preview if image */}
-                        {ev.sanitizedPreviewPath && (
-                          <div className="w-full h-36 rounded-lg bg-slate-200 dark:bg-slate-800 overflow-hidden border border-slate-200">
-                            <img
-                              src={ev.sanitizedPreviewPath}
-                              alt="Evidence Preview"
-                              className="w-full h-full object-contain"
-                              onError={(e) => {
-                                (e.target as any).style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        )}
+                      <div key={i} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg glass-pill text-[11px] text-slate-300">
+                        <FileText className="w-3 h-3 text-sky-400" />
+                        <span className="truncate max-w-[140px]">{ev.fileName}</span>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-400 italic">No evidence files attached with this report.</p>
                 )}
               </div>
 
-              {/* Two-Way Anonymous Communication */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-700">
+              {/* AI Triage Card if present */}
+              {currentCase.aiAnalysis && (
+                <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-200 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                      AI Routing: {currentCase.aiAnalysis.suggested_department_name}
+                    </span>
+                    <span className="font-mono text-sky-300">
+                      {Math.round(currentCase.aiAnalysis.confidence * 100)}% Confidence
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 italic">"{currentCase.aiAnalysis.reasoning}"</p>
+                </div>
+              )}
+
+              {/* Two-Way Chat */}
+              <div className="glass-panel rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
+                    Anonymous Chat Channel ({messages.length})
+                  </span>
                   <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-campus-600" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                      Two-Way Communication & Case Notes
-                    </h3>
-                  </div>
-                  <span className="text-[11px] text-slate-400">Total: {messages.length} messages</span>
-                </div>
-
-                <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                  {messages.map((m) => (
-                    <div
-                      key={m.id}
-                      className={`p-3 rounded-xl text-xs space-y-1 ${
-                        !m.visibleToStudent
-                          ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-200 text-amber-900'
-                          : m.senderType === 'student'
-                          ? 'bg-blue-50 dark:bg-blue-950/40 border border-blue-200 text-blue-900'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between text-[10px] font-semibold">
-                        <span>{m.senderName}</span>
-                        <span>{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                      <p className="leading-relaxed">{m.message}</p>
-                      {!m.visibleToStudent && (
-                        <span className="text-[10px] text-amber-700 font-bold block pt-1">
-                          🔒 Internal Confidential Note (Hidden from Student)
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Send Response or Internal Note */}
-                <form onSubmit={handleSendMessage} className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
-                  <div className="flex items-center gap-4 text-xs">
-                    <label className="inline-flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="noteType"
-                        checked={!isInternalNote}
-                        onChange={() => setIsInternalNote(false)}
-                        className="text-campus-600 focus:ring-campus-500"
-                      />
-                      <span className="font-semibold text-slate-700">Send Response to Student</span>
-                    </label>
-
-                    <label className="inline-flex items-center gap-1.5 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="noteType"
-                        checked={isInternalNote}
-                        onChange={() => setIsInternalNote(true)}
-                        className="text-amber-600 focus:ring-amber-500"
-                      />
-                      <span className="font-semibold text-amber-800">Add Internal Staff Note (Confidential)</span>
-                    </label>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newResponse}
-                      onChange={(e) => setNewResponse(e.target.value)}
-                      placeholder={
-                        isInternalNote
-                          ? 'Add internal staff comment, investigative note...'
-                          : 'Send safe acknowledgment to student tracking channel...'
-                      }
-                      className="flex-1 p-2.5 text-xs rounded-xl border border-slate-300 dark:border-slate-700"
-                    />
                     <button
-                      type="submit"
-                      disabled={sending || !newResponse.trim()}
-                      className={`px-4 py-2.5 rounded-xl text-white font-semibold text-xs shadow-xs transition-colors ${
-                        isInternalNote
-                          ? 'bg-amber-600 hover:bg-amber-500'
-                          : 'bg-campus-600 hover:bg-campus-500'
+                      type="button"
+                      onClick={() => setIsInternalNote(false)}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] cursor-pointer ${
+                        !isInternalNote ? 'bg-sky-500/20 text-sky-300 font-semibold' : 'text-slate-400'
                       }`}
                     >
-                      {sending ? 'Sending...' : isInternalNote ? 'Save Note' : 'Reply'}
+                      Reply Student
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsInternalNote(true)}
+                      className={`px-2 py-0.5 rounded-lg text-[10px] cursor-pointer ${
+                        isInternalNote ? 'bg-amber-500/20 text-amber-300 font-semibold' : 'text-slate-400'
+                      }`}
+                    >
+                      Internal Note
                     </button>
                   </div>
+                </div>
+
+                <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                  {messages.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-slate-500 glass-pill rounded-xl">
+                      No communications yet.
+                    </div>
+                  ) : (
+                    messages.map((m) => (
+                      <div
+                        key={m.id}
+                        className={`p-2.5 rounded-xl text-xs space-y-0.5 ${
+                          !m.visibleToStudent
+                            ? 'bg-amber-500/10 border border-amber-500/25 text-amber-200'
+                            : m.senderType === 'student'
+                            ? 'bg-sky-500/10 border border-sky-500/25 text-sky-200'
+                            : 'glass-pill text-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between text-[10px] text-slate-400">
+                          <span className="font-semibold text-slate-300">
+                            {m.senderName} {!m.visibleToStudent && '(Internal)'}
+                          </span>
+                          <span className="font-mono text-[9px]">
+                            {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="leading-snug">{m.message}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <form onSubmit={handleSendMessage} className="pt-1 flex gap-2">
+                  <input
+                    type="text"
+                    value={newResponse}
+                    onChange={(e) => setNewResponse(e.target.value)}
+                    placeholder={isInternalNote ? 'Confidential staff note...' : 'Reply to student...'}
+                    className="flex-1 p-2 rounded-xl glass-input text-white text-xs placeholder:text-slate-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={sending || !newResponse.trim()}
+                    className={`px-3 py-2 rounded-xl font-semibold text-xs transition-all cursor-pointer disabled:opacity-40 ${
+                      isInternalNote
+                        ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                        : 'bg-sky-500 hover:bg-sky-400 text-slate-950'
+                    }`}
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
                 </form>
               </div>
             </div>
 
-            {/* Right Column: Case Controls & Timeline */}
-            <div className="space-y-6">
-              {/* Lifecycle Actions */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-                  Update Case Status
+            {/* Right Column: Controls & Audit */}
+            <div className="space-y-4">
+              {/* Status Actions */}
+              <div className="glass-panel rounded-2xl p-4 space-y-2.5">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400 block">
+                  Change Status
                 </span>
-
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 gap-1.5">
                   {[
-                    { status: 'UNDER_REVIEW', label: 'Mark Under Review' },
-                    { status: 'ACTION_TAKEN', label: 'Mark Action Taken' },
-                    { status: 'RESOLVED', label: 'Mark Case Resolved' }
-                  ].map((action) => (
+                    { status: 'UNDER_REVIEW', label: 'Under Review' },
+                    { status: 'ACTION_TAKEN', label: 'Action Taken' },
+                    { status: 'RESOLVED', label: 'Mark Resolved' }
+                  ].map((btn) => (
                     <button
-                      key={action.status}
+                      key={btn.status}
                       type="button"
-                      onClick={() => handleStatusChange(action.status)}
-                      disabled={updatingStatus || currentCase.status === action.status}
-                      className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold text-left transition-all ${
-                        currentCase.status === action.status
-                          ? 'bg-campus-50 text-campus-700 border border-campus-300'
-                          : 'border border-slate-200 hover:bg-slate-50 text-slate-700'
+                      onClick={() => handleStatusChange(btn.status)}
+                      disabled={updatingStatus || currentCase.status === btn.status}
+                      className={`w-full py-2 px-3 rounded-xl text-xs font-semibold text-left transition-all cursor-pointer ${
+                        currentCase.status === btn.status
+                          ? 'bg-sky-500 text-slate-950 font-bold shadow-xs'
+                          : 'glass-pill text-slate-300 hover:text-white hover:border-white/15'
                       }`}
                     >
-                      {action.label}
+                      {btn.label}
                     </button>
                   ))}
                 </div>
 
-                {/* Department Assignment */}
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-700">
-                  <span className="text-xs font-bold text-slate-600 block mb-1.5">
-                    Assign / Route Department
-                  </span>
-                  <div className="flex gap-2">
+                {/* Reassign Dept */}
+                <div className="pt-2 border-t border-white/5 space-y-1.5">
+                  <span className="text-[11px] font-medium text-slate-400 block">Department Routing</span>
+                  <div className="flex gap-1.5">
                     <select
-                      aria-label="Assign / Route Department"
+                      aria-label="Route Department"
                       value={selectedDeptId}
                       onChange={(e) => setSelectedDeptId(e.target.value)}
-                      className="flex-1 p-2 text-xs rounded-xl border border-slate-300 bg-white"
+                      className="flex-1 glass-input text-xs py-1.5 px-2 rounded-xl text-slate-200"
                     >
                       {departments.map((d) => (
                         <option key={d.id} value={d.id}>{d.name}</option>
@@ -434,29 +335,25 @@ export const StaffCaseDetail: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={handleDepartmentReassign}
-                      className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold"
+                      className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-medium cursor-pointer"
                     >
-                      Assign
+                      Route
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* Chronological Timeline */}
-              <div className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-                  Action Audit Trail
+              {/* Action Timeline */}
+              <div className="glass-panel rounded-2xl p-4 space-y-3">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400 block">
+                  Audit Timeline
                 </span>
-
-                <div className="relative pl-5 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                <div className="relative pl-4 space-y-3 before:absolute before:left-1 before:top-1 before:bottom-1 before:w-0.5 before:bg-white/10 text-xs">
                   {currentCase.timeline && currentCase.timeline.map((ev, i) => (
-                    <div key={i} className="relative text-xs">
-                      <div className="absolute -left-5 top-1 w-2.5 h-2.5 rounded-full bg-campus-600" />
-                      <strong className="text-slate-800 dark:text-slate-200 block">{ev.title}</strong>
-                      <p className="text-[11px] text-slate-500 leading-snug">{ev.description}</p>
-                      <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">
-                        {new Date(ev.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                    <div key={i} className="relative">
+                      <div className="absolute -left-4 top-1 w-2 h-2 rounded-full bg-sky-400" />
+                      <strong className="text-white block text-[11px]">{ev.title}</strong>
+                      <p className="text-[10px] text-slate-400 leading-snug">{ev.description}</p>
                     </div>
                   ))}
                 </div>

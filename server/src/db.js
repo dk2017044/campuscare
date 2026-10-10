@@ -25,7 +25,7 @@ export const DEFAULT_DEPARTMENTS = [
 
 export function getCleanEmptyData() {
   return {
-    departments: DEFAULT_DEPARTMENTS,
+    departments: [], // Dynamic: Zero predesigned departments! Admin creates customized campus departments.
     users: [], // Zero pre-detailed staff, students, or teachers! Real users register/login.
     cases: [], // Completely clean: 0 pre-populated cases.
     messages: [], // 0 pre-populated messages.
@@ -129,6 +129,13 @@ class Database {
     return this.data.cases[idx];
   }
 
+  clearCases() {
+    this.data.cases = [];
+    this.data.messages = [];
+    this.save();
+    return { success: true, count: 0 };
+  }
+
   // Messages
   getMessages(publicCaseId, isStudent = false) {
     let msgs = (this.data.messages || []).filter(m => m.publicCaseId.toUpperCase() === publicCaseId.toUpperCase());
@@ -175,7 +182,7 @@ class Database {
       name: (name || 'Staff Officer').trim(),
       email: normalizedEmail || `staff_${Date.now()}@campuscare.edu`,
       role: 'staff',
-      departmentId: departmentId || 'dept-welfare',
+      departmentId: departmentId || (this.data.departments?.[0]?.id || null),
       title: title || 'Staff Member',
       createdAt: new Date().toISOString()
     };

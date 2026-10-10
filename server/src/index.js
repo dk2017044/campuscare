@@ -71,22 +71,35 @@ app.post('/api/cases', async (req, res) => {
     const { hash: pinHash, salt: pinSalt } = hashPin(rawPin);
 
     // AI Triage
+    // Dynamic Department Resolution (No hardcoded predesigns)
+    const allDepts = db.getDepartments();
+    let assignedDeptId = null;
+    let assignedDeptName = 'Pending Department Creation';
+
+    if (allDepts && allDepts.length > 0) {
+      if (isEmergency || reportType === 'immediate_danger' || description.toLowerCase().includes('immediate danger')) {
+        const secDept = allDepts.find(d => d.type === 'safety' || d.name.toLowerCase().includes('security') || d.name.toLowerCase().includes('safety')) || allDepts[0];
+        assignedDeptId = secDept.id;
+        assignedDeptName = secDept.name;
+      } else {
+        const welDept = allDepts.find(d => d.type === 'welfare' || d.name.toLowerCase().includes('welfare') || d.name.toLowerCase().includes('counsel')) || allDepts[0];
+        assignedDeptId = welDept.id;
+        assignedDeptName = welDept.name;
+      }
+    }
+
     let aiAnalysis = null;
     let priority = 'MEDIUM';
-    let assignedDeptId = 'dept-welfare';
-    let assignedDeptName = 'Student Welfare & Counseling Committee';
 
     if (isEmergency || reportType === 'immediate_danger' || description.toLowerCase().includes('immediate danger')) {
       priority = 'CRITICAL';
-      assignedDeptId = 'dept-security';
-      assignedDeptName = 'Campus Security & Emergency Response';
       aiAnalysis = {
         category: 'student_safety',
         subcategory: 'immediate_danger',
         priority_suggestion: 'CRITICAL',
         suggested_department: assignedDeptName,
         confidence: 0.99,
-        reasoning: '🚨 EMERGENCY REPORT: High-priority immediate alert dispatched directly to Campus Security & Response Units.',
+        reasoning: '🚨 EMERGENCY REPORT: High-priority immediate alert dispatched directly to response team.',
         location_detected: location || 'Campus Premises',
         evidence_present: evidence.length > 0
       };
@@ -100,10 +113,17 @@ app.post('/api/cases', async (req, res) => {
 
       if (aiAnalysis) {
         priority = aiAnalysis.priority_suggestion || 'MEDIUM';
-        if (aiAnalysis.suggested_department_id) {
-          assignedDeptId = aiAnalysis.suggested_department_id;
-          const foundDept = db.getDepartments().find(d => d.id === assignedDeptId);
-          if (foundDept) assignedDeptName = foundDept.name;
+        if (allDepts && allDepts.length > 0) {
+          const matchedDept = allDepts.find(d => 
+            d.id === aiAnalysis.suggested_department_id ||
+            d.name.toLowerCase().includes(aiAnalysis.suggested_department_name?.toLowerCase() || '') ||
+            (aiAnalysis.category === 'student_safety' && d.type === 'safety') ||
+            (aiAnalysis.category === 'maintenance' && d.type === 'maintenance')
+          );
+          if (matchedDept) {
+            assignedDeptId = matchedDept.id;
+            assignedDeptName = matchedDept.name;
+          }
         }
       }
     }
@@ -210,6 +230,32 @@ app.get('/api/cases', (req, res) => {
   } catch (error) {
     console.error('Error fetching cases:', error);
     return res.status(500).json({ error: 'Failed to retrieve cases' });
+  }
+});
+
+/**
+ * DELETE /api/cases - Clear all case and message records
+ */
+app.delete('/api/cases', (req, res) => {
+  try {
+    db.clearCases();
+    return res.json({ success: true, message: 'All case data removed successfully' });
+  } catch (error) {
+    console.error('Error clearing cases:', error);
+    return res.status(500).json({ error: 'Failed to clear cases' });
+  }
+});
+
+/**
+ * POST /api/cases/clear - Clear all case and message records (Alternative POST)
+ */
+app.post('/api/cases/clear', (req, res) => {
+  try {
+    db.clearCases();
+    return res.json({ success: true, message: 'All case data removed successfully' });
+  } catch (error) {
+    console.error('Error clearing cases:', error);
+    return res.status(500).json({ error: 'Failed to clear cases' });
   }
 });
 
@@ -633,8 +679,8 @@ app.post('/api/lost-found', (req, res) => {
       status: 'MATCHING',
       pinHash,
       pinSalt,
-      assignedDepartmentId: 'dept-welfare',
-      assignedDepartmentName: 'Student Welfare & Counseling Committee',
+      assignedDepartmentId: (allDepts && allDepts.length > 0 ? (allDepts.find(d => d.type === 'welfare') || allDepts[0]).id : null),
+      assignedDepartmentName: (allDepts && allDepts.length > 0 ? (allDepts.find(d => d.type === 'welfare') || allDepts[0]).name : 'Pending Department Creation'),
       assignedStaffId: null,
       assignedStaffName: null,
       evidence: image ? [{ id: 'ev-img', fileName: 'item_photo.jpg', sanitizedPreviewPath: image }] : [],

@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }) => {
-  const [issueType, setIssueType] = useState('Broken Fan / Ceiling Fixture');
+  const [issueType, setIssueType] = useState('Broken Fan');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [attachedImage, setAttachedImage] = useState<any>(null);
@@ -17,11 +17,9 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // AI Classification analysis result from Gemini 3.5 Flash Vision
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
   const [analyzingAi, setAnalyzingAi] = useState(false);
 
-  // Result dialog
   const [createdCase, setCreatedCase] = useState<{
     publicCaseId: string;
     rawPin: string;
@@ -42,11 +40,9 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
       setUploading(true);
       setError(null);
 
-      // Upload file to server vault
       const res = await api.uploadEvidence(file);
       setAttachedImage(res.file);
 
-      // Read image as base64 for Gemini 3.5 Flash Multimodal Vision
       const reader = new FileReader();
       reader.onload = async () => {
         try {
@@ -82,11 +78,11 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!description.trim()) {
-      setError('Please provide a description of the maintenance issue.');
+      setError('Please provide a description of the issue.');
       return;
     }
     if (!location.trim()) {
-      setError('Please provide the building, room, or campus location.');
+      setError('Please provide the building or room location.');
       return;
     }
 
@@ -98,8 +94,8 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
         reportType: 'maintenance',
         category: 'Maintenance',
         subcategory: issueType,
-        description: description.trim(),
-        location: location.trim(),
+        description: `[Maintenance Defect]: ${description}`,
+        location,
         incidentDate: 'Today',
         incidentTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isAnonymous: true,
@@ -116,7 +112,7 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Submission failed');
+      setError(err.message || 'Failed to submit report');
     } finally {
       setLoading(false);
     }
@@ -134,59 +130,57 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-8 px-4 space-y-6">
-      {/* Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-amber-700 via-amber-800 to-slate-900 text-white shadow-lg flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-amber-500/20 rounded-2xl border border-amber-400/30">
-            <Wrench className="w-6 h-6 text-amber-300" />
+    <div className="max-w-2xl mx-auto py-6 px-4 space-y-6 relative z-10">
+      {/* Minimal Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
+            <Wrench className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">Campus Maintenance & Repairs</h1>
-            <p className="text-xs text-amber-200 mt-0.5">
-              Submit electrical, plumbing, lab equipment, furniture, or classroom repair requests.
-            </p>
+            <h1 className="text-base font-bold text-white tracking-tight">Facilities Maintenance</h1>
+            <p className="text-[11px] text-slate-400">Report broken fixtures, plumbing, or classroom hardware</p>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-300 text-xs border border-amber-400/30 font-semibold">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Gemini Vision Active</span>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full glass-pill text-[11px] text-amber-300 font-medium">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>AI Vision Diagnostic</span>
         </div>
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Main Form */}
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 sm:p-8 space-y-6">
+      {/* Main Glass Form */}
+      <form onSubmit={handleSubmit} className="glass-panel rounded-3xl p-6 sm:p-7 space-y-5">
         <div>
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-            Issue Category
+          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+            Defect Category
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              'Broken Fan / Ceiling Fixture',
-              'Broken Light / Lighting',
-              'Electrical Spark / Switch',
-              'Water Leakage / Plumbing',
-              'Damaged Furniture / Desk',
-              'Classroom Projector / AV',
-              'Lab Equipment Defect',
-              'Sanitation / Cleanliness'
+              'Broken Fan',
+              'Lighting Fault',
+              'Electrical Spark',
+              'Water Leakage',
+              'Desk / Chair',
+              'Projector / AV',
+              'Lab Hardware',
+              'Cleanliness'
             ].map((type) => (
               <button
                 key={type}
                 type="button"
                 onClick={() => setIssueType(type)}
-                className={`p-3 text-xs text-left rounded-xl border transition-all font-medium ${
+                className={`p-2.5 text-xs text-left rounded-xl border transition-all cursor-pointer truncate ${
                   issueType === type
-                    ? 'border-amber-600 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 font-semibold ring-1 ring-amber-600'
-                    : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                    ? 'border-amber-400 bg-amber-500/15 text-white ring-1 ring-amber-400/50'
+                    : 'glass-pill text-slate-300 hover:text-white hover:border-white/15'
                 }`}
               >
                 {type}
@@ -197,17 +191,17 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
 
         {/* Location */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-            Campus Location & Room / Block
+          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">
+            Location (Room / Floor)
           </label>
           <div className="relative">
-            <MapPin className="w-4 h-4 text-amber-600 absolute left-3 top-3.5" />
+            <MapPin className="w-4 h-4 text-amber-400 absolute left-3 top-3" />
             <input
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. Main Building - Room 304, Electronics Lab Workstation 3, Hostel Block B Floor 1"
-              className="w-full pl-9 pr-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+              placeholder="e.g. Main Building - Room 304, Electronics Lab 2"
+              className="w-full pl-9 pr-3 py-2.5 rounded-xl glass-input text-white text-xs placeholder:text-slate-500"
               required
             />
           </div>
@@ -215,36 +209,33 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
 
         {/* Description */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-            Problem Description
+          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-1.5">
+            Defect Description
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe what is broken, abnormal sounds, water leaking, sparks, or hazards..."
-            rows={4}
-            className="w-full p-3.5 rounded-xl border border-slate-300 dark:border-slate-700 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"
+            placeholder="Describe what is defective or making noise..."
+            rows={3}
+            className="w-full p-3 rounded-xl glass-input text-white text-xs placeholder:text-slate-500 resize-none"
             required
           />
         </div>
 
-        {/* Real Photo Upload & Multimodal Gemini Vision Inspection */}
+        {/* Defect Photo & Gemini Vision */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-            Upload Defect Photo (AI Vision Analysis)
+          <label className="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+            Attach Defect Photo (AI Diagnosis)
           </label>
 
           {!attachedImage ? (
-            <div className="border-2 border-dashed border-amber-300 dark:border-amber-900 rounded-2xl p-6 text-center bg-amber-50/30 dark:bg-amber-950/20">
-              <Camera className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                Attach a photo of the defect
+            <div className="border border-dashed border-white/15 rounded-2xl p-5 text-center hover:border-amber-400/40 transition-colors">
+              <Camera className="w-6 h-6 text-amber-400 mx-auto mb-1.5" />
+              <p className="text-xs font-medium text-slate-200">
+                Snap or upload defect photo
               </p>
-              <p className="text-xs text-slate-500 mt-1">
-                Gemini Multimodal Vision will inspect the image in real-time, assess the damage, and determine priority.
-              </p>
-              <label className="mt-3.5 inline-flex items-center gap-2 px-5 py-2.5 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors shadow-xs">
-                <Upload className="w-3.5 h-3.5" />
+              <label className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 glass-panel hover:bg-white/[0.08] text-slate-200 rounded-xl text-xs font-medium cursor-pointer">
+                <Upload className="w-3.5 h-3.5 text-amber-400" />
                 <span>Upload Image</span>
                 <input
                   type="file"
@@ -253,148 +244,103 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
                   className="hidden"
                 />
               </label>
-              {uploading && <p className="text-xs text-amber-700 mt-2 animate-pulse">Uploading and sanitizing image...</p>}
+              {uploading && <p className="text-xs text-amber-400 mt-2 animate-pulse">Uploading...</p>}
             </div>
           ) : (
-            <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-lg bg-slate-200 dark:bg-slate-800 overflow-hidden flex items-center justify-center border border-slate-300">
-                    <img
-                      src={attachedImage.sanitizedPreviewPath}
-                      alt="Uploaded preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as any).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-slate-900 dark:text-white block">
-                      {attachedImage.fileName}
-                    </span>
-                    <span className="text-[11px] text-emerald-600 font-medium">✓ Securely attached to work order</span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAttachedImage(null);
-                    setAiAnalysis(null);
-                  }}
-                  className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                  title="Remove image"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+            <div className="p-3 rounded-xl glass-pill flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <Camera className="w-4 h-4 text-amber-400" />
+                <span className="text-slate-200 truncate">{attachedImage.fileName}</span>
               </div>
-
-              {/* Gemini 3.5 Flash Multimodal Vision Output */}
-              {analyzingAi ? (
-                <div className="p-4 bg-purple-50 rounded-xl text-xs text-purple-700 flex items-center gap-2.5 animate-pulse border border-purple-200">
-                  <Sparkles className="w-4 h-4 animate-spin text-purple-600 shrink-0" />
-                  <span>Google Gemini Multimodal Vision inspecting image pixels...</span>
-                </div>
-              ) : aiAnalysis ? (
-                <div className="p-4 rounded-xl bg-purple-50/90 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 space-y-2.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-purple-900 dark:text-purple-200 flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-purple-600" />
-                      Gemini Vision Inspection Report
-                    </span>
-                    <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-purple-200 text-purple-900 font-bold">
-                      Confidence: {Math.round(aiAnalysis.confidence * 100)}%
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-                    <div className="p-2.5 bg-white dark:bg-slate-800 rounded-lg border border-purple-100 dark:border-purple-900">
-                      <span className="text-slate-500 block text-[10px]">Detected Defect</span>
-                      <strong className="text-slate-800 dark:text-slate-200 block truncate">{aiAnalysis.subcategory || issueType}</strong>
-                    </div>
-                    <div className="p-2.5 bg-white dark:bg-slate-800 rounded-lg border border-purple-100 dark:border-purple-900">
-                      <span className="text-slate-500 block text-[10px]">Assessed Priority</span>
-                      <strong className="text-amber-700 font-bold block">{aiAnalysis.priority}</strong>
-                    </div>
-                    <div className="p-2.5 bg-white dark:bg-slate-800 rounded-lg border border-purple-100 dark:border-purple-900 col-span-2 sm:col-span-1">
-                      <span className="text-slate-500 block text-[10px]">Assigned Team</span>
-                      <strong className="text-slate-800 dark:text-slate-200 block truncate">{aiAnalysis.suggestedDepartment}</strong>
-                    </div>
-                  </div>
-
-                  <p className="text-[11px] text-purple-800 dark:text-purple-300 italic bg-white/60 dark:bg-slate-800/60 p-2 rounded border border-purple-100">
-                    "{aiAnalysis.detectedIssue}"
-                  </p>
-                </div>
-              ) : null}
+              <button
+                type="button"
+                onClick={() => {
+                  setAttachedImage(null);
+                  setAiAnalysis(null);
+                }}
+                className="text-rose-400 hover:text-rose-300 p-1 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
-        </div>
 
-        <div className="pt-2 flex items-center justify-between text-xs text-slate-500">
-          <span>Identity Shield: <strong>ACTIVE</strong> (Anonymous)</span>
-          <span>Cryptographic PIN Generated Upon Submit</span>
+          {analyzingAi && (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 mt-2 animate-pulse flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Gemini Vision inspecting image...</span>
+            </div>
+          )}
+
+          {aiAnalysis && (
+            <div className="mt-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs text-amber-200 space-y-1">
+              <div className="flex justify-between font-semibold">
+                <span>Issue: {aiAnalysis.detectedIssue || aiAnalysis.subcategory}</span>
+                <span className="font-mono text-amber-400">Priority: {aiAnalysis.priority}</span>
+              </div>
+              <p className="text-[11px] text-slate-300">Department: {aiAnalysis.suggestedDepartment}</p>
+            </div>
+          )}
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm shadow-md transition-all disabled:opacity-50"
+          className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] cursor-pointer disabled:opacity-50"
         >
-          {loading ? 'Submitting Work Order...' : '🔧 Submit Maintenance Request'}
+          {loading ? 'Submitting...' : 'Submit Maintenance Request'}
         </button>
       </form>
 
-      {/* Post Submission Modal */}
+      {/* Success Modal */}
       <AnimatePresence>
         {createdCase && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.93, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.93, y: 15 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-6 sm:p-8 border border-amber-300 dark:border-amber-900 shadow-2xl space-y-5"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass-panel bg-slate-900/90 rounded-3xl max-w-md w-full p-6 border border-white/10 shadow-2xl space-y-4"
             >
-              <div className="text-center space-y-2">
-                <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
-                  <CheckCircle className="w-8 h-8" />
+              <div className="text-center space-y-1">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/20">
+                  <CheckCircle className="w-6 h-6" />
                 </div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  Work Order Created
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Routed to the designated facilities maintenance department.
-                </p>
+                <h2 className="text-lg font-bold text-white">Maintenance Logged</h2>
+                <p className="text-xs text-slate-400">Request dispatched to campus facilities.</p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900 text-white space-y-3">
-                <div className="flex items-center justify-between">
+              <div className="p-4 rounded-2xl glass-card space-y-3">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
                   <div>
-                    <span className="text-[10px] uppercase text-slate-400 font-bold">Case ID</span>
-                    <div className="text-xl font-mono font-bold text-campus-400">{createdCase.publicCaseId}</div>
+                    <span className="text-[10px] text-slate-400 uppercase">Case ID</span>
+                    <div className="text-xl font-mono font-bold text-amber-400">
+                      {createdCase.publicCaseId}
+                    </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(createdCase.publicCaseId, 'id')}
-                    className="px-2.5 py-1 rounded bg-slate-800 text-xs font-medium"
+                    className="px-2.5 py-1 rounded-lg glass-pill text-xs text-slate-200 inline-flex items-center gap-1 cursor-pointer"
                   >
-                    {copiedId ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedId ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-slate-800 pt-2">
+                <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] uppercase text-slate-400 font-bold">Private PIN</span>
-                    <div className="text-xl font-mono font-bold text-amber-400">{createdCase.rawPin}</div>
+                    <span className="text-[10px] text-slate-400 uppercase">Secret PIN</span>
+                    <div className="text-xl font-mono font-bold text-sky-400">
+                      {createdCase.rawPin}
+                    </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => copyToClipboard(createdCase.rawPin, 'pin')}
-                    className="px-2.5 py-1 rounded bg-slate-800 text-xs font-medium"
+                    className="px-2.5 py-1 rounded-lg glass-pill text-xs text-slate-200 inline-flex items-center gap-1 cursor-pointer"
                   >
-                    {copiedPin ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    {copiedPin ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedPin ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
               </div>
@@ -402,9 +348,9 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
               <button
                 type="button"
                 onClick={() => onNavigate('track_report')}
-                className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm text-center shadow-md transition-colors"
+                className="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs text-center cursor-pointer shadow-[0_0_15px_rgba(14,141,231,0.25)]"
               >
-                Track Maintenance Work Order →
+                Track Status →
               </button>
             </motion.div>
           </div>

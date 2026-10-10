@@ -227,7 +227,7 @@ Respond with ONLY valid JSON with this exact schema:
   "evidence_needed": boolean
 }`;
 
-    for (const model of ['gemini-3.5-flash', 'gemini-3.5-flash-lite']) {
+    for (const model of ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite']) {
       try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
           method: 'POST',
@@ -291,37 +291,44 @@ Respond with ONLY valid JSON with this schema:
   "aiNotice": "AI Suggested Classification — Human Review Required"
 }`;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-goog-api-key': apiKey
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
+      const visionModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      for (const vModel of visionModels) {
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${vModel}:generateContent`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-goog-api-key': apiKey
+            },
+            body: JSON.stringify({
+              contents: [
                 {
-                  inlineData: {
-                    mimeType: mimeType || 'image/jpeg',
-                    data: imageBase64
-                  }
-                },
-                { text: visionPrompt }
-              ]
-            }
-          ],
-          generationConfig: { responseMimeType: 'application/json' }
-        })
-      });
+                  parts: [
+                    {
+                      inlineData: {
+                        mimeType: mimeType || 'image/jpeg',
+                        data: imageBase64
+                      }
+                    },
+                    { text: visionPrompt }
+                  ]
+                }
+              ],
+              generationConfig: { responseMimeType: 'application/json' }
+            })
+          });
 
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          const parsed = JSON.parse(text);
-          parsed.aiNotice = 'AI Suggested Classification — Human Review Required';
-          return parsed;
+          if (response.ok) {
+            const data = await response.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text) {
+              const parsed = JSON.parse(text);
+              parsed.aiNotice = 'AI Suggested Classification — Human Review Required';
+              return parsed;
+            }
+          }
+        } catch (mErr) {
+          console.warn(`Vision model ${vModel} error:`, mErr.message);
         }
       }
     } catch (e) {
