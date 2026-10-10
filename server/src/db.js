@@ -23,13 +23,43 @@ export const DEFAULT_DEPARTMENTS = [
   { id: 'dept-it-labs', name: 'IT Infrastructure & Labs', type: 'it', active: true, email: 'itlabs@campuscare.edu' }
 ];
 
+export const DEFAULT_STAFF = [
+  {
+    id: 'staff-welfare-01',
+    name: 'Dr. Ananya Roy',
+    email: 'ananya.roy@campuscare.edu',
+    role: 'staff',
+    departmentId: 'dept-welfare',
+    title: 'Chief Student Counselor & Head',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'staff-security-01',
+    name: 'Inspector Ramesh Kumar',
+    email: 'ramesh.kumar@campuscare.edu',
+    role: 'staff',
+    departmentId: 'dept-security',
+    title: 'Head of Campus Security & Proctor',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: 'staff-maintenance-01',
+    name: 'Engr. Suresh Verma',
+    email: 'suresh.verma@campuscare.edu',
+    role: 'staff',
+    departmentId: 'dept-electrical',
+    title: 'Senior Estate Engineer',
+    createdAt: new Date().toISOString()
+  }
+];
+
 export function getCleanEmptyData() {
   return {
-    departments: [], // Dynamic: Zero predesigned departments! Admin creates customized campus departments.
-    users: [], // Zero pre-detailed staff, students, or teachers! Real users register/login.
-    cases: [], // Completely clean: 0 pre-populated cases.
-    messages: [], // 0 pre-populated messages.
-    lostFoundItems: [], // 0 pre-populated items.
+    departments: [...DEFAULT_DEPARTMENTS],
+    users: [...DEFAULT_STAFF],
+    cases: [],
+    messages: [],
+    lostFoundItems: [],
     auditLogs: [
       {
         id: `audit-${Date.now()}`,
@@ -37,7 +67,7 @@ export function getCleanEmptyData() {
         actorName: 'CampusCare System',
         action: 'PLATFORM_INITIALIZED',
         timestamp: new Date().toISOString(),
-        metadata: { message: 'Clean production database initialized. Zero dummy records.' }
+        metadata: { message: 'Clean production database initialized with core campus departments and active staff.' }
       }
     ]
   };
@@ -54,9 +84,13 @@ class Database {
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         this.data = JSON.parse(raw);
-        // Ensure clean structure
-        if (!this.data.departments) this.data.departments = DEFAULT_DEPARTMENTS;
-        if (!this.data.users) this.data.users = [];
+        // Ensure clean structure and populate defaults if empty
+        if (!this.data.departments || this.data.departments.length === 0) {
+          this.data.departments = [...DEFAULT_DEPARTMENTS];
+        }
+        if (!this.data.users || this.data.users.length === 0) {
+          this.data.users = [...DEFAULT_STAFF];
+        }
         if (!this.data.cases) this.data.cases = [];
         if (!this.data.messages) this.data.messages = [];
         if (!this.data.lostFoundItems) this.data.lostFoundItems = [];
@@ -164,7 +198,7 @@ class Database {
   staffLoginOrRegister({ name, email, departmentId, title }) {
     if (!this.data.users) this.data.users = [];
     const normalizedEmail = (email || '').trim().toLowerCase();
-    
+
     // Look up existing user by email
     let user = this.data.users.find(u => u.email && u.email.toLowerCase() === normalizedEmail);
     if (user) {

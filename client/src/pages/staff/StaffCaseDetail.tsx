@@ -28,7 +28,7 @@ export const StaffCaseDetail: React.FC<Props> = ({
   const [isInternalNote, setIsInternalNote] = useState(false);
   const [sending, setSending] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [selectedDeptId, setSelectedDeptId] = useState(caseItem.assignedDepartmentId || '');
+  const [selectedDeptId, setSelectedDeptId] = useState(caseItem.assignedDepartmentId || (departments.length > 0 ? departments[0].id : ''));
   const [escalating, setEscalating] = useState(false);
 
   useEffect(() => {
@@ -39,10 +39,23 @@ export const StaffCaseDetail: React.FC<Props> = ({
     return () => clearInterval(interval);
   }, [caseItem.publicCaseId]);
 
+  useEffect(() => {
+    if (currentCase.assignedDepartmentId) {
+      setSelectedDeptId(currentCase.assignedDepartmentId);
+    } else if (departments.length > 0 && !selectedDeptId) {
+      setSelectedDeptId(departments[0].id);
+    }
+  }, [currentCase.assignedDepartmentId, departments]);
+
   const loadCaseData = async () => {
     try {
       const res = await api.getCaseDetails(caseItem.publicCaseId);
-      setCurrentCase(res.case);
+      if (res.case) {
+        setCurrentCase(res.case);
+        if (res.case.assignedDepartmentId) {
+          setSelectedDeptId(res.case.assignedDepartmentId);
+        }
+      }
       setMessages(res.messages || []);
     } catch (e) {
       console.error(e);
@@ -266,12 +279,24 @@ export const StaffCaseDetail: React.FC<Props> = ({
                   )}
                 </div>
 
+                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <span>Officer on duty:</span>
+                    <strong className="text-slate-800 font-semibold">{actorName}</strong>
+                  </span>
+                  {isInternalNote && (
+                    <span className="text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[10px] shrink-0">
+                      🔒 Internal note
+                    </span>
+                  )}
+                </div>
+
                 <form onSubmit={handleSendMessage} className="pt-1 flex gap-2">
                   <input
                     type="text"
                     value={newResponse}
                     onChange={(e) => setNewResponse(e.target.value)}
-                    placeholder={isInternalNote ? 'Confidential staff note (invisible to student)...' : 'Reply to student anonymously...'}
+                    placeholder={isInternalNote ? 'Confidential staff note (invisible to student)...' : `Reply to student as ${actorName}...`}
                     className="flex-1 p-2.5 rounded-xl bg-white border border-slate-200 focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none"
                   />
                   <button
@@ -320,26 +345,45 @@ export const StaffCaseDetail: React.FC<Props> = ({
 
                 {/* Reassign Dept */}
                 <div className="pt-3 border-t border-slate-200 space-y-2">
-                  <span className="text-xs font-semibold text-slate-600 block">Department Routing</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-slate-700 block">Department Routing</span>
+                    <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/60 truncate max-w-[150px]" title={currentCase.assignedDepartmentName || 'Pending'}>
+                      {currentCase.assignedDepartmentName || 'Pending Routing'}
+                    </span>
+                  </div>
                   <div className="flex gap-2">
                     <select
                       aria-label="Route Department"
                       value={selectedDeptId}
                       onChange={(e) => setSelectedDeptId(e.target.value)}
-                      className="flex-1 bg-white border border-slate-200 text-xs py-2 px-2.5 rounded-xl text-slate-800 font-medium outline-none"
+                      className="flex-1 bg-white border border-slate-200 text-xs py-2 px-2.5 rounded-xl text-slate-800 font-medium outline-none focus:border-[#0066FF]"
                     >
-                      {departments.map((d) => (
-                        <option key={d.id} value={d.id}>{d.name}</option>
-                      ))}
+                      {departments.length === 0 ? (
+                        <option value="">No departments available</option>
+                      ) : (
+                        departments.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name} {d.id === currentCase.assignedDepartmentId ? '✓ (Current)' : ''}
+                          </option>
+                        ))
+                      )}
                     </select>
                     <button
                       type="button"
                       onClick={handleDepartmentReassign}
-                      className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold cursor-pointer shadow-xs"
+                      disabled={!selectedDeptId || selectedDeptId === currentCase.assignedDepartmentId}
+                      className={`px-3 py-2 rounded-xl text-xs font-semibold shadow-xs transition-colors ${
+                        !selectedDeptId || selectedDeptId === currentCase.assignedDepartmentId
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                          : 'bg-slate-900 hover:bg-slate-800 text-white cursor-pointer'
+                      }`}
                     >
-                      Route
+                      {selectedDeptId === currentCase.assignedDepartmentId ? 'Assigned' : 'Route'}
                     </button>
                   </div>
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    Forward case responsibility to another campus unit or grievance cell.
+                  </p>
                 </div>
               </div>
 

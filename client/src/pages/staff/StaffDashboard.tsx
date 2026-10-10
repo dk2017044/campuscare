@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, ShieldAlert, Wrench, RefreshCw, Siren, ClipboardList, ShieldCheck, ChevronRight, VolumeX } from 'lucide-react';
 import { api } from '../../services/api';
-import { Case, Department } from '../../types';
+import { Case, Department, StaffUser } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { PriorityBadge } from '../../components/PriorityBadge';
 import { CategoryBadge } from '../../components/CategoryBadge';
@@ -16,6 +16,11 @@ interface Props {
 export const StaffDashboard: React.FC<Props> = ({ staffDept }) => {
   const [cases, setCases] = useState<Case[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [staffMembers, setStaffMembers] = useState<StaffUser[]>([]);
+  const [activeStaffUser, setActiveStaffUser] = useState<StaffUser | null>(() => {
+    const saved = localStorage.getItem('campuscare_active_staff');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(false);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
 
@@ -51,7 +56,7 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept }) => {
   const loadData = async (showIndicator = true) => {
     try {
       if (showIndicator) setLoading(true);
-      const [casesRes, deptsRes] = await Promise.all([
+      const [casesRes, deptsRes, staffRes] = await Promise.all([
         api.getCases({
           category: filterCategory,
           priority: filterPriority,
@@ -59,12 +64,19 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept }) => {
           departmentId: filterDept === 'all' ? undefined : filterDept,
           role: 'staff'
         }),
-        api.getDepartments()
+        api.getDepartments(),
+        api.getStaff().catch(() => ({ staff: [] }))
       ]);
 
       const fetchedCases: Case[] = casesRes.cases || [];
+      const fetchedStaff: StaffUser[] = staffRes.staff || [];
       setCases(fetchedCases);
       setDepartments(deptsRes.departments || []);
+      setStaffMembers(fetchedStaff);
+
+      if (!activeStaffUser && fetchedStaff.length > 0) {
+        setActiveStaffUser(fetchedStaff[0]);
+      }
 
       const criticalCases = fetchedCases.filter(
         (c) => c.priority === 'CRITICAL' && (c.status === 'NEW' || c.status === 'AI_TRIAGED')
@@ -220,7 +232,29 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept }) => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {staffMembers.length > 0 && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs shadow-2xs">
+              <span className="text-slate-500 font-medium">Logged in Officer:</span>
+              <select
+                aria-label="Active Staff Officer"
+                value={activeStaffUser?.id || ''}
+                onChange={(e) => {
+                  const s = staffMembers.find(m => m.id === e.target.value);
+                  if (s) {
+                    setActiveStaffUser(s);
+                    localStorage.setItem('campuscare_active_staff', JSON.stringify(s));
+                  }
+                }}
+                className="bg-transparent text-[#0066FF] font-bold outline-none cursor-pointer"
+              >
+                {staffMembers.map(s => (
+                  <option key={s.id} value={s.id}>{s.name} ({s.title})</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={handleTriggerTestDemoAlert}
@@ -391,6 +425,7 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept }) => {
         <StaffCaseDetail
           caseItem={selectedCase}
           departments={departments}
+          actorName={activeStaffUser ? `${activeStaffUser.name} (${activeStaffUser.title})` : 'Duty Staff Officer'}
           onClose={() => setSelectedCase(null)}
           onCaseUpdated={(updated) => {
             setSelectedCase(updated);

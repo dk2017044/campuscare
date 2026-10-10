@@ -1,10 +1,338 @@
 {
-  "departments": [],
-  "users": [],
-  "cases": [],
-  "messages": [],
+  "departments": [
+    {
+      "id": "dept-security",
+      "name": "Campus Security & Emergency Response",
+      "type": "safety",
+      "active": true,
+      "email": "security@campuscare.edu"
+    },
+    {
+      "id": "dept-welfare",
+      "name": "Student Welfare & Counseling Committee",
+      "type": "welfare",
+      "active": true,
+      "email": "welfare@campuscare.edu"
+    },
+    {
+      "id": "dept-electrical",
+      "name": "Electrical & Power Maintenance",
+      "type": "maintenance",
+      "active": true,
+      "email": "electrical@campuscare.edu"
+    },
+    {
+      "id": "dept-plumbing",
+      "name": "Plumbing & Water Systems",
+      "type": "maintenance",
+      "active": true,
+      "email": "plumbing@campuscare.edu"
+    },
+    {
+      "id": "dept-civil",
+      "name": "Civil & Infrastructure Maintenance",
+      "type": "maintenance",
+      "active": true,
+      "email": "civil@campuscare.edu"
+    },
+    {
+      "id": "dept-hostel",
+      "name": "Hostel Administration",
+      "type": "hostel",
+      "active": true,
+      "email": "hostel@campuscare.edu"
+    },
+    {
+      "id": "dept-it-labs",
+      "name": "IT Infrastructure & Labs",
+      "type": "it",
+      "active": true,
+      "email": "itlabs@campuscare.edu"
+    }
+  ],
+  "users": [
+    {
+      "id": "staff-welfare-01",
+      "name": "Dr. Ananya Roy",
+      "email": "ananya.roy@campuscare.edu",
+      "role": "staff",
+      "departmentId": "dept-welfare",
+      "title": "Chief Student Counselor & Head",
+      "createdAt": "2026-10-10T21:00:00.000Z"
+    },
+    {
+      "id": "staff-security-01",
+      "name": "Inspector Ramesh Kumar",
+      "email": "ramesh.kumar@campuscare.edu",
+      "role": "staff",
+      "departmentId": "dept-security",
+      "title": "Head of Campus Security & Proctor",
+      "createdAt": "2026-10-10T21:00:00.000Z"
+    },
+    {
+      "id": "staff-maintenance-01",
+      "name": "Engr. Suresh Verma",
+      "email": "suresh.verma@campuscare.edu",
+      "role": "staff",
+      "departmentId": "dept-electrical",
+      "title": "Senior Estate Engineer",
+      "createdAt": "2026-10-10T21:00:00.000Z"
+    }
+  ],
+  "cases": [
+    {
+      "id": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "reportType": "safety",
+      "category": "Harassment / Intimidation",
+      "subcategory": "Harassment / Intimidation",
+      "description": "mujhe koi ladka bahut din se pareshan kar raha hai kya kare batao",
+      "location": "Main Building",
+      "incidentDate": "Today",
+      "incidentTime": "3pm",
+      "isAnonymous": false,
+      "reporterName": "Dilip Kumar",
+      "reporterContact": "dk2017044@gmail.com",
+      "priority": "HIGH",
+      "status": "RESOLVED",
+      "pinHash": "e2736dd52302954ed09f677b1e27ed4e9c1522c3e644dd871b06672977abf459",
+      "pinSalt": "1109f5966123a046938821897b41a394",
+      "assignedDepartmentId": "dept-welfare",
+      "assignedDepartmentName": "Student Welfare & Counseling Committee",
+      "assignedStaffId": "staff-welfare-01",
+      "assignedStaffName": "Dr. Ananya Roy",
+      "evidence": [],
+      "aiAnalysis": {
+        "category": "student_safety",
+        "category_label": "Student Safety",
+        "subcategory": "harassment_stalking",
+        "subcategory_label": "Harassment & Stalking",
+        "priority_suggestion": "HIGH",
+        "suggested_department_id": "dept-welfare",
+        "suggested_department_name": "Student Welfare & Counseling Committee",
+        "confidence": 0.92,
+        "reasoning": "The student describes persistent harassment/stalking by an individual over several days. This falls under the jurisdiction of the Student Welfare & Counseling Committee for immediate intervention, support, and necessary escalation.",
+        "location_detected": "Main Building",
+        "evidence_needed": true
+      },
+      "createdAt": "2026-10-10T21:13:21.430Z",
+      "updatedAt": "2026-10-10T21:15:08.333Z",
+      "timeline": [
+        {
+          "time": "2026-10-10T21:13:21.430Z",
+          "title": "Report Safely Submitted",
+          "description": "Identified report filed by Dilip Kumar."
+        },
+        {
+          "time": "2026-10-10T21:13:21.430Z",
+          "title": "AI Triage Completed",
+          "description": "Classified as Harassment & Stalking with priority HIGH. Routed to Pending Department Creation."
+        },
+        {
+          "time": "2026-10-10T21:14:52.505Z",
+          "title": "Status Changed to ACTION TAKEN",
+          "description": "Status updated to ACTION_TAKEN"
+        },
+        {
+          "time": "2026-10-10T21:14:58.090Z",
+          "title": "Status Changed to RESOLVED",
+          "description": "Status updated to RESOLVED"
+        },
+        {
+          "time": "2026-10-10T21:15:00.820Z",
+          "title": "Status Changed to ACTION TAKEN",
+          "description": "Status updated to ACTION_TAKEN"
+        },
+        {
+          "time": "2026-10-10T21:15:02.444Z",
+          "title": "Status Changed to RESOLVED",
+          "description": "Status updated to RESOLVED"
+        },
+        {
+          "time": "2026-10-10T21:15:06.908Z",
+          "title": "Status Changed to UNDER REVIEW",
+          "description": "Status updated to UNDER_REVIEW"
+        },
+        {
+          "time": "2026-10-10T21:15:08.333Z",
+          "title": "Status Changed to RESOLVED",
+          "description": "Status updated to RESOLVED"
+        }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-1791666886663-p35k",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "senderType": "staff",
+      "senderName": "Super Admin",
+      "message": "wait to confirmaation please send me their adress",
+      "visibleToStudent": true,
+      "createdAt": "2026-10-10T21:14:46.662Z"
+    },
+    {
+      "id": "msg-1791666956921-g2lw",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "senderType": "student",
+      "senderName": "Anonymous Reporter",
+      "message": "they are in 5th sem",
+      "visibleToStudent": true,
+      "createdAt": "2026-10-10T21:15:56.921Z"
+    },
+    {
+      "id": "msg-1791666983810-lssx",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "senderType": "staff",
+      "senderName": "Staff Officer",
+      "message": "What happen",
+      "visibleToStudent": true,
+      "createdAt": "2026-10-10T21:16:23.810Z"
+    }
+  ],
   "lostFoundItems": [],
   "auditLogs": [
+    {
+      "id": "audit-1791666983811-nokg",
+      "timestamp": "2026-10-10T21:16:23.811Z",
+      "actorId": "staff-member",
+      "actorName": "Staff Officer",
+      "action": "MESSAGE_SENT",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "metadata": {
+        "senderType": "staff",
+        "visibleToStudent": true
+      }
+    },
+    {
+      "id": "audit-1791666956923-zed3",
+      "timestamp": "2026-10-10T21:15:56.923Z",
+      "actorId": "anonymous-student",
+      "actorName": "Anonymous Reporter",
+      "action": "MESSAGE_SENT",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "metadata": {
+        "senderType": "student",
+        "visibleToStudent": true
+      }
+    },
+    {
+      "id": "audit-1791666908336-vl4w",
+      "timestamp": "2026-10-10T21:15:08.337Z",
+      "actorId": "staff-user",
+      "actorName": "Super Admin",
+      "action": "CASE_STATUS_UPDATED",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "metadata": {
+        "previousStatus": "UNDER_REVIEW",
+        "newStatus": "RESOLVED",
+        "notes": "Status updated to RESOLVED"
+      }
+    },
+    {
+      "id": "audit-1791666906911-e7zc",
+      "timestamp": "2026-10-10T21:15:06.911Z",
+      "actorId": "staff-user",
+      "actorName": "Super Admin",
+      "action": "CASE_STATUS_UPDATED",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "metadata": {
+        "previousStatus": "RESOLVED",
+        "newStatus": "UNDER_REVIEW",
+        "notes": "Status updated to UNDER_REVIEW"
+      }
+    },
+    {
+      "id": "audit-1791666902447-zha6",
+      "timestamp": "2026-10-10T21:15:02.447Z",
+      "actorId": "staff-user",
+      "actorName": "Super Admin",
+      "action": "CASE_STATUS_UPDATED",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "metadata": {
+        "previousStatus": "ACTION_TAKEN",
+        "newStatus": "RESOLVED",
+        "notes": "Status updated to RESOLVED"
+      }
+    },
+    {
+      "id": "audit-1791666900822-61z8",
+      "timestamp": "2026-10-10T21:15:00.822Z",
+      "actorId": "staff-user",
+      "actorName": "Super Admin",
+      "action": "CASE_STATUS_UPDATED",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "metadata": {
+        "previousStatus": "RESOLVED",
+        "newStatus": "ACTION_TAKEN",
+        "notes": "Status updated to ACTION_TAKEN"
+      }
+    },
+    {
+      "id": "audit-1791666898094-a4ua",
+      "timestamp": "2026-10-10T21:14:58.094Z",
+      "actorId": "staff-user",
+      "actorName": "Super Admin",
+      "action": "CASE_STATUS_UPDATED",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "metadata": {
+        "previousStatus": "ACTION_TAKEN",
+        "newStatus": "RESOLVED",
+        "notes": "Status updated to RESOLVED"
+      }
+    },
+    {
+      "id": "audit-1791666892513-kkwq",
+      "timestamp": "2026-10-10T21:14:52.514Z",
+      "actorId": "staff-user",
+      "actorName": "Super Admin",
+      "action": "CASE_STATUS_UPDATED",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "metadata": {
+        "previousStatus": "AI_TRIAGED",
+        "newStatus": "ACTION_TAKEN",
+        "notes": "Status updated to ACTION_TAKEN"
+      }
+    },
+    {
+      "id": "audit-1791666886667-kv0o",
+      "timestamp": "2026-10-10T21:14:46.667Z",
+      "actorId": "staff-member",
+      "actorName": "Super Admin",
+      "action": "MESSAGE_SENT",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "metadata": {
+        "senderType": "staff",
+        "visibleToStudent": true
+      }
+    },
+    {
+      "id": "audit-1791666801455-ya6d",
+      "timestamp": "2026-10-10T21:13:21.455Z",
+      "actorId": "student",
+      "actorName": "Dilip Kumar",
+      "action": "CASE_CREATED",
+      "caseId": "case-1791666801435-kzb0",
+      "publicCaseId": "CC-W842CVJ",
+      "metadata": {
+        "isAnonymous": false,
+        "category": "Harassment / Intimidation",
+        "priority": "HIGH",
+        "assignedDepartment": "Pending Department Creation"
+      }
+    },
     {
       "id": "audit-1791657338376-uua5",
       "timestamp": "2026-10-10T18:35:38.376Z",
