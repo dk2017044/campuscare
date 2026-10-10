@@ -156,13 +156,31 @@ export function App() {
               {userRole === 'staff' && (
                 <>
                   {currentTab === 'staff_dashboard' && (
-                    <StaffDashboard staffDept={staffDept} />
+                    <StaffDashboard
+                      staffDept={staffDept}
+                      onNavigateTab={(t) => {
+                        if (t.startsWith('admin_') || t === 'admin_dashboard') {
+                          setUserRole('super_admin');
+                          localStorage.setItem('campuscare_role', 'super_admin');
+                        }
+                        setCurrentTab(t);
+                      }}
+                    />
                   )}
                   {currentTab === 'lost_found' && (
                     <LostAndFound onNavigate={setCurrentTab} />
                   )}
                   {currentTab !== 'staff_dashboard' && currentTab !== 'lost_found' && (
-                    <StaffDashboard staffDept={staffDept} />
+                    <StaffDashboard
+                      staffDept={staffDept}
+                      onNavigateTab={(t) => {
+                        if (t.startsWith('admin_') || t === 'admin_dashboard') {
+                          setUserRole('super_admin');
+                          localStorage.setItem('campuscare_role', 'super_admin');
+                        }
+                        setCurrentTab(t);
+                      }}
+                    />
                   )}
                 </>
               )}

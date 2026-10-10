@@ -23,40 +23,10 @@ export const DEFAULT_DEPARTMENTS = [
   { id: 'dept-it-labs', name: 'IT Infrastructure & Labs', type: 'it', active: true, email: 'itlabs@campuscare.edu' }
 ];
 
-export const DEFAULT_STAFF = [
-  {
-    id: 'staff-welfare-01',
-    name: 'Dr. Ananya Roy',
-    email: 'ananya.roy@campuscare.edu',
-    role: 'staff',
-    departmentId: 'dept-welfare',
-    title: 'Chief Student Counselor & Head',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'staff-security-01',
-    name: 'Inspector Ramesh Kumar',
-    email: 'ramesh.kumar@campuscare.edu',
-    role: 'staff',
-    departmentId: 'dept-security',
-    title: 'Head of Campus Security & Proctor',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'staff-maintenance-01',
-    name: 'Engr. Suresh Verma',
-    email: 'suresh.verma@campuscare.edu',
-    role: 'staff',
-    departmentId: 'dept-electrical',
-    title: 'Senior Estate Engineer',
-    createdAt: new Date().toISOString()
-  }
-];
-
 export function getCleanEmptyData() {
   return {
     departments: [...DEFAULT_DEPARTMENTS],
-    users: [...DEFAULT_STAFF],
+    users: [], // Zero dummy staff! Purely dynamic, registered by University Admin.
     cases: [],
     messages: [],
     lostFoundItems: [],
@@ -67,7 +37,7 @@ export function getCleanEmptyData() {
         actorName: 'CampusCare System',
         action: 'PLATFORM_INITIALIZED',
         timestamp: new Date().toISOString(),
-        metadata: { message: 'Clean production database initialized with core campus departments and active staff.' }
+        metadata: { message: 'Clean production database initialized. Zero dummy staff records.' }
       }
     ]
   };
@@ -84,12 +54,12 @@ class Database {
       if (fs.existsSync(DB_FILE)) {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         this.data = JSON.parse(raw);
-        // Ensure clean structure and populate defaults if empty
+        // Ensure clean structure
         if (!this.data.departments || this.data.departments.length === 0) {
           this.data.departments = [...DEFAULT_DEPARTMENTS];
         }
-        if (!this.data.users || this.data.users.length === 0) {
-          this.data.users = [...DEFAULT_STAFF];
+        if (!this.data.users) {
+          this.data.users = [];
         }
         if (!this.data.cases) this.data.cases = [];
         if (!this.data.messages) this.data.messages = [];
@@ -192,32 +162,60 @@ class Database {
     if (role) {
       list = list.filter(u => u.role === role);
     }
-    return list;
+    // Return users without exposing passwords
+    return list.map(u => {
+      const dept = (this.data.departments || []).find(d => d.id === u.departmentId);
+      const { password, ...safeUser } = u;
+      return {
+        ...safeUser,
+        departmentName: dept ? dept.name : (u.departmentName || 'General Administration')
+      };
+    });
   }
 
-  staffLoginOrRegister({ name, email, departmentId, title }) {
+  // Admin creates a new staff account with Staff ID and Password
+  createStaffUser({ name, staffId, email, password, departmentId, title }) {
     if (!this.data.users) this.data.users = [];
+    const normalizedStaffId = (staffId || '').trim();
     const normalizedEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
 
-    // Look up existing user by email
-    let user = this.data.users.find(u => u.email && u.email.toLowerCase() === normalizedEmail);
-    if (user) {
-      // Update details if provided
-      if (name) user.name = name;
-      if (departmentId) user.departmentId = departmentId;
-      if (title) user.title = title;
-      this.save();
-      return user;
+    if (!normalizedStaffId) {
+      throw new Error('Staff ID is required for official staff accounts.');
+    }
+    if (!cleanPassword) {
+      throw new Error('Password is required for staff login.');
     }
 
-    // Register new staff user
+    // Check duplicate staffId or email
+    const duplicateId = this.data.users.find(u => 
+      u.staffId && u.staffId.toLowerCase() === normalizedStaffId.toLowerCase()
+    );
+    if (duplicateId) {
+      throw new Error(`A staff member with Staff ID '${normalizedStaffId}' already exists.`);
+    }
+
+    if (normalizedEmail) {
+      const duplicateEmail = this.data.users.find(u => 
+        u.email && u.email.toLowerCase() === normalizedEmail
+      );
+      if (duplicateEmail) {
+        throw new Error(`A staff member with email '${normalizedEmail}' already exists.`);
+      }
+    }
+
+    const dept = (this.data.departments || []).find(d => d.id === departmentId);
+
     const newUser = {
       id: `staff-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      staffId: normalizedStaffId,
       name: (name || 'Staff Officer').trim(),
-      email: normalizedEmail || `staff_${Date.now()}@campuscare.edu`,
+      email: normalizedEmail || `${normalizedStaffId.toLowerCase()}@campuscare.edu`,
+      password: cleanPassword,
       role: 'staff',
-      departmentId: departmentId || (this.data.departments?.[0]?.id || null),
-      title: title || 'Staff Member',
+      departmentId: departmentId || '',
+      departmentName: dept ? dept.name : 'General Administration',
+      title: (title || 'Staff Officer').trim(),
       createdAt: new Date().toISOString()
     };
 
@@ -225,20 +223,66 @@ class Database {
     this.save();
 
     this.addAuditLog({
-      actorId: newUser.id,
-      actorName: newUser.name,
-      action: 'STAFF_REGISTERED',
-      metadata: { departmentId: newUser.departmentId, title: newUser.title }
+      actorId: 'admin',
+      actorName: 'University Administrator',
+      action: 'STAFF_ACCOUNT_CREATED',
+      metadata: { staffId: newUser.staffId, name: newUser.name, department: newUser.departmentName, title: newUser.title }
     });
 
-    return newUser;
+    const { password: _, ...safeUser } = newUser;
+    return safeUser;
+  }
+
+  // Staff Portal Login: verifies Staff ID / Email and Password
+  staffLogin({ identifier, password }) {
+    if (!this.data.users || this.data.users.length === 0) {
+      throw new Error('No staff accounts registered in system. University Admin must first create staff accounts from Admin Portal.');
+    }
+
+    const idClean = (identifier || '').trim().toLowerCase();
+    const pwdClean = (password || '').trim();
+
+    if (!idClean || !pwdClean) {
+      throw new Error('Please provide both Staff ID / Email and Password.');
+    }
+
+    const user = this.data.users.find(u => 
+      (u.staffId && u.staffId.toLowerCase() === idClean) ||
+      (u.email && u.email.toLowerCase() === idClean)
+    );
+
+    if (!user) {
+      throw new Error('Invalid Staff ID or Email. No matching staff account found.');
+    }
+
+    if (user.password !== pwdClean) {
+      throw new Error('Incorrect password. Please verify your credentials or contact Admin.');
+    }
+
+    const dept = (this.data.departments || []).find(d => d.id === user.departmentId);
+    const { password: _, ...safeUser } = user;
+    return {
+      ...safeUser,
+      departmentName: dept ? dept.name : (user.departmentName || 'General Administration')
+    };
   }
 
   deleteUser(id) {
     if (!this.data.users) return false;
+    const target = this.data.users.find(u => u.id === id || u.staffId === id);
     const initialLen = this.data.users.length;
-    this.data.users = this.data.users.filter(u => u.id !== id);
+    this.data.users = this.data.users.filter(u => u.id !== id && u.staffId !== id);
     this.save();
+
+    if (target) {
+      this.addAuditLog({
+        actorId: 'admin',
+        actorName: 'University Administrator',
+        action: 'STAFF_ACCOUNT_REMOVED',
+        metadata: { staffId: target.staffId, name: target.name }
+      });
+    }
+
     return this.data.users.length < initialLen;
   }
 

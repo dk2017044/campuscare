@@ -92,10 +92,12 @@ export interface Department {
 
 export interface StaffUser {
   id: string;
+  staffId: string;
   name: string;
   email: string;
   role: 'staff';
   departmentId: string;
+  departmentName?: string;
   title: string;
   createdAt: string;
 }

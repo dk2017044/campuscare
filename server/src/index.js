@@ -843,18 +843,31 @@ app.get('/api/audit', (req, res) => {
   res.json({ success: true, logs: db.getAuditLogs(limit) });
 });
 
-// Staff Authentication & User Management (Zero pre-filled dummy profiles)
+// Staff Authentication & User Management (Purely dynamic, created by Admin)
 app.post('/api/staff/login', (req, res) => {
   try {
-    const { name, email, departmentId, title } = req.body;
-    if (!name || !email) {
-      return res.status(400).json({ error: 'Official name and institutional email are required.' });
+    const { identifier, staffId, password } = req.body;
+    const loginId = identifier || staffId;
+    if (!loginId || !password) {
+      return res.status(400).json({ error: 'Staff ID or Official Email and Password are required.' });
     }
-    const user = db.staffLoginOrRegister({ name, email, departmentId, title });
+    const user = db.staffLogin({ identifier: loginId, password });
     return res.json({ success: true, user });
   } catch (error) {
-    console.error('Staff login error:', error);
-    return res.status(500).json({ error: 'Staff authentication failed' });
+    return res.status(401).json({ error: error.message || 'Staff authentication failed' });
+  }
+});
+
+app.post('/api/staff/create', (req, res) => {
+  try {
+    const { name, staffId, email, password, departmentId, title } = req.body;
+    if (!name || !staffId || !password) {
+      return res.status(400).json({ error: 'Staff Name, Staff ID, and Login Password are required.' });
+    }
+    const user = db.createStaffUser({ name, staffId, email, password, departmentId, title });
+    return res.json({ success: true, user });
+  } catch (error) {
+    return res.status(400).json({ error: error.message || 'Failed to create staff account' });
   }
 });
 

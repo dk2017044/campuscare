@@ -50,35 +50,7 @@
       "email": "itlabs@campuscare.edu"
     }
   ],
-  "users": [
-    {
-      "id": "staff-welfare-01",
-      "name": "Dr. Ananya Roy",
-      "email": "ananya.roy@campuscare.edu",
-      "role": "staff",
-      "departmentId": "dept-welfare",
-      "title": "Chief Student Counselor & Head",
-      "createdAt": "2026-10-10T21:00:00.000Z"
-    },
-    {
-      "id": "staff-security-01",
-      "name": "Inspector Ramesh Kumar",
-      "email": "ramesh.kumar@campuscare.edu",
-      "role": "staff",
-      "departmentId": "dept-security",
-      "title": "Head of Campus Security & Proctor",
-      "createdAt": "2026-10-10T21:00:00.000Z"
-    },
-    {
-      "id": "staff-maintenance-01",
-      "name": "Engr. Suresh Verma",
-      "email": "suresh.verma@campuscare.edu",
-      "role": "staff",
-      "departmentId": "dept-electrical",
-      "title": "Senior Estate Engineer",
-      "createdAt": "2026-10-10T21:00:00.000Z"
-    }
-  ],
+  "users": [],
   "cases": [
     {
       "id": "case-1791666801435-kzb0",
@@ -99,8 +71,8 @@
       "pinSalt": "1109f5966123a046938821897b41a394",
       "assignedDepartmentId": "dept-welfare",
       "assignedDepartmentName": "Student Welfare & Counseling Committee",
-      "assignedStaffId": "staff-welfare-01",
-      "assignedStaffName": "Dr. Ananya Roy",
+      "assignedStaffId": null,
+      "assignedStaffName": null,
       "evidence": [],
       "aiAnalysis": {
         "category": "student_safety",
@@ -195,6 +167,30 @@
   ],
   "lostFoundItems": [],
   "auditLogs": [
+    {
+      "id": "audit-1791668058395-x66s",
+      "timestamp": "2026-10-10T21:34:18.395Z",
+      "actorId": "admin",
+      "actorName": "University Administrator",
+      "action": "STAFF_ACCOUNT_REMOVED",
+      "metadata": {
+        "staffId": "STF001",
+        "name": "Test Officer"
+      }
+    },
+    {
+      "id": "audit-1791668058366-wpwm",
+      "timestamp": "2026-10-10T21:34:18.366Z",
+      "actorId": "admin",
+      "actorName": "University Administrator",
+      "action": "STAFF_ACCOUNT_CREATED",
+      "metadata": {
+        "staffId": "STF001",
+        "name": "Test Officer",
+        "department": "Student Welfare & Counseling Committee",
+        "title": "Counselor"
+      }
+    },
     {
       "id": "audit-1791666983811-nokg",
       "timestamp": "2026-10-10T21:16:23.811Z",

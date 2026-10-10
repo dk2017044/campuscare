@@ -1,28 +1,35 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, ShieldAlert, Wrench, RefreshCw, Siren, ClipboardList, ShieldCheck, ChevronRight, VolumeX } from 'lucide-react';
+import { Search, ShieldAlert, Wrench, RefreshCw, Siren, ClipboardList, ShieldCheck, ChevronRight, VolumeX, LogOut, UserCheck } from 'lucide-react';
 import { api } from '../../services/api';
 import { Case, Department, StaffUser } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { PriorityBadge } from '../../components/PriorityBadge';
 import { CategoryBadge } from '../../components/CategoryBadge';
 import { StaffCaseDetail } from './StaffCaseDetail';
+import { StaffLogin } from './StaffLogin';
 import { playEmergencySiren, stopEmergencySiren } from '../../services/sound';
 
 interface Props {
   staffDept: string;
+  onNavigateTab?: (tab: string) => void;
 }
 
-export const StaffDashboard: React.FC<Props> = ({ staffDept }) => {
+export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) => {
   const [cases, setCases] = useState<Case[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffUser[]>([]);
   const [activeStaffUser, setActiveStaffUser] = useState<StaffUser | null>(() => {
-    const saved = localStorage.getItem('campuscare_active_staff');
+    const saved = localStorage.getItem('campuscare_staff_session');
     return saved ? JSON.parse(saved) : null;
   });
   const [loading, setLoading] = useState(false);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
+
+  const handleLogout = () => {
+    localStorage.removeItem('campuscare_staff_session');
+    setActiveStaffUser(null);
+  };
 
   // Real-Time Emergency SOS Siren State
   const [emergencyAlert, setEmergencyAlert] = useState<Case | null>(null);
@@ -73,10 +80,6 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept }) => {
       setCases(fetchedCases);
       setDepartments(deptsRes.departments || []);
       setStaffMembers(fetchedStaff);
-
-      if (!activeStaffUser && fetchedStaff.length > 0) {
-        setActiveStaffUser(fetchedStaff[0]);
-      }
 
       const criticalCases = fetchedCases.filter(
         (c) => c.priority === 'CRITICAL' && (c.status === 'NEW' || c.status === 'AI_TRIAGED')
@@ -160,6 +163,20 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept }) => {
     );
   });
 
+  if (!activeStaffUser) {
+    return (
+      <StaffLogin
+        onLoginSuccess={(user) => {
+          setActiveStaffUser(user);
+          loadData(true);
+        }}
+        onNavigateToAdmin={() => {
+          if (onNavigateTab) onNavigateTab('admin_staff');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-4 space-y-6 relative z-10">
       {/* Sleek Emergency Strobe Banner if active */}
@@ -233,27 +250,33 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {staffMembers.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-xs shadow-2xs">
-              <span className="text-slate-500 font-medium">Logged in Officer:</span>
-              <select
-                aria-label="Active Staff Officer"
-                value={activeStaffUser?.id || ''}
-                onChange={(e) => {
-                  const s = staffMembers.find(m => m.id === e.target.value);
-                  if (s) {
-                    setActiveStaffUser(s);
-                    localStorage.setItem('campuscare_active_staff', JSON.stringify(s));
-                  }
-                }}
-                className="bg-transparent text-[#0066FF] font-bold outline-none cursor-pointer"
-              >
-                {staffMembers.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.title})</option>
-                ))}
-              </select>
+          {/* Authenticated Staff Officer Profile Pill */}
+          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl bg-white border border-slate-200/90 text-xs shadow-xs">
+            <div className="w-7 h-7 rounded-xl bg-blue-50 border border-blue-200 text-[#0066FF] flex items-center justify-center font-bold text-xs shrink-0">
+              {activeStaffUser.name.charAt(0)}
             </div>
-          )}
+            <div className="space-y-0.5 text-left">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-slate-900 leading-tight">{activeStaffUser.name}</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 bg-blue-50 text-[#0066FF] rounded font-semibold border border-blue-100">
+                  {activeStaffUser.staffId}
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-500 font-medium block">
+                {activeStaffUser.title} {activeStaffUser.departmentName ? `• ${activeStaffUser.departmentName}` : ''}
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors cursor-pointer shadow-2xs"
+            title="Log out of Staff Portal"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Log Out</span>
+          </button>
 
           <button
             type="button"

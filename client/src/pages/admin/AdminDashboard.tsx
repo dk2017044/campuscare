@@ -21,7 +21,11 @@ import {
   Lock,
   ChevronRight,
   Activity,
-  FileText
+  FileText,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Copy
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { SystemStats, Department, AuditLog, StaffUser, Case } from '../../types';
@@ -76,6 +80,9 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
 
   const [showNewStaffModal, setShowNewStaffModal] = useState(false);
   const [newStaffName, setNewStaffName] = useState('');
+  const [newStaffId, setNewStaffId] = useState('');
+  const [newStaffPassword, setNewStaffPassword] = useState('');
+  const [showStaffPassword, setShowStaffPassword] = useState(false);
   const [newStaffEmail, setNewStaffEmail] = useState('');
   const [newStaffDept, setNewStaffDept] = useState('');
   const [newStaffTitle, setNewStaffTitle] = useState('Faculty Counselor');
@@ -134,18 +141,26 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStaffName.trim() || !newStaffEmail.trim()) return;
+    if (!newStaffName.trim() || !newStaffId.trim() || !newStaffPassword.trim()) {
+      alert('Staff Full Name, Staff ID, and Login Password are required.');
+      return;
+    }
 
     try {
       setSavingStaff(true);
-      await api.loginStaff({
+      await api.createStaff({
         name: newStaffName.trim(),
-        email: newStaffEmail.trim(),
-        departmentId: newStaffDept,
+        staffId: newStaffId.trim(),
+        email: newStaffEmail.trim() || undefined,
+        password: newStaffPassword.trim(),
+        departmentId: newStaffDept || (departments.length > 0 ? departments[0].id : ''),
         title: newStaffTitle.trim() || 'Staff Officer'
       });
+      alert(`Staff Account provisioned successfully!\n\nName: ${newStaffName.trim()}\nStaff ID: ${newStaffId.trim()}\nPassword: ${newStaffPassword.trim()}\n\nShare these credentials with the officer to log in to the Staff Portal.`);
       setNewStaffName('');
+      setNewStaffId('');
       setNewStaffEmail('');
+      setNewStaffPassword('');
       setShowNewStaffModal(false);
       loadAdminData();
     } catch (e: any) {
@@ -635,9 +650,22 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
           )}
 
           {staffMembers.length === 0 ? (
-            <div className="p-10 text-center rounded-3xl bg-white border border-slate-200/80 text-xs text-slate-500 space-y-2 shadow-xs">
-              <Users className="w-8 h-8 text-slate-400 mx-auto" />
-              <p className="font-semibold text-slate-800">No staff members enrolled yet</p>
+            <div className="p-10 text-center rounded-3xl bg-white border border-slate-200/80 text-xs text-slate-500 space-y-3 shadow-xs">
+              <Users className="w-9 h-9 text-slate-400 mx-auto" />
+              <div>
+                <p className="font-bold text-slate-800 text-sm">Zero staff members registered yet</p>
+                <p className="text-[11px] text-slate-500 mt-1 max-w-sm mx-auto">
+                  Click "+ Add Staff Member" to provision an authorized staff account with a Staff ID and Password for logging into the Staff Portal.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNewStaffModal(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0066FF] text-white font-semibold text-xs shadow-xs cursor-pointer hover:bg-[#0052CC]"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>+ Add First Staff Member</span>
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -646,14 +674,19 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                 return (
                   <div
                     key={staff.id}
-                    className="p-4 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-between text-xs hover:border-slate-300 shadow-xs transition-all"
+                    className="p-4 rounded-2xl bg-white border border-slate-200/80 flex items-start justify-between text-xs hover:border-slate-300 shadow-xs transition-all"
                   >
-                    <div className="space-y-0.5">
+                    <div className="space-y-1">
                       <strong className="text-slate-900 text-sm block font-bold">{staff.name}</strong>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-[#0066FF] border border-blue-200">
+                          ID: {staff.staffId}
+                        </span>
+                        <span className="text-[11px] text-slate-700 font-semibold block truncate max-w-[140px]">
+                          {dept ? dept.name : (staff.departmentName || staff.departmentId)}
+                        </span>
+                      </div>
                       <span className="text-slate-500 block text-[11px] font-medium">{staff.title}</span>
-                      <span className="text-[11px] text-[#0066FF] font-semibold block">
-                        {dept ? dept.name : staff.departmentId}
-                      </span>
                       <span className="text-[10px] text-slate-400 font-mono block">
                         {staff.email}
                       </span>
@@ -661,7 +694,8 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
 
                     <button
                       onClick={() => handleDeleteStaff(staff.id, staff.name)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer shrink-0"
+                      title="Remove staff officer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -806,31 +840,60 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
 
               <form onSubmit={handleCreateStaff} className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Full Name</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Full Name *</label>
                   <input
                     type="text"
                     value={newStaffName}
                     onChange={(e) => setNewStaffName(e.target.value)}
-                    placeholder="Prof. Rajiv Nambiar"
+                    placeholder="e.g. Dr. Rajesh Sharma"
                     className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
                     required
                   />
                 </div>
 
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Official Email</label>
-                  <input
-                    type="email"
-                    value={newStaffEmail}
-                    onChange={(e) => setNewStaffEmail(e.target.value)}
-                    placeholder="r.nambiar@campus.edu"
-                    className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
-                    required
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-700 font-semibold">Staff Login ID *</label>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={newStaffId}
+                        onChange={(e) => setNewStaffId(e.target.value)}
+                        placeholder="e.g. STAFF001"
+                        className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none font-mono uppercase font-bold"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-700 font-semibold">Login Password *</label>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showStaffPassword ? 'text' : 'password'}
+                        value={newStaffPassword}
+                        onChange={(e) => setNewStaffPassword(e.target.value)}
+                        placeholder="e.g. Staff@123"
+                        className="w-full pl-3 pr-9 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none font-medium"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowStaffPassword(!showStaffPassword)}
+                        className="absolute right-2.5 top-2.5 p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+                      >
+                        {showStaffPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Department *</label>
+                  <label className="block text-slate-700 font-semibold mb-1">Assigned Department *</label>
                   {departments.length === 0 ? (
                     <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between">
                       <span className="font-medium">No departments created yet</span>
@@ -860,16 +923,33 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Title / Designation</label>
-                  <input
-                    type="text"
-                    value={newStaffTitle}
-                    onChange={(e) => setNewStaffTitle(e.target.value)}
-                    placeholder="Faculty Counselor, Security Lead, Warden"
-                    className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">Title / Designation</label>
+                    <input
+                      type="text"
+                      value={newStaffTitle}
+                      onChange={(e) => setNewStaffTitle(e.target.value)}
+                      placeholder="e.g. Chief Proctor, Warden"
+                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-semibold mb-1">Official Email</label>
+                    <input
+                      type="email"
+                      value={newStaffEmail}
+                      onChange={(e) => setNewStaffEmail(e.target.value)}
+                      placeholder="e.g. officer@campus.edu"
+                      className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
+                    />
+                  </div>
                 </div>
+
+                <p className="text-[11px] text-slate-500 bg-blue-50/70 p-2.5 rounded-xl border border-blue-100">
+                  ℹ️ Provide the <strong>Staff Login ID</strong> and <strong>Password</strong> to the officer. They will use them to sign in at the Staff Portal.
+                </p>
 
                 <div className="flex gap-2 pt-2">
                   <button

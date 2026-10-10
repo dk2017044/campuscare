@@ -215,15 +215,35 @@ export const api = {
   },
 
   // Staff & Faculty Management
-  async loginStaff(data: { name: string; email: string; departmentId?: string; title?: string }): Promise<{ success: boolean; user: StaffUser }> {
+  async createStaff(data: {
+    name: string;
+    staffId: string;
+    email?: string;
+    password: string;
+    departmentId: string;
+    title: string;
+  }): Promise<{ success: boolean; user: StaffUser }> {
+    const res = await fetch(`${API_BASE}/staff/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to create staff account' }));
+      throw new Error(err.error || 'Failed to create staff account');
+    }
+    return res.json();
+  },
+
+  async loginStaff(data: { staffId: string; password: string }): Promise<{ success: boolean; user: StaffUser }> {
     const res = await fetch(`${API_BASE}/staff/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: 'Staff authorization failed' }));
-      throw new Error(err.error || 'Staff authorization failed');
+      const err = await res.json().catch(() => ({ error: 'Invalid Staff ID or Password' }));
+      throw new Error(err.error || 'Invalid Staff ID or Password');
     }
     return res.json();
   },
