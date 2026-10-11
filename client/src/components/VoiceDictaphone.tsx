@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, MicOff, Globe, Sparkles, Volume2, CheckCircle2 } from 'lucide-react';
+import { Mic, MicOff, Globe, Sparkles, Volume2, CheckCircle2, ChevronDown } from 'lucide-react';
 
 interface Props {
   onTranscript: (text: string) => void;
@@ -18,6 +18,7 @@ export const VoiceDictaphone: React.FC<Props> = ({
   const [interimText, setInterimText] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [supported, setSupported] = useState(true);
+  const [isPromptsOpen, setIsPromptsOpen] = useState(false);
 
   const recognitionRef = useRef<any>(null);
 
@@ -214,35 +215,55 @@ export const VoiceDictaphone: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Quick Presets */}
-      <div className="mt-2.5 pt-2 border-t border-slate-200/80 flex flex-wrap items-center gap-1.5 text-[10px]">
-        <span className="text-slate-500 font-semibold">Demo Prompts:</span>
+      {/* Collapsible Example Prompts */}
+      <div className="mt-2 pt-2 border-t border-slate-200/70">
         <button
           type="button"
-          onClick={() =>
-            applyPreset(
-              isEmergency
-                ? 'दो लोग मेन कैंटीन के पास डंडों के साथ लड़ाई कर रहे हैं, तुरंत सिक्योरिटी भेजो!'
-                : 'Mechanical lab ke piche do log ladayi kar rahe hain aur threats de rahe hain.'
-            )
-          }
-          className="px-2.5 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium cursor-pointer transition-all shadow-2xs"
+          onClick={() => setIsPromptsOpen(prev => !prev)}
+          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 hover:text-slate-800 cursor-pointer transition-colors"
         >
-          🇮🇳 Sample Hindi Prompt
+          <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isPromptsOpen ? 'rotate-180' : ''}`} />
+          <span>Example Prompts</span>
         </button>
-        <button
-          type="button"
-          onClick={() =>
-            applyPreset(
-              isEmergency
-                ? 'Immediate assistance required! An intruder is threatening students near Electronics Lab corridor.'
-                : 'Someone is repeatedly following female students near the hostel back gate after 6 PM.'
-            )
-          }
-          className="px-2.5 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium cursor-pointer transition-all shadow-2xs"
-        >
-          🇬🇧 Sample English Prompt
-        </button>
+
+        <AnimatePresence>
+          {isPromptsOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.18 }}
+              className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] overflow-hidden"
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  applyPreset(
+                    isEmergency
+                      ? 'दो लोग मेन कैंटीन के पास डंडों के साथ लड़ाई कर रहे हैं, तुरंत सिक्योरिटी भेजो!'
+                      : 'Mechanical lab ke piche do log ladayi kar rahe hain aur threats de rahe hain.'
+                  )
+                }
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium cursor-pointer transition-all shadow-2xs"
+              >
+                🇮🇳 Sample Hindi Prompt
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  applyPreset(
+                    isEmergency
+                      ? 'Immediate assistance required! An intruder is threatening students near Electronics Lab corridor.'
+                      : 'Someone is repeatedly following female students near the hostel back gate after 6 PM.'
+                  )
+                }
+                className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium cursor-pointer transition-all shadow-2xs"
+              >
+                🇬🇧 Sample English Prompt
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

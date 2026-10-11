@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Lock, 
@@ -17,7 +17,8 @@ import {
   ShieldAlert, 
   Wrench, 
   Search, 
-  Users 
+  Users,
+  ChevronDown 
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { VoiceDictaphone } from '../../components/VoiceDictaphone';
@@ -26,6 +27,17 @@ interface Props {
   onNavigate: (tab: string) => void;
   onCaseCreated?: (publicCaseId: string, rawPin: string) => void;
 }
+
+const CATEGORY_OPTIONS = [
+  { label: 'Harassment', type: 'safety', icon: ShieldAlert, badge: 'Safety' },
+  { label: 'Bullying / Ragging', type: 'safety', icon: ShieldAlert, badge: 'Safety' },
+  { label: 'Unsafe Activity', type: 'safety', icon: ShieldAlert, badge: 'Safety' },
+  { label: 'Suspicious Behavior', type: 'safety', icon: ShieldAlert, badge: 'Safety' },
+  { label: 'Facility Hazard', type: 'maintenance', icon: Wrench, badge: 'Facilities' },
+  { label: 'Hostel Defect', type: 'maintenance', icon: Wrench, badge: 'Facilities' },
+  { label: 'Lost Property', type: 'lost_found', icon: Search, badge: 'Lost & Found' },
+  { label: 'Welfare Concern', type: 'other', icon: Users, badge: 'Welfare' }
+];
 
 const PREDEFINED_LOCATIONS = [
   'Electronics Lab',
@@ -40,17 +52,29 @@ const PREDEFINED_LOCATIONS = [
   'Other / Unspecified Area'
 ];
 
+const STEP_LABELS = ['Issue', 'Location', 'Time', 'Evidence', 'Submit'];
+
 export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => {
   const [step, setStep] = useState<number>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form states
-  const [category, setCategory] = useState('Harassment / Intimidation');
+  const [category, setCategory] = useState('Harassment');
   const [reportType, setReportType] = useState('safety');
-  const [description, setDescription] = useState('');
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [catSearch, setCatSearch] = useState('');
+  const catDropdownRef = useRef<HTMLDivElement>(null);
+
   const [location, setLocation] = useState('Electronics Lab');
   const [customLocationDetail, setCustomLocationDetail] = useState('');
+  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+  const [locSearch, setLocSearch] = useState('');
+  const locDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [aiCollapsibleOpen, setAiCollapsibleOpen] = useState(false);
+
+  const [description, setDescription] = useState('');
   const [incidentDate, setIncidentDate] = useState('Today');
   const [approxTime, setApproxTime] = useState('Approx. 5:30 PM');
   const [isAnonymous, setIsAnonymous] = useState(true);
@@ -58,6 +82,19 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
   const [reporterContact, setReporterContact] = useState('');
   const [emailCheckStatus, setEmailCheckStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
   const [emailCheckMessage, setEmailCheckMessage] = useState<string>('');
+
+  useEffect(() => {
+    const handleDocClick = (e: MouseEvent) => {
+      if (catDropdownRef.current && !catDropdownRef.current.contains(e.target as Node)) {
+        setCategoryDropdownOpen(false);
+      }
+      if (locDropdownRef.current && !locDropdownRef.current.contains(e.target as Node)) {
+        setLocationDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleDocClick);
+    return () => document.removeEventListener('mousedown', handleDocClick);
+  }, []);
 
   const handleVerifyContactEmail = async (contactVal: string) => {
     if (!contactVal || !contactVal.includes('@')) {
@@ -202,163 +239,267 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
     }
   };
 
+  const selectedCategoryObj =
+    CATEGORY_OPTIONS.find((c) => c.label.toLowerCase() === category.toLowerCase()) ||
+    CATEGORY_OPTIONS.find((c) => category.toLowerCase().includes(c.label.toLowerCase().slice(0, 6))) ||
+    CATEGORY_OPTIONS[0];
+  const SelectedCatIcon = selectedCategoryObj.icon;
+
+  const filteredCategories = CATEGORY_OPTIONS.filter((c) =>
+    c.label.toLowerCase().includes(catSearch.toLowerCase()) ||
+    c.badge.toLowerCase().includes(catSearch.toLowerCase())
+  );
+
+  const filteredLocations = PREDEFINED_LOCATIONS.filter((l) =>
+    l.toLowerCase().includes(locSearch.toLowerCase())
+  );
+
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4 space-y-6 relative z-10">
-      {/* Header Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0066FF] border border-blue-100 flex items-center justify-center shadow-xs">
-            <Lock className="w-5 h-5" />
+    <div className="max-w-xl mx-auto py-3 sm:py-6 px-3 sm:px-4 space-y-3 sm:space-y-4 relative z-10">
+      {/* Header Banner - Compact & Mobile-Friendly */}
+      <div className="flex items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-50 text-[#0066FF] border border-blue-100 flex items-center justify-center shadow-2xs shrink-0">
+            <Lock className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight font-heading">
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight font-heading leading-tight">
               Confidential Report
             </h1>
-            <p className="text-xs text-slate-500 font-medium">
-              Zero-telemetry encrypted reporting with private PIN tracking
+            <p className="text-[11px] text-slate-500 font-medium line-clamp-1">
+              Encrypted reporting with private PIN tracking
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 font-medium shadow-xs">
-          <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Identity Shield Active</span>
+        <div className="hidden xs:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] sm:text-[11px] text-emerald-700 font-medium shadow-2xs shrink-0">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Shield Active</span>
         </div>
       </div>
 
-      {/* Sleek Step Indicator Pill Bar */}
-      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-        {[
-          { num: 1, label: '1. Issue' },
-          { num: 2, label: '2. Location' },
-          { num: 3, label: '3. Time' },
-          { num: 4, label: '4. Evidence' },
-          { num: 5, label: '5. Submit' }
-        ].map((s) => (
-          <button
-            key={s.num}
-            type="button"
-            onClick={() => s.num < step && setStep(s.num)}
-            className={`flex-1 py-2 text-center rounded-xl text-xs font-medium transition-all ${
-              step === s.num
-                ? 'bg-[#0066FF] text-white font-semibold shadow-xs'
-                : step > s.num
-                ? 'text-[#0066FF] hover:bg-blue-50 font-medium cursor-pointer'
-                : 'text-slate-400 cursor-not-allowed'
-            }`}
-          >
-            {s.label}
-          </button>
-        ))}
+      {/* Progress Steps: Mobile Progress Bar vs Desktop Stepper */}
+      {/* Mobile: Step X of 5 with Progress Bar */}
+      <div className="sm:hidden bg-white rounded-xl border border-slate-200/80 p-2.5 shadow-2xs space-y-1.5">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-bold text-[#0066FF]">Step {step} of 5</span>
+          <span className="text-slate-600 font-semibold">{STEP_LABELS[step - 1]}</span>
+        </div>
+        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-[#0066FF] rounded-full transition-all duration-300"
+            style={{ width: `${(step / 5) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Desktop: Compact 5-Step Stepper */}
+      <div className="hidden sm:flex items-center gap-1 p-1 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
+        {STEP_LABELS.map((label, idx) => {
+          const num = idx + 1;
+          return (
+            <button
+              key={num}
+              type="button"
+              onClick={() => num < step && setStep(num)}
+              className={`flex-1 py-1.5 text-center rounded-xl text-xs font-medium transition-all ${
+                step === num
+                  ? 'bg-[#0066FF] text-white font-semibold shadow-2xs'
+                  : step > num
+                  ? 'text-[#0066FF] hover:bg-blue-50 font-medium cursor-pointer'
+                  : 'text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              {num}. {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Error Notice */}
       {error && (
-        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2.5 shadow-xs">
+        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 shadow-2xs">
           <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
           <span className="font-medium">{error}</span>
         </div>
       )}
 
       {/* Main Form Container */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-6 shadow-sm">
-        {/* STEP 1: WHAT HAPPENED */}
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-6 space-y-4 shadow-xs">
+        {/* STEP 1: ISSUE / WHAT HAPPENED */}
         {step === 1 && (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-3">
-                Select Concern Category
+          <div className="space-y-4">
+            {/* Searchable Concern Category Dropdown */}
+            <div className="space-y-1.5" ref={catDropdownRef}>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                Concern Category
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {[
-                  { label: 'Harassment', type: 'safety', icon: ShieldAlert },
-                  { label: 'Bullying / Ragging', type: 'safety', icon: ShieldAlert },
-                  { label: 'Unsafe Activity', type: 'safety', icon: ShieldAlert },
-                  { label: 'Suspicious Behavior', type: 'safety', icon: ShieldAlert },
-                  { label: 'Facility Hazard', type: 'maintenance', icon: Wrench },
-                  { label: 'Hostel Defect', type: 'maintenance', icon: Wrench },
-                  { label: 'Lost Property', type: 'lost_found', icon: Search },
-                  { label: 'Welfare Concern', type: 'other', icon: Users }
-                ].map((item) => {
-                  const isSelected = category.toLowerCase().includes(item.label.toLowerCase().slice(0, 8));
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => {
-                        setCategory(item.label);
-                        setReportType(item.type);
-                      }}
-                      className={`p-3 text-left rounded-2xl border text-xs font-medium transition-all flex flex-col justify-between h-20 cursor-pointer ${
-                        isSelected
-                          ? 'border-[#0066FF] bg-blue-50 text-[#0066FF] ring-2 ring-blue-500/20 font-semibold shadow-xs'
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
-                      }`}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setCategoryDropdownOpen((prev) => !prev)}
+                  className="w-full flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-50/70 border border-slate-200/90 hover:bg-white hover:border-[#0066FF]/70 text-slate-900 text-xs font-medium transition-all cursor-pointer shadow-2xs focus:ring-2 focus:ring-[#0066FF]/20"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <div className="w-6 h-6 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0066FF] shrink-0">
+                      <SelectedCatIcon className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="font-semibold text-slate-900 truncate">{selectedCategoryObj.label}</span>
+                    <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
+                      {selectedCategoryObj.badge}
+                    </span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${categoryDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {categoryDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-30 p-2 space-y-1.5 max-h-72 flex flex-col"
                     >
-                      <Icon className={`w-4 h-4 ${isSelected ? 'text-[#0066FF]' : 'text-slate-400'}`} />
-                      <span className="line-clamp-1">{item.label}</span>
-                    </button>
-                  );
-                })}
+                      {/* Search box inside dropdown */}
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                        <input
+                          type="text"
+                          value={catSearch}
+                          onChange={(e) => setCatSearch(e.target.value)}
+                          placeholder="Search category..."
+                          autoFocus
+                          className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#0066FF] focus:bg-white"
+                        />
+                      </div>
+
+                      <div className="overflow-y-auto space-y-0.5 max-h-52 pr-1">
+                        {filteredCategories.length === 0 ? (
+                          <div className="p-3 text-center text-xs text-slate-400 font-medium">
+                            No matching category found
+                          </div>
+                        ) : (
+                          filteredCategories.map((item) => {
+                            const isSelected = category.toLowerCase().includes(item.label.toLowerCase().slice(0, 8));
+                            const Icon = item.icon;
+                            return (
+                              <button
+                                key={item.label}
+                                type="button"
+                                onClick={() => {
+                                  setCategory(item.label);
+                                  setReportType(item.type);
+                                  setCategoryDropdownOpen(false);
+                                  setCatSearch('');
+                                }}
+                                className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors cursor-pointer text-left ${
+                                  isSelected
+                                    ? 'bg-blue-50 text-[#0066FF] font-semibold'
+                                    : 'text-slate-700 hover:bg-slate-50'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 truncate">
+                                  <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-[#0066FF]' : 'text-slate-400'}`} />
+                                  <span className="truncate">{item.label}</span>
+                                  <span className="text-[10px] text-slate-400">({item.badge})</span>
+                                </div>
+                                {isSelected && <Check className="w-3.5 h-3.5 text-[#0066FF] shrink-0" />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-2">
+            {/* Description & Voice Dictation */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
                   Detailed Description
                 </label>
-                <span className="text-[11px] font-medium text-[#0066FF] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                <span className="text-[10px] sm:text-[11px] font-medium text-[#0066FF] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
                   Multilingual Voice Enabled
                 </span>
               </div>
 
-              {/* Multilingual Voice Dictaphone */}
-              <div className="mb-2.5">
-                <VoiceDictaphone
-                  onTranscript={(text) => {
-                    setDescription((prev) => (prev ? `${prev} ${text}` : text));
-                  }}
-                />
-              </div>
+              {/* Multilingual Voice Dictaphone with Collapsible Prompts */}
+              <VoiceDictaphone
+                onTranscript={(text) => {
+                  setDescription((prev) => (prev ? `${prev} ${text}` : text));
+                }}
+              />
 
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe what occurred with as much detail as possible... (You may type or use voice dictation)"
-                rows={4}
-                className="w-full p-4 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 resize-none transition-all outline-none"
+                rows={3}
+                className="w-full p-3 rounded-xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 resize-none transition-all outline-none"
               />
             </div>
 
-            {/* AI Assistant Preview Button */}
-            <div className="p-3.5 rounded-2xl bg-blue-50/60 border border-blue-100 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-slate-700 font-medium">
-                <Sparkles className="w-4 h-4 text-[#0066FF]" />
-                <span>Smart AI Triage & Routing</span>
-              </div>
+            {/* Collapsible Smart AI Triage & Routing */}
+            <div className="rounded-xl border border-blue-100 bg-blue-50/40 overflow-hidden text-xs">
               <button
                 type="button"
-                onClick={triggerAiPreview}
-                disabled={triaging || !description.trim()}
-                className="text-xs font-semibold text-[#0066FF] hover:underline disabled:opacity-40 cursor-pointer"
+                onClick={() => setAiCollapsibleOpen((prev) => !prev)}
+                className="w-full p-2.5 sm:p-3 flex items-center justify-between text-slate-700 font-semibold cursor-pointer hover:bg-blue-50/80 transition-colors"
               >
-                {triaging ? 'Analyzing with AI...' : 'Preview AI Routing →'}
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#0066FF]" />
+                  <span>Smart AI Triage &amp; Routing</span>
+                  {aiPreview && (
+                    <span className="text-[10px] font-semibold text-[#0066FF] bg-blue-100 px-2 py-0.5 rounded-full">
+                      Analyzed
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-[#0066FF] text-[11px] font-medium">
+                  <span>{aiCollapsibleOpen ? 'Hide' : 'Preview Routing'}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${aiCollapsibleOpen ? 'rotate-180' : ''}`} />
+                </div>
               </button>
+
+              <AnimatePresence>
+                {aiCollapsibleOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="p-3 pt-0 border-t border-blue-100 space-y-2 overflow-hidden"
+                  >
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-[11px] text-slate-500">Auto-routes to department &amp; priority</span>
+                      <button
+                        type="button"
+                        onClick={triggerAiPreview}
+                        disabled={triaging || !description.trim()}
+                        className="text-xs font-semibold px-3 py-1 bg-white border border-blue-200 text-[#0066FF] rounded-lg hover:bg-blue-50 disabled:opacity-40 cursor-pointer shadow-2xs"
+                      >
+                        {triaging ? 'Analyzing with AI...' : 'Run AI Analysis →'}
+                      </button>
+                    </div>
+
+                    {aiPreview && (
+                      <div className="p-3 rounded-xl bg-white border border-blue-200 text-xs text-slate-800 space-y-1 shadow-2xs">
+                        <div className="flex justify-between font-semibold">
+                          <span className="text-[#0066FF]">Assigned Dept: {aiPreview.suggested_department_name}</span>
+                          <span className="font-mono text-slate-700 font-bold">Priority: {aiPreview.priority_suggestion}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 italic">"{aiPreview.reasoning}"</p>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {aiPreview && (
-              <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-slate-800 space-y-1.5">
-                <div className="flex justify-between font-semibold">
-                  <span className="text-[#0066FF]">Assigned Dept: {aiPreview.suggested_department_name}</span>
-                  <span className="font-mono text-slate-700 font-bold">Priority: {aiPreview.priority_suggestion}</span>
-                </div>
-                <p className="text-[11px] text-slate-600 italic">"{aiPreview.reasoning}"</p>
-              </div>
-            )}
-
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-end pt-1">
               <button
                 type="button"
                 onClick={() => {
@@ -369,7 +510,7 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                   setError(null);
                   setStep(2);
                 }}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs"
               >
                 <span>Continue to Location</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -378,34 +519,89 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
           </div>
         )}
 
-        {/* STEP 2: WHERE */}
+        {/* STEP 2: WHERE / LOCATION */}
         {step === 2 && (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-3">
-                Select Campus Location
+          <div className="space-y-4">
+            {/* Searchable Compact Location Dropdown */}
+            <div className="space-y-1.5" ref={locDropdownRef}>
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide">
+                Campus Location
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                {PREDEFINED_LOCATIONS.map((loc) => (
-                  <button
-                    key={loc}
-                    type="button"
-                    onClick={() => setLocation(loc)}
-                    className={`p-3 text-xs text-left rounded-2xl border transition-all cursor-pointer flex items-center gap-2 ${
-                      location === loc
-                        ? 'border-[#0066FF] bg-blue-50 text-[#0066FF] ring-2 ring-blue-500/20 font-semibold shadow-xs'
-                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
-                    }`}
-                  >
-                    <MapPin className={`w-3.5 h-3.5 shrink-0 ${location === loc ? 'text-[#0066FF]' : 'text-slate-400'}`} />
-                    <span className="truncate">{loc}</span>
-                  </button>
-                ))}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setLocationDropdownOpen((prev) => !prev)}
+                  className="w-full flex items-center justify-between p-2.5 sm:p-3 rounded-xl bg-slate-50/70 border border-slate-200/90 hover:bg-white hover:border-[#0066FF]/70 text-slate-900 text-xs font-medium transition-all cursor-pointer shadow-2xs focus:ring-2 focus:ring-[#0066FF]/20"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <MapPin className="w-4 h-4 text-[#0066FF] shrink-0" />
+                    <span className="font-semibold text-slate-900 truncate">{location}</span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${locationDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {locationDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-30 p-2 space-y-1.5 max-h-72 flex flex-col"
+                    >
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                        <input
+                          type="text"
+                          value={locSearch}
+                          onChange={(e) => setLocSearch(e.target.value)}
+                          placeholder="Search campus location..."
+                          autoFocus
+                          className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-[#0066FF] focus:bg-white"
+                        />
+                      </div>
+
+                      <div className="overflow-y-auto space-y-0.5 max-h-52 pr-1">
+                        {filteredLocations.length === 0 ? (
+                          <div className="p-3 text-center text-xs text-slate-400 font-medium">
+                            No matching location found
+                          </div>
+                        ) : (
+                          filteredLocations.map((loc) => {
+                            const isSelected = location === loc;
+                            return (
+                              <button
+                                key={loc}
+                                type="button"
+                                onClick={() => {
+                                  setLocation(loc);
+                                  setLocationDropdownOpen(false);
+                                  setLocSearch('');
+                                }}
+                                className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors cursor-pointer text-left ${
+                                  isSelected
+                                    ? 'bg-blue-50 text-[#0066FF] font-semibold'
+                                    : 'text-slate-700 hover:bg-slate-50'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 truncate">
+                                  <MapPin className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-[#0066FF]' : 'text-slate-400'}`} />
+                                  <span className="truncate">{loc}</span>
+                                </div>
+                                {isSelected && <Check className="w-3.5 h-3.5 text-[#0066FF] shrink-0" />}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide">
                 Specific Room or Landmark (Optional)
               </label>
               <input
@@ -413,15 +609,15 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                 value={customLocationDetail}
                 onChange={(e) => setCustomLocationDetail(e.target.value)}
                 placeholder="e.g. 2nd Floor corridor, near Room 204 or Stairwell B"
-                className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
+                className="w-full p-2.5 sm:p-3 rounded-xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
 
-            <div className="flex justify-between pt-4 border-t border-slate-100">
+            <div className="flex justify-between pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-slate-500 hover:text-slate-800 text-xs font-medium cursor-pointer"
+                className="inline-flex items-center gap-1 px-3 py-2 text-slate-500 hover:text-slate-800 text-xs font-medium cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
@@ -429,7 +625,7 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs"
               >
                 <span>Continue to Time</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -438,23 +634,23 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
           </div>
         )}
 
-        {/* STEP 3: WHEN */}
+        {/* STEP 3: WHEN / TIME */}
         {step === 3 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-3">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">
                 Approximate Date
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {['Today', 'Yesterday', 'Earlier This Week', 'Unsure'].map((d) => (
                   <button
                     key={d}
                     type="button"
                     onClick={() => setIncidentDate(d)}
-                    className={`p-3 text-xs text-center rounded-2xl border transition-all cursor-pointer ${
+                    className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all text-center cursor-pointer ${
                       incidentDate === d
-                        ? 'border-[#0066FF] bg-blue-50 text-[#0066FF] ring-2 ring-blue-500/20 font-semibold shadow-xs'
-                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
+                        ? 'border-[#0066FF] bg-blue-50 text-[#0066FF] ring-1 ring-blue-500/20 font-semibold shadow-2xs'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                     }`}
                   >
                     {d}
@@ -463,8 +659,8 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide mb-1.5">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wide">
                 Approximate Time
               </label>
               <input
@@ -472,15 +668,15 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                 value={approxTime}
                 onChange={(e) => setApproxTime(e.target.value)}
                 placeholder="e.g. Around 5:30 PM, During lunch break, or Late evening"
-                className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
+                className="w-full p-2.5 sm:p-3 rounded-xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
 
-            <div className="flex justify-between pt-4 border-t border-slate-100">
+            <div className="flex justify-between pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-slate-500 hover:text-slate-800 text-xs font-medium cursor-pointer"
+                className="inline-flex items-center gap-1 px-3 py-2 text-slate-500 hover:text-slate-800 text-xs font-medium cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
@@ -488,7 +684,7 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
               <button
                 type="button"
                 onClick={() => setStep(4)}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs"
               >
                 <span>Continue to Evidence</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -499,15 +695,15 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
 
         {/* STEP 4: EVIDENCE */}
         {step === 4 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Clean Drop Zone */}
-            <div className="border-2 border-dashed border-slate-200 hover:border-[#0066FF] bg-slate-50/50 rounded-3xl p-6 text-center transition-colors">
-              <Upload className="w-8 h-8 text-[#0066FF] mx-auto mb-2 opacity-80" />
+            <div className="border-2 border-dashed border-slate-200 hover:border-[#0066FF] bg-slate-50/50 rounded-2xl p-4 sm:p-5 text-center transition-colors">
+              <Upload className="w-7 h-7 text-[#0066FF] mx-auto mb-1.5 opacity-80" />
               <p className="text-xs font-semibold text-slate-800">
                 Attach Screenshots, Photos, or Documents (Optional)
               </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">PNG, JPG, WEBP, or PDF up to 10MB</p>
-              <label className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-xs cursor-pointer">
+              <p className="text-[10px] text-slate-400 mt-0.5">PNG, JPG, WEBP, or PDF up to 10MB</p>
+              <label className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-2xs cursor-pointer">
                 <span>Choose File to Upload</span>
                 <input
                   type="file"
@@ -516,16 +712,16 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                   className="hidden"
                 />
               </label>
-              {uploading && <p className="text-xs text-[#0066FF] mt-2 font-medium animate-pulse">Uploading securely...</p>}
+              {uploading && <p className="text-xs text-[#0066FF] mt-1.5 font-medium animate-pulse">Uploading securely...</p>}
             </div>
 
             {/* Uploaded List */}
             {uploadedFiles.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {uploadedFiles.map((file, idx) => (
                   <div
                     key={file.id || idx}
-                    className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs"
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs"
                   >
                     <div className="flex items-center gap-2 truncate">
                       <FileText className="w-4 h-4 text-[#0066FF] shrink-0" />
@@ -543,11 +739,11 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
               </div>
             )}
 
-            <div className="flex justify-between pt-4 border-t border-slate-100">
+            <div className="flex justify-between pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-slate-500 hover:text-slate-800 text-xs font-medium cursor-pointer"
+                className="inline-flex items-center gap-1 px-3 py-2 text-slate-500 hover:text-slate-800 text-xs font-medium cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
@@ -555,9 +751,9 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
               <button
                 type="button"
                 onClick={() => setStep(5)}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl font-semibold text-xs transition-all cursor-pointer shadow-xs"
               >
-                <span>Continue to Privacy & Submit</span>
+                <span>Continue to Submit</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -566,19 +762,19 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
 
         {/* STEP 5: PRIVACY & SUBMIT */}
         {step === 5 && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Identity Switcher */}
-            <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
+            <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-slate-900">
-                    {isAnonymous ? 'Anonymous Protection: Active' : 'Identified Mode'}
+                    {isAnonymous ? 'Anonymous Mode: Active' : 'Identified Mode'}
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    {isAnonymous ? 'No identity or student email is logged.' : 'Your name & contact will be attached for direct follow-up.'}
+                    {isAnonymous ? 'Zero personal data logged.' : 'Name & contact attached for follow-up.'}
                   </p>
                 </div>
               </div>
@@ -586,21 +782,21 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
               <button
                 type="button"
                 onClick={() => setIsAnonymous(!isAnonymous)}
-                className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-50 cursor-pointer shadow-xs"
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-emerald-200 text-emerald-800 hover:bg-emerald-50 cursor-pointer shadow-2xs shrink-0"
               >
                 {isAnonymous ? 'Add Identity' : 'Make Anonymous'}
               </button>
             </div>
 
             {!isAnonymous && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <input
                     type="text"
                     value={reporterName}
                     onChange={(e) => setReporterName(e.target.value)}
                     placeholder="Your Name (Optional)"
-                    className="p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none"
+                    className="p-2.5 sm:p-3 rounded-xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none"
                   />
                   <div className="space-y-1">
                     <input
@@ -615,7 +811,7 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                       }}
                       onBlur={() => handleVerifyContactEmail(reporterContact)}
                       placeholder="Student Email or Phone Number"
-                      className={`w-full p-3.5 rounded-2xl bg-slate-50/60 border text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all ${
+                      className={`w-full p-2.5 sm:p-3 rounded-xl bg-slate-50/60 border text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all ${
                         emailCheckStatus === 'valid'
                           ? 'border-emerald-500 bg-emerald-50/20'
                           : emailCheckStatus === 'invalid'
@@ -624,14 +820,14 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                       }`}
                     />
                     {emailCheckMessage && (
-                      <p className={`text-[11px] font-medium px-1 flex items-center gap-1 ${
+                      <p className={`text-[10px] font-medium px-1 flex items-center gap-1 ${
                         emailCheckStatus === 'valid' 
                           ? 'text-emerald-700' 
                           : emailCheckStatus === 'invalid' 
                           ? 'text-rose-600' 
                           : 'text-slate-500'
                       }`}>
-                        {emailCheckStatus === 'checking' && <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping inline-block" />}
+                        {emailCheckStatus === 'checking' && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping inline-block" />}
                         {emailCheckMessage}
                       </p>
                     )}
@@ -641,7 +837,7 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
             )}
 
             {/* Quick Summary Pill */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs space-y-1.5">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs space-y-1">
               <div className="flex justify-between text-slate-500 text-[11px]">
                 <span>Category: <strong className="text-slate-900">{category}</strong></span>
                 <span>Location: <strong className="text-slate-900">{location}</strong></span>
@@ -649,11 +845,11 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
               <p className="text-[11px] text-slate-600 italic line-clamp-2">"{description}"</p>
             </div>
 
-            <div className="flex justify-between pt-4 border-t border-slate-100">
+            <div className="flex justify-between pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setStep(4)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-slate-500 hover:text-slate-800 text-xs font-medium cursor-pointer"
+                className="inline-flex items-center gap-1 px-3 py-2 text-slate-500 hover:text-slate-800 text-xs font-medium cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Back</span>
@@ -662,7 +858,7 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="inline-flex items-center gap-2 px-7 py-3 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl font-bold text-xs transition-all cursor-pointer shadow-md shadow-blue-500/20 disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-xl font-bold text-xs transition-all cursor-pointer shadow-md shadow-blue-500/20 disabled:opacity-50"
               >
                 {loading ? 'Encrypting & Logging...' : 'Submit Confidential Report →'}
               </button>

@@ -25,7 +25,8 @@ import {
   KeyRound,
   Eye,
   EyeOff,
-  Copy
+  Copy,
+  ChevronDown
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { SystemStats, Department, AuditLog, StaffUser, Case } from '../../types';
@@ -70,6 +71,17 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
   const [filterCaseCategory, setFilterCaseCategory] = useState('all');
   const [filterCasePriority, setFilterCasePriority] = useState('all');
   const [filterCaseStatus, setFilterCaseStatus] = useState('all');
+  const [expandedCaseIds, setExpandedCaseIds] = useState<Set<string>>(new Set());
+
+  const toggleExpandCase = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setExpandedCaseIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   // Modals
   const [showNewDeptModal, setShowNewDeptModal] = useState(false);
@@ -526,11 +538,12 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.98 }}
                     onClick={() => setSelectedCase(c)}
-                    className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer space-y-2.5 group"
+                    className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer space-y-2 group"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-[#0066FF] bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-lg">
+                    {/* Primary Header: ID, Badges, Date */}
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="font-mono text-xs font-bold text-[#0066FF] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">
                           {c.publicCaseId}
                         </span>
                         <CategoryBadge category={c.category || c.reportType} size="sm" />
@@ -538,47 +551,73 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                         <StatusBadge status={c.status} size="sm" />
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono font-medium">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                      <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-500 font-mono font-medium">
+                        <Clock className="w-3 h-3 text-slate-400" />
                         <span>{new Date(c.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1">
-                      <div className="flex items-center justify-between text-[10px] text-slate-500 font-semibold">
-                        <span>Student Statement:</span>
-                        <span className="text-emerald-700">
-                          {c.isAnonymous ? '🛡️ Anonymous' : `Identified: ${c.reporterName || 'Student'}`}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-800 line-clamp-2 leading-relaxed font-medium">
+                    {/* Compact One-Line Snippet */}
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <p className="text-slate-800 line-clamp-1 font-medium flex-1">
                         "{c.description}"
                       </p>
+                      <span className="text-[10px] text-emerald-700 font-semibold shrink-0">
+                        {c.isAnonymous ? '🛡️ Anon' : `${c.reporterName || 'Identified'}`}
+                      </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5 text-xs text-slate-500">
-                      <div className="flex flex-wrap items-center gap-3 text-[11px]">
-                        <span className="flex items-center gap-1 text-slate-600 font-medium">
-                          <MapPin className="w-3.5 h-3.5 text-rose-500" />
-                          <span>{c.location || 'Campus'}</span>
-                        </span>
+                    {/* Secondary Details (Expandable Section) */}
+                    <AnimatePresence>
+                      {expandedCaseIds.has(c.publicCaseId) && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="pt-1.5 border-t border-slate-100 space-y-2 text-xs overflow-hidden"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/70 text-xs text-slate-800 space-y-1">
+                            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Full Statement:</span>
+                            <p className="leading-relaxed">"{c.description}"</p>
+                          </div>
 
-                        {c.assignedDepartmentName && (
-                          <span className="flex items-center gap-1 text-slate-600 font-medium">
-                            <Users className="w-3.5 h-3.5 text-[#0066FF]" />
-                            <span>{c.assignedDepartmentName}</span>
-                          </span>
-                        )}
+                          <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600">
+                            <span className="flex items-center gap-1 font-medium">
+                              <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                              <span>{c.location || 'Campus'}</span>
+                            </span>
 
-                        {c.evidence && c.evidence.length > 0 && (
-                          <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
-                            <Paperclip className="w-3.5 h-3.5 text-amber-500" />
-                            <span>{c.evidence.length} file(s)</span>
-                          </span>
-                        )}
-                      </div>
+                            {c.assignedDepartmentName && (
+                              <span className="flex items-center gap-1 font-medium">
+                                <Users className="w-3.5 h-3.5 text-[#0066FF]" />
+                                <span>{c.assignedDepartmentName}</span>
+                              </span>
+                            )}
 
-                      <div className="flex items-center gap-2 ml-auto">
+                            {c.evidence && c.evidence.length > 0 && (
+                              <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
+                                <Paperclip className="w-3.5 h-3.5 text-amber-500" />
+                                <span>{c.evidence.length} file(s) attached</span>
+                              </span>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Card Actions Footer */}
+                    <div className="flex items-center justify-between pt-1 text-xs">
+                      <button
+                        type="button"
+                        onClick={(e) => toggleExpandCase(e, c.publicCaseId)}
+                        className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 font-medium cursor-pointer"
+                      >
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedCaseIds.has(c.publicCaseId) ? 'rotate-180' : ''}`} />
+                        <span>{expandedCaseIds.has(c.publicCaseId) ? 'Hide details' : 'More details'}</span>
+                      </button>
+
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -586,13 +625,13 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                             handleDeleteCase(c.publicCaseId);
                           }}
                           title="Delete Case Record"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
-                        <span className="inline-flex items-center gap-1 text-[#0066FF] text-xs font-semibold">
-                          <span>Inspect Case</span>
-                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                        <span className="inline-flex items-center gap-1 text-[#0066FF] text-[11px] font-semibold group-hover:underline">
+                          <span>Inspect</span>
+                          <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                         </span>
                       </div>
                     </div>

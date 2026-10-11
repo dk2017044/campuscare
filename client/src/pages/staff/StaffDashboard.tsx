@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, ShieldAlert, Wrench, RefreshCw, Siren, ClipboardList, ShieldCheck, ChevronRight, VolumeX, LogOut, UserCheck } from 'lucide-react';
+import { Search, ShieldAlert, Wrench, RefreshCw, Siren, ClipboardList, ShieldCheck, ChevronRight, VolumeX, LogOut, UserCheck, ChevronDown, MapPin, Paperclip, Clock } from 'lucide-react';
 import { api } from '../../services/api';
 import { Case, Department, StaffUser } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -43,6 +43,17 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterDept, setFilterDept] = useState(staffDept || 'all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedStaffCaseIds, setExpandedStaffCaseIds] = useState<Set<string>>(new Set());
+
+  const toggleExpandStaffCase = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setExpandedStaffCaseIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   useEffect(() => {
     setFilterDept(staffDept);
@@ -331,31 +342,31 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
         </div>
       </div>
 
-      {/* Bento Pastel KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <motion.div whileHover={{ y: -2 }} className="p-5 rounded-3xl bg-[#F0F7FF] border border-[#DCEBFF] space-y-1 shadow-xs">
-          <span className="text-[11px] font-bold text-[#0066FF] uppercase tracking-wider">New Intake</span>
-          <div className="text-3xl font-mono font-bold text-slate-900">{newCount}</div>
+      {/* Bento Pastel KPI Cards - Compact */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+        <motion.div whileHover={{ y: -2 }} className="p-3.5 sm:p-4 rounded-2xl bg-[#F0F7FF] border border-[#DCEBFF] space-y-0.5 shadow-xs">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[#0066FF] uppercase tracking-wider">New Intake</span>
+          <div className="text-2xl sm:text-3xl font-mono font-bold text-slate-900">{newCount}</div>
         </motion.div>
 
-        <motion.div whileHover={{ y: -2 }} className="p-5 rounded-3xl bg-[#FFF9EE] border border-[#FEE8B7] space-y-1 shadow-xs">
-          <span className="text-[11px] font-bold text-[#B54708] uppercase tracking-wider">In Progress</span>
-          <div className="text-3xl font-mono font-bold text-slate-900">{inProgressCount}</div>
+        <motion.div whileHover={{ y: -2 }} className="p-3.5 sm:p-4 rounded-2xl bg-[#FFF9EE] border border-[#FEE8B7] space-y-0.5 shadow-xs">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[#B54708] uppercase tracking-wider">In Progress</span>
+          <div className="text-2xl sm:text-3xl font-mono font-bold text-slate-900">{inProgressCount}</div>
         </motion.div>
 
-        <motion.div whileHover={{ y: -2 }} className="p-5 rounded-3xl bg-[#FFF1F0] border border-[#FED4D1] space-y-1 shadow-xs">
-          <span className="text-[11px] font-bold text-[#D92D20] uppercase tracking-wider">Critical SOS</span>
-          <div className="text-3xl font-mono font-bold text-slate-900">{criticalCount}</div>
+        <motion.div whileHover={{ y: -2 }} className="p-3.5 sm:p-4 rounded-2xl bg-[#FFF1F0] border border-[#FED4D1] space-y-0.5 shadow-xs">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[#D92D20] uppercase tracking-wider">Critical SOS</span>
+          <div className="text-2xl sm:text-3xl font-mono font-bold text-slate-900">{criticalCount}</div>
         </motion.div>
 
-        <motion.div whileHover={{ y: -2 }} className="p-5 rounded-3xl bg-[#F0FDF9] border border-[#CCFBEF] space-y-1 shadow-xs">
-          <span className="text-[11px] font-bold text-[#0E9384] uppercase tracking-wider">Resolved</span>
-          <div className="text-3xl font-mono font-bold text-slate-900">{resolvedCount}</div>
+        <motion.div whileHover={{ y: -2 }} className="p-3.5 sm:p-4 rounded-2xl bg-[#F0FDF9] border border-[#CCFBEF] space-y-0.5 shadow-xs">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[#0E9384] uppercase tracking-wider">Resolved</span>
+          <div className="text-2xl sm:text-3xl font-mono font-bold text-slate-900">{resolvedCount}</div>
         </motion.div>
       </div>
 
       {/* Category Pills & Filters */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 p-4 space-y-3.5 shadow-sm">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-3 sm:p-4 space-y-3 shadow-xs">
         <div className="flex flex-wrap items-center gap-1.5">
           {[
             { id: 'all', label: 'All Incidents', count: cases.length, icon: ClipboardList },
@@ -369,7 +380,7 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
                 key={tab.id}
                 type="button"
                 onClick={() => setFilterCategory(tab.id)}
-                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                   isSelected
                     ? 'bg-[#0066FF] text-white shadow-xs'
                     : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/70'
@@ -384,15 +395,15 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
         </div>
 
         {/* Search & Dropdown Filters */}
-        <div className="flex flex-col sm:flex-row items-center gap-2.5 text-xs">
+        <div className="flex flex-col sm:flex-row items-center gap-2 text-xs">
           <div className="relative flex-1 w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by Case ID, keyword, location..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-50/70 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
+              className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50/70 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
             />
           </div>
 
@@ -427,10 +438,10 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
         </div>
       </div>
 
-      {/* Incident Cards List */}
-      <div className="space-y-2.5">
+      {/* Incident Cards List - Compact & Expandable */}
+      <div className="space-y-2">
         {filteredCases.length === 0 ? (
-          <div className="p-10 text-center text-xs text-slate-400 bg-white border border-slate-200/80 rounded-3xl font-medium">
+          <div className="p-8 text-center text-xs text-slate-400 bg-white border border-slate-200/80 rounded-2xl font-medium">
             No incident reports found matching current filters.
           </div>
         ) : (
@@ -439,36 +450,91 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
               whileHover={{ y: -1 }}
               key={c.id || c.publicCaseId}
               onClick={() => setSelectedCase(c)}
-              className="p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer space-y-2 group"
             >
-              <div className="flex items-start sm:items-center gap-3.5">
-                <span className="font-mono text-xs font-bold text-[#0066FF] shrink-0 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100">
-                  {c.publicCaseId}
-                </span>
-
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <CategoryBadge category={c.category || c.reportType} sublabel={c.subcategory || c.category} size="sm" />
-                    <PriorityBadge priority={c.priority} size="sm" />
-                    <StatusBadge status={c.status} size="sm" />
-                  </div>
-                  <p className="text-xs text-slate-700 line-clamp-1 font-medium">
-                    {c.description}
-                  </p>
+              {/* Primary Header Row */}
+              <div className="flex flex-wrap items-center justify-between gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="font-mono text-xs font-bold text-[#0066FF] shrink-0 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                    {c.publicCaseId}
+                  </span>
+                  <CategoryBadge category={c.category || c.reportType} sublabel={c.subcategory || c.category} size="sm" />
+                  <PriorityBadge priority={c.priority} size="sm" />
+                  <StatusBadge status={c.status} size="sm" />
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-3.5 shrink-0 text-xs text-slate-500">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-500 font-medium">{c.assignedDepartmentName || 'Department'}</span>
-                  {c.isAnonymous && (
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-[11px] text-slate-500 font-medium hidden xs:inline">{c.assignedDepartmentName || 'Department'}</span>
+                  {c.isAnonymous ? (
                     <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
                       <ShieldCheck className="w-3 h-3 text-emerald-600" />
                       <span>Anon</span>
                     </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-600 font-medium bg-slate-100 px-2 py-0.5 rounded-full">
+                      {c.reporterName || 'Identified'}
+                    </span>
                   )}
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </div>
+
+              {/* Compact 1-liner description */}
+              <p className="text-xs text-slate-700 line-clamp-1 font-medium">
+                "{c.description}"
+              </p>
+
+              {/* Secondary Details (Expandable Section) */}
+              <AnimatePresence>
+                {expandedStaffCaseIds.has(c.publicCaseId) && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="pt-2 border-t border-slate-100 space-y-1.5 text-xs overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="p-2 rounded-lg bg-slate-50 border border-slate-200/70 text-slate-800">
+                      <span className="text-[10px] text-slate-500 font-semibold block uppercase">Statement:</span>
+                      <p className="leading-relaxed mt-0.5">"{c.description}"</p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 pt-0.5">
+                      <span className="flex items-center gap-1 font-medium">
+                        <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                        <span>{c.location || 'Campus'}</span>
+                      </span>
+
+                      <span className="flex items-center gap-1 font-medium text-slate-500">
+                        <Clock className="w-3 h-3" />
+                        <span>{c.incidentDate || 'Recent'} ({c.incidentTime || 'Time not specified'})</span>
+                      </span>
+
+                      {c.evidence && c.evidence.length > 0 && (
+                        <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
+                          <Paperclip className="w-3.5 h-3.5 text-amber-500" />
+                          <span>{c.evidence.length} file(s) attached</span>
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Card Footer Actions */}
+              <div className="flex items-center justify-between pt-1 text-xs">
+                <button
+                  type="button"
+                  onClick={(e) => toggleExpandStaffCase(e, c.publicCaseId)}
+                  className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 font-medium cursor-pointer"
+                >
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${expandedStaffCaseIds.has(c.publicCaseId) ? 'rotate-180' : ''}`} />
+                  <span>{expandedStaffCaseIds.has(c.publicCaseId) ? 'Hide details' : 'More details'}</span>
+                </button>
+
+                <span className="inline-flex items-center gap-1 text-[#0066FF] text-[11px] font-semibold group-hover:underline">
+                  <span>Review Case</span>
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </span>
               </div>
             </motion.div>
           ))
