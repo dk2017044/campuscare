@@ -34,6 +34,7 @@ import { StaffCaseDetail } from '../staff/StaffCaseDetail';
 import { StatusBadge } from '../../components/StatusBadge';
 import { PriorityBadge } from '../../components/PriorityBadge';
 import { CategoryBadge, getCategoryMeta } from '../../components/CategoryBadge';
+import { JioSkeletonLoader } from '../../components/JioSkeletonLoader';
 
 interface Props {
   currentTab?: string;
@@ -100,23 +101,64 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
   const [newStaffFieldScope, setNewStaffFieldScope] = useState('all');
   const [savingStaff, setSavingStaff] = useState(false);
 
-  // Admin Login Authentication Gate (Default: admin / admin@123)
+  // Admin Login Authentication Gate (Clean empty defaults)
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
     return localStorage.getItem('campuscare_admin_auth') === 'true';
   });
-  const [adminLoginUser, setAdminLoginUser] = useState('admin');
-  const [adminLoginPass, setAdminLoginPass] = useState('admin@123');
+  const [adminLoginUser, setAdminLoginUser] = useState('');
+  const [adminLoginPass, setAdminLoginPass] = useState('');
   const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
+
+  // Admin Change Password Modal State
+  const [showAdminChangePasswordModal, setShowAdminChangePasswordModal] = useState(false);
+  const [adminCurrentPassword, setAdminCurrentPassword] = useState('');
+  const [adminNewPassword, setAdminNewPassword] = useState('');
+  const [adminConfirmPassword, setAdminConfirmPassword] = useState('');
+  const [adminPasswordChangeError, setAdminPasswordChangeError] = useState<string | null>(null);
+  const [adminPasswordChangeSuccess, setAdminPasswordChangeSuccess] = useState<string | null>(null);
+
+  // Progressive On-Demand Queue Loading
+  const [queueDisplayLimit, setQueueDisplayLimit] = useState(5);
+  const [isLoadingMoreQueue, setIsLoadingMoreQueue] = useState(false);
 
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminLoginUser.trim() === 'admin' && adminLoginPass === 'admin@123') {
+    const activeAdminPassword = localStorage.getItem('campuscare_admin_password') || 'admin@123';
+    if (adminLoginUser.trim() === 'admin' && adminLoginPass === activeAdminPassword) {
       setIsAdminAuthenticated(true);
       localStorage.setItem('campuscare_admin_auth', 'true');
       setAdminLoginError(null);
     } else {
-      setAdminLoginError('Invalid Administrator credentials. Default: admin / admin@123');
+      setAdminLoginError('Invalid Administrator credentials.');
     }
+  };
+
+  const handleChangeAdminPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminPasswordChangeError(null);
+    setAdminPasswordChangeSuccess(null);
+    const activeAdminPassword = localStorage.getItem('campuscare_admin_password') || 'admin@123';
+    if (adminCurrentPassword !== activeAdminPassword) {
+      setAdminPasswordChangeError('Current password is incorrect.');
+      return;
+    }
+    if (!adminNewPassword || adminNewPassword.length < 6) {
+      setAdminPasswordChangeError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (adminNewPassword !== adminConfirmPassword) {
+      setAdminPasswordChangeError('New passwords do not match.');
+      return;
+    }
+    localStorage.setItem('campuscare_admin_password', adminNewPassword);
+    setAdminPasswordChangeSuccess('Admin password changed successfully!');
+    setTimeout(() => {
+      setShowAdminChangePasswordModal(false);
+      setAdminCurrentPassword('');
+      setAdminNewPassword('');
+      setAdminConfirmPassword('');
+      setAdminPasswordChangeSuccess(null);
+    }, 1200);
   };
 
   const handleAdminLogout = () => {
@@ -289,8 +331,8 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                 type="text"
                 value={adminLoginUser}
                 onChange={(e) => setAdminLoginUser(e.target.value)}
-                placeholder="admin"
-                className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs font-mono font-bold outline-none"
+                placeholder="Enter Admin User ID"
+                className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs font-medium outline-none"
                 required
               />
             </div>
@@ -301,7 +343,7 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                 type="password"
                 value={adminLoginPass}
                 onChange={(e) => setAdminLoginPass(e.target.value)}
-                placeholder="admin@123"
+                placeholder="Enter Admin Password"
                 className="w-full p-3.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs font-medium outline-none"
                 required
               />
@@ -319,12 +361,6 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
             >
               Sign In as Administrator →
             </button>
-
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
-              <p className="text-[11px] text-slate-600 font-medium">
-                Default Credentials: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-300 font-bold text-slate-900 font-mono">admin</code> / <code className="bg-white px-1.5 py-0.5 rounded border border-slate-300 font-bold text-slate-900 font-mono">admin@123</code>
-              </p>
-            </div>
           </form>
         </motion.div>
       </div>
@@ -350,19 +386,36 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={loadAdminData}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-xs transition-all cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? 'animate-spin text-[#0066FF]' : ''}`} />
-            <span>Sync Live Data</span>
+            <span className="hidden sm:inline">Sync Live Data</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setAdminCurrentPassword('');
+              setAdminNewPassword('');
+              setAdminConfirmPassword('');
+              setAdminPasswordChangeError(null);
+              setAdminPasswordChangeSuccess(null);
+              setShowAdminChangePasswordModal(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition-all cursor-pointer shadow-2xs"
+            title="Change Administrator Password"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-slate-600" />
+            <span>Change Password</span>
           </button>
 
           <button
             onClick={handleAdminLogout}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-xs transition-all cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-100 shadow-xs transition-all cursor-pointer"
             title="Log out of Admin Console"
           >
             <Lock className="w-3.5 h-3.5 text-rose-600" />
@@ -530,7 +583,7 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
           ) : (
             <div className="space-y-2.5">
               <AnimatePresence mode="popLayout">
-                {filteredCases.map((c) => (
+                {filteredCases.slice(0, queueDisplayLimit).map((c) => (
                   <motion.div
                     key={c.publicCaseId}
                     layout
@@ -538,12 +591,12 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.98 }}
                     onClick={() => setSelectedCase(c)}
-                    className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer space-y-2 group"
+                    className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer space-y-2 group w-full max-w-full overflow-hidden break-words"
                   >
                     {/* Primary Header: ID, Badges, Date */}
-                    <div className="flex flex-wrap items-center justify-between gap-1.5">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-mono text-xs font-bold text-[#0066FF] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">
+                    <div className="flex flex-wrap items-center justify-between gap-1.5 w-full min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                        <span className="font-mono text-xs font-bold text-[#0066FF] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md shrink-0">
                           {c.publicCaseId}
                         </span>
                         <CategoryBadge category={c.category || c.reportType} size="sm" />
@@ -551,15 +604,15 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                         <StatusBadge status={c.status} size="sm" />
                       </div>
 
-                      <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-500 font-mono font-medium">
+                      <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-slate-500 font-mono font-medium shrink-0">
                         <Clock className="w-3 h-3 text-slate-400" />
                         <span>{new Date(c.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                     </div>
 
                     {/* Compact One-Line Snippet */}
-                    <div className="flex items-center justify-between gap-2 text-xs">
-                      <p className="text-slate-800 line-clamp-1 font-medium flex-1">
+                    <div className="flex items-center justify-between gap-2 text-xs w-full min-w-0">
+                      <p className="text-slate-800 line-clamp-1 font-medium flex-1 min-w-0 truncate">
                         "{c.description}"
                       </p>
                       <span className="text-[10px] text-emerald-700 font-semibold shrink-0">
@@ -574,29 +627,29 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="pt-1.5 border-t border-slate-100 space-y-2 text-xs overflow-hidden"
+                          className="pt-1.5 border-t border-slate-100 space-y-2 text-xs overflow-hidden w-full min-w-0"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/70 text-xs text-slate-800 space-y-1">
+                          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/70 text-xs text-slate-800 space-y-1 w-full min-w-0 break-words">
                             <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Full Statement:</span>
-                            <p className="leading-relaxed">"{c.description}"</p>
+                            <p className="leading-relaxed break-words">"{c.description}"</p>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600">
-                            <span className="flex items-center gap-1 font-medium">
-                              <MapPin className="w-3.5 h-3.5 text-rose-500" />
-                              <span>{c.location || 'Campus'}</span>
+                          <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 min-w-0">
+                            <span className="flex items-center gap-1 font-medium min-w-0">
+                              <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                              <span className="truncate max-w-[200px] sm:max-w-none">{c.location || 'Campus'}</span>
                             </span>
 
                             {c.assignedDepartmentName && (
-                              <span className="flex items-center gap-1 font-medium">
-                                <Users className="w-3.5 h-3.5 text-[#0066FF]" />
-                                <span>{c.assignedDepartmentName}</span>
+                              <span className="flex items-center gap-1 font-medium min-w-0">
+                                <Users className="w-3.5 h-3.5 text-[#0066FF] shrink-0" />
+                                <span className="truncate max-w-[200px] sm:max-w-none">{c.assignedDepartmentName}</span>
                               </span>
                             )}
 
                             {c.evidence && c.evidence.length > 0 && (
-                              <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
+                              <span className="inline-flex items-center gap-1 text-amber-700 font-medium shrink-0">
                                 <Paperclip className="w-3.5 h-3.5 text-amber-500" />
                                 <span>{c.evidence.length} file(s) attached</span>
                               </span>
@@ -607,7 +660,7 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                     </AnimatePresence>
 
                     {/* Card Actions Footer */}
-                    <div className="flex items-center justify-between pt-1 text-xs">
+                    <div className="flex items-center justify-between pt-1 text-xs w-full min-w-0">
                       <button
                         type="button"
                         onClick={(e) => toggleExpandCase(e, c.publicCaseId)}
@@ -617,7 +670,7 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                         <span>{expandedCaseIds.has(c.publicCaseId) ? 'Hide details' : 'More details'}</span>
                       </button>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -638,6 +691,29 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                   </motion.div>
                 ))}
               </AnimatePresence>
+
+              {filteredCases.length > queueDisplayLimit && (
+                <div className="pt-2 space-y-3">
+                  {isLoadingMoreQueue && <JioSkeletonLoader count={2} />}
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      disabled={isLoadingMoreQueue}
+                      onClick={() => {
+                        setIsLoadingMoreQueue(true);
+                        setTimeout(() => {
+                          setQueueDisplayLimit(prev => prev + 5);
+                          setIsLoadingMoreQueue(false);
+                        }, 400);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs inline-flex items-center gap-1.5 cursor-pointer transition-all hover:border-slate-300"
+                    >
+                      <span>Load More Incidents ({filteredCases.length - queueDisplayLimit} more)</span>
+                      <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -760,14 +836,14 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
               {departments.map((dept) => (
                 <div
                   key={dept.id}
-                  className="p-4 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-between text-xs group hover:border-slate-300 shadow-xs transition-all"
+                  className="p-4 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-between text-xs group hover:border-slate-300 shadow-xs transition-all w-full max-w-full overflow-hidden break-words min-w-0"
                 >
-                  <div className="space-y-0.5">
-                    <strong className="text-slate-900 text-sm block font-bold">{dept.name}</strong>
-                    <span className="text-slate-500 font-mono text-[11px]">{dept.email || 'Internal Dispatch'}</span>
-                    <span className="text-[10px] text-[#0066FF] font-mono capitalize block font-semibold">Type: {dept.type}</span>
+                  <div className="space-y-0.5 min-w-0 flex-1 pr-2">
+                    <strong className="text-slate-900 text-sm block font-bold truncate">{dept.name}</strong>
+                    <span className="text-slate-500 font-mono text-[11px] truncate block">{dept.email || 'Internal Dispatch'}</span>
+                    <span className="text-[10px] text-[#0066FF] font-mono capitalize block font-semibold truncate">Type: {dept.type}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] border border-emerald-200 font-mono font-bold">
                       Active
                     </span>
@@ -842,25 +918,25 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                 return (
                   <div
                     key={staff.id}
-                    className="p-4 rounded-2xl bg-white border border-slate-200/80 flex items-start justify-between text-xs hover:border-slate-300 shadow-xs transition-all"
+                    className="p-4 rounded-2xl bg-white border border-slate-200/80 flex items-start justify-between text-xs hover:border-slate-300 shadow-xs transition-all w-full max-w-full overflow-hidden break-words min-w-0"
                   >
-                    <div className="space-y-1">
-                      <strong className="text-slate-900 text-sm block font-bold">{staff.name}</strong>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-[#0066FF] border border-blue-200">
+                    <div className="space-y-1 min-w-0 flex-1 pr-2">
+                      <strong className="text-slate-900 text-sm block font-bold truncate">{staff.name}</strong>
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-[#0066FF] border border-blue-200 shrink-0">
                           ID: {staff.staffId}
                         </span>
                         <span className="text-[11px] text-slate-700 font-semibold block truncate max-w-[140px]">
                           {dept ? dept.name : (staff.departmentName || staff.departmentId)}
                         </span>
                       </div>
-                      <span className="text-slate-500 block text-[11px] font-medium">{staff.title}</span>
-                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      <span className="text-slate-500 block text-[11px] font-medium truncate">{staff.title}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5 min-w-0">
+                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
                           Scope: {staff.fieldScope === 'all' ? 'All Unit Incidents' : staff.fieldScope || 'all'}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono block">
+                      <span className="text-[10px] text-slate-400 font-mono block truncate">
                         {staff.email}
                       </span>
                     </div>
@@ -1018,7 +1094,7 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                     type="text"
                     value={newStaffName}
                     onChange={(e) => setNewStaffName(e.target.value)}
-                    placeholder="e.g. Dr. Rajesh Sharma"
+                    placeholder="Enter full name"
                     className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
                     required
                   />
@@ -1034,7 +1110,7 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                         type="text"
                         value={newStaffId}
                         onChange={(e) => setNewStaffId(e.target.value)}
-                        placeholder="e.g. STAFF001"
+                        placeholder="e.g. STF101"
                         className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none font-mono uppercase font-bold"
                         required
                       />
@@ -1050,7 +1126,7 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                         type={showStaffPassword ? 'text' : 'password'}
                         value={newStaffPassword}
                         onChange={(e) => setNewStaffPassword(e.target.value)}
-                        placeholder="e.g. Staff@123"
+                        placeholder="Create staff password"
                         className="w-full pl-3 pr-9 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none font-medium"
                         required
                       />
@@ -1137,6 +1213,110 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
                     className="flex-1 py-2.5 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold text-xs transition-all cursor-pointer shadow-xs"
                   >
                     {savingStaff ? 'Saving...' : 'Authorize Staff'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Admin Change Password Modal */}
+      <AnimatePresence>
+        {showAdminChangePasswordModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-sm bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-50 text-[#0066FF]">
+                    <KeyRound className="w-4 h-4" />
+                  </div>
+                  <h3 className="font-bold text-sm text-slate-900 font-heading">Change Admin Password</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAdminChangePasswordModal(false);
+                    setAdminPasswordChangeError(null);
+                    setAdminPasswordChangeSuccess(null);
+                  }}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleChangeAdminPassword} className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    value={adminCurrentPassword}
+                    onChange={(e) => setAdminCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-[#0066FF] outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">New Password (Min 6 chars)</label>
+                  <input
+                    type="password"
+                    value={adminNewPassword}
+                    onChange={(e) => setAdminNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-[#0066FF] outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={adminConfirmPassword}
+                    onChange={(e) => setAdminConfirmPassword(e.target.value)}
+                    placeholder="Re-enter new password"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-[#0066FF] outline-none"
+                    required
+                  />
+                </div>
+
+                {adminPasswordChangeError && (
+                  <p className="text-[11px] text-rose-600 font-semibold p-2 rounded-lg bg-rose-50 border border-rose-200">
+                    {adminPasswordChangeError}
+                  </p>
+                )}
+
+                {adminPasswordChangeSuccess && (
+                  <p className="text-[11px] text-emerald-700 font-semibold p-2 rounded-lg bg-emerald-50 border border-emerald-200">
+                    {adminPasswordChangeSuccess}
+                  </p>
+                )}
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAdminChangePasswordModal(false);
+                      setAdminPasswordChangeError(null);
+                      setAdminPasswordChangeSuccess(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white text-xs font-bold shadow-xs cursor-pointer"
+                  >
+                    Save Password
                   </button>
                 </div>
               </form>

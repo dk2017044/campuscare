@@ -240,26 +240,26 @@ export const VoiceDictaphone: React.FC<Props> = ({
                 onClick={() =>
                   applyPreset(
                     isEmergency
-                      ? 'दो लोग मेन कैंटीन के पास डंडों के साथ लड़ाई कर रहे हैं, तुरंत सिक्योरिटी भेजो!'
-                      : 'Mechanical lab ke piche do log ladayi kar rahe hain aur threats de rahe hain.'
+                      ? 'कैंटीन के पास तुरंत सुरक्षा भेजो'
+                      : 'कैंटीन के पास लड़ाई हो रही है'
                   )
                 }
                 className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium cursor-pointer transition-all shadow-2xs"
               >
-                🇮🇳 Sample Hindi Prompt
+                🇮🇳 {isEmergency ? 'सुरक्षा भेजो' : 'कैंटीन में लड़ाई'}
               </button>
               <button
                 type="button"
                 onClick={() =>
                   applyPreset(
                     isEmergency
-                      ? 'Immediate assistance required! An intruder is threatening students near Electronics Lab corridor.'
-                      : 'Someone is repeatedly following female students near the hostel back gate after 6 PM.'
+                      ? 'Immediate security needed near main block'
+                      : 'Ragging incident near library'
                   )
                 }
                 className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium cursor-pointer transition-all shadow-2xs"
               >
-                🇬🇧 Sample English Prompt
+                🇬🇧 {isEmergency ? 'Emergency Security' : 'Ragging Incident'}
               </button>
             </motion.div>
           )}

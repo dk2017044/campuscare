@@ -901,6 +901,19 @@ app.post('/api/staff/login', (req, res) => {
   }
 });
 
+app.post('/api/staff/change-password', (req, res) => {
+  try {
+    const { staffId, oldPassword, newPassword } = req.body;
+    if (!staffId || !oldPassword || !newPassword) {
+      return res.status(400).json({ error: 'Staff ID, current password, and new password are required.' });
+    }
+    db.updateStaffPassword({ staffId, oldPassword, newPassword });
+    return res.json({ success: true, message: 'Password updated successfully.' });
+  } catch (error) {
+    return res.status(400).json({ error: error.message || 'Failed to update password' });
+  }
+});
+
 app.post('/api/staff/create', async (req, res) => {
   try {
     const { name, staffId, email, password, departmentId, title, fieldScope } = req.body;

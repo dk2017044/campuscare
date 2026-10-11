@@ -268,6 +268,19 @@ export const api = {
     return res.json();
   },
 
+  async changeStaffPassword(data: { staffId: string; oldPassword: string; newPassword: string }): Promise<{ success: boolean; message: string }> {
+    const res = await fetch(`${API_BASE}/staff/change-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Failed to update password' }));
+      throw new Error(err.error || 'Failed to update password');
+    }
+    return res.json();
+  },
+
   async getStaff(): Promise<{ success: boolean; staff: StaffUser[] }> {
     const res = await fetch(`${API_BASE}/staff`);
     if (!res.ok) throw new Error('Failed to load staff directory');

@@ -118,6 +118,46 @@
   "lostFoundItems": [],
   "auditLogs": [
     {
+      "id": "audit-1791679112616-3zht",
+      "timestamp": "2026-10-11T00:38:32.616Z",
+      "actorId": "admin",
+      "actorName": "University Administrator",
+      "action": "STAFF_ACCOUNT_REMOVED",
+      "metadata": {
+        "staffId": "TEST_STF_PWD",
+        "name": "Test Officer"
+      }
+    },
+    {
+      "id": "audit-1791679107274-1drg",
+      "timestamp": "2026-10-11T00:38:27.274Z",
+      "actorId": "admin",
+      "actorName": "University Administrator",
+      "action": "STAFF_ACCOUNT_CREATED",
+      "metadata": {
+        "staffId": "TEST_STF_PWD",
+        "name": "Test Officer",
+        "department": "General Administration",
+        "title": "Safety Officer",
+        "fieldScope": "all"
+      }
+    },
+    {
+      "id": "audit-1791677904236-jxjz",
+      "timestamp": "2026-10-11T00:18:24.236Z",
+      "actorId": "anonymous-student",
+      "actorName": "Anonymous Student",
+      "action": "CASE_CREATED",
+      "caseId": "case-1791677904229-3wo2",
+      "publicCaseId": "CC-2U2N4LV",
+      "metadata": {
+        "isAnonymous": true,
+        "category": "Bullying / Ragging",
+        "priority": "MEDIUM",
+        "assignedDepartment": "Pending Department Creation"
+      }
+    },
+    {
       "id": "audit-1791673999110-ghyd",
       "timestamp": "2026-10-10T23:13:19.110Z",
       "actorId": "anonymous-student",

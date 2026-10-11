@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, ShieldAlert, Wrench, RefreshCw, Siren, ClipboardList, ShieldCheck, ChevronRight, VolumeX, LogOut, UserCheck, ChevronDown, MapPin, Paperclip, Clock } from 'lucide-react';
+import { Search, ShieldAlert, Wrench, RefreshCw, Siren, ClipboardList, ShieldCheck, ChevronRight, VolumeX, LogOut, UserCheck, ChevronDown, MapPin, Paperclip, Clock, KeyRound, X } from 'lucide-react';
 import { api } from '../../services/api';
 import { Case, Department, StaffUser } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { PriorityBadge } from '../../components/PriorityBadge';
 import { CategoryBadge } from '../../components/CategoryBadge';
+import { JioSkeletonLoader } from '../../components/JioSkeletonLoader';
 import { StaffCaseDetail } from './StaffCaseDetail';
 import { StaffLogin } from './StaffLogin';
 import { playEmergencySiren, stopEmergencySiren } from '../../services/sound';
@@ -26,9 +27,57 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
   const [loading, setLoading] = useState(false);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
 
+  // Staff Change Password Modal State
+  const [showStaffChangePasswordModal, setShowStaffChangePasswordModal] = useState(false);
+  const [staffCurrentPassword, setStaffCurrentPassword] = useState('');
+  const [staffNewPassword, setStaffNewPassword] = useState('');
+  const [staffConfirmPassword, setStaffConfirmPassword] = useState('');
+  const [staffPasswordChangeError, setStaffPasswordChangeError] = useState<string | null>(null);
+  const [staffPasswordChangeSuccess, setStaffPasswordChangeSuccess] = useState<string | null>(null);
+  const [savingStaffPassword, setSavingStaffPassword] = useState(false);
+
+  // Progressive On-Demand Loading State for Staff Incidents
+  const [staffDisplayLimit, setStaffDisplayLimit] = useState(5);
+  const [isLoadingMoreStaff, setIsLoadingMoreStaff] = useState(false);
+
   const handleLogout = () => {
     localStorage.removeItem('campuscare_staff_session');
     setActiveStaffUser(null);
+  };
+
+  const handleChangeStaffPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStaffPasswordChangeError(null);
+    setStaffPasswordChangeSuccess(null);
+    if (!activeStaffUser) return;
+    if (!staffNewPassword || staffNewPassword.length < 4) {
+      setStaffPasswordChangeError('New password must be at least 4 characters long.');
+      return;
+    }
+    if (staffNewPassword !== staffConfirmPassword) {
+      setStaffPasswordChangeError('New passwords do not match.');
+      return;
+    }
+    try {
+      setSavingStaffPassword(true);
+      await api.changeStaffPassword({
+        staffId: activeStaffUser.staffId,
+        oldPassword: staffCurrentPassword,
+        newPassword: staffNewPassword
+      });
+      setStaffPasswordChangeSuccess('Password updated successfully!');
+      setTimeout(() => {
+        setShowStaffChangePasswordModal(false);
+        setStaffCurrentPassword('');
+        setStaffNewPassword('');
+        setStaffConfirmPassword('');
+        setStaffPasswordChangeSuccess(null);
+      }, 1200);
+    } catch (err: any) {
+      setStaffPasswordChangeError(err.message || 'Failed to update password.');
+    } finally {
+      setSavingStaffPassword(false);
+    }
   };
 
   // Real-Time Emergency SOS Siren State
@@ -58,6 +107,10 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
   useEffect(() => {
     setFilterDept(staffDept);
   }, [staffDept]);
+
+  useEffect(() => {
+    setStaffDisplayLimit(5);
+  }, [filterCategory, filterPriority, filterStatus, filterDept, searchQuery]);
 
   useEffect(() => {
     loadData(true);
@@ -285,6 +338,23 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
 
           <button
             type="button"
+            onClick={() => {
+              setStaffCurrentPassword('');
+              setStaffNewPassword('');
+              setStaffConfirmPassword('');
+              setStaffPasswordChangeError(null);
+              setStaffPasswordChangeSuccess(null);
+              setShowStaffChangePasswordModal(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors cursor-pointer shadow-2xs"
+            title="Change Staff Password"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-slate-600" />
+            <span className="hidden sm:inline">Change Password</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleLogout}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors cursor-pointer shadow-2xs"
             title="Log out of Staff Portal"
@@ -445,16 +515,16 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
             No incident reports found matching current filters.
           </div>
         ) : (
-          filteredCases.map((c) => (
+          filteredCases.slice(0, staffDisplayLimit).map((c) => (
             <motion.div
               whileHover={{ y: -1 }}
               key={c.id || c.publicCaseId}
               onClick={() => setSelectedCase(c)}
-              className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer space-y-2 group"
+              className="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer space-y-2 group w-full max-w-full overflow-hidden break-words"
             >
               {/* Primary Header Row */}
-              <div className="flex flex-wrap items-center justify-between gap-1.5">
-                <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 w-full min-w-0">
+                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                   <span className="font-mono text-xs font-bold text-[#0066FF] shrink-0 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
                     {c.publicCaseId}
                   </span>
@@ -463,8 +533,8 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
                   <StatusBadge status={c.status} size="sm" />
                 </div>
 
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-[11px] text-slate-500 font-medium hidden xs:inline">{c.assignedDepartmentName || 'Department'}</span>
+                <div className="flex items-center gap-2 text-xs shrink-0">
+                  <span className="text-[11px] text-slate-500 font-medium hidden xs:inline truncate max-w-[150px]">{c.assignedDepartmentName || 'Department'}</span>
                   {c.isAnonymous ? (
                     <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">
                       <ShieldCheck className="w-3 h-3 text-emerald-600" />
@@ -479,7 +549,7 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
               </div>
 
               {/* Compact 1-liner description */}
-              <p className="text-xs text-slate-700 line-clamp-1 font-medium">
+              <p className="text-xs text-slate-700 line-clamp-1 font-medium w-full min-w-0 truncate">
                 "{c.description}"
               </p>
 
@@ -490,27 +560,27 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="pt-2 border-t border-slate-100 space-y-1.5 text-xs overflow-hidden"
+                    className="pt-2 border-t border-slate-100 space-y-1.5 text-xs overflow-hidden w-full min-w-0"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="p-2 rounded-lg bg-slate-50 border border-slate-200/70 text-slate-800">
+                    <div className="p-2 rounded-lg bg-slate-50 border border-slate-200/70 text-slate-800 w-full min-w-0 break-words">
                       <span className="text-[10px] text-slate-500 font-semibold block uppercase">Statement:</span>
-                      <p className="leading-relaxed mt-0.5">"{c.description}"</p>
+                      <p className="leading-relaxed mt-0.5 break-words">"{c.description}"</p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 pt-0.5">
-                      <span className="flex items-center gap-1 font-medium">
-                        <MapPin className="w-3.5 h-3.5 text-rose-500" />
-                        <span>{c.location || 'Campus'}</span>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 pt-0.5 min-w-0">
+                      <span className="flex items-center gap-1 font-medium min-w-0">
+                        <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        <span className="truncate max-w-[180px] sm:max-w-none">{c.location || 'Campus'}</span>
                       </span>
 
-                      <span className="flex items-center gap-1 font-medium text-slate-500">
+                      <span className="flex items-center gap-1 font-medium text-slate-500 shrink-0">
                         <Clock className="w-3 h-3" />
                         <span>{c.incidentDate || 'Recent'} ({c.incidentTime || 'Time not specified'})</span>
                       </span>
 
                       {c.evidence && c.evidence.length > 0 && (
-                        <span className="inline-flex items-center gap-1 text-amber-700 font-medium">
+                        <span className="inline-flex items-center gap-1 text-amber-700 font-medium shrink-0">
                           <Paperclip className="w-3.5 h-3.5 text-amber-500" />
                           <span>{c.evidence.length} file(s) attached</span>
                         </span>
@@ -521,7 +591,7 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
               </AnimatePresence>
 
               {/* Card Footer Actions */}
-              <div className="flex items-center justify-between pt-1 text-xs">
+              <div className="flex items-center justify-between pt-1 text-xs w-full min-w-0">
                 <button
                   type="button"
                   onClick={(e) => toggleExpandStaffCase(e, c.publicCaseId)}
@@ -539,7 +609,138 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
             </motion.div>
           ))
         )}
+
+        {filteredCases.length > staffDisplayLimit && (
+          <div className="pt-2 space-y-3">
+            {isLoadingMoreStaff && <JioSkeletonLoader count={2} />}
+            <div className="text-center">
+              <button
+                type="button"
+                disabled={isLoadingMoreStaff}
+                onClick={() => {
+                  setIsLoadingMoreStaff(true);
+                  setTimeout(() => {
+                    setStaffDisplayLimit(prev => prev + 5);
+                    setIsLoadingMoreStaff(false);
+                  }, 400);
+                }}
+                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 shadow-2xs inline-flex items-center gap-1.5 cursor-pointer transition-all hover:border-slate-300"
+              >
+                <span>Load More Incidents ({filteredCases.length - staffDisplayLimit} more)</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Change Staff Password Modal */}
+      <AnimatePresence>
+        {showStaffChangePasswordModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-sm bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-blue-50 text-[#0066FF]">
+                    <KeyRound className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900 font-heading">Change Password</h3>
+                    <p className="text-[10px] text-slate-500 font-mono">{activeStaffUser?.staffId}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowStaffChangePasswordModal(false);
+                    setStaffPasswordChangeError(null);
+                    setStaffPasswordChangeSuccess(null);
+                  }}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleChangeStaffPassword} className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Current Password</label>
+                  <input
+                    type="password"
+                    value={staffCurrentPassword}
+                    onChange={(e) => setStaffCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-[#0066FF] outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">New Password (Min 4 chars)</label>
+                  <input
+                    type="password"
+                    value={staffNewPassword}
+                    onChange={(e) => setStaffNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-[#0066FF] outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={staffConfirmPassword}
+                    onChange={(e) => setStaffConfirmPassword(e.target.value)}
+                    placeholder="Re-enter new password"
+                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs focus:bg-white focus:border-[#0066FF] outline-none"
+                    required
+                  />
+                </div>
+
+                {staffPasswordChangeError && (
+                  <p className="text-[11px] text-rose-600 font-semibold p-2 rounded-lg bg-rose-50 border border-rose-200">
+                    {staffPasswordChangeError}
+                  </p>
+                )}
+
+                {staffPasswordChangeSuccess && (
+                  <p className="text-[11px] text-emerald-700 font-semibold p-2 rounded-lg bg-emerald-50 border border-emerald-200">
+                    {staffPasswordChangeSuccess}
+                  </p>
+                )}
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowStaffChangePasswordModal(false);
+                      setStaffPasswordChangeError(null);
+                      setStaffPasswordChangeSuccess(null);
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingStaffPassword}
+                    className="flex-1 py-2.5 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white text-xs font-bold shadow-xs cursor-pointer"
+                  >
+                    {savingStaffPassword ? 'Updating...' : 'Save Password'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Case Detail Modal */}
       {selectedCase && (

@@ -276,6 +276,36 @@ class Database {
     };
   }
 
+  updateStaffPassword({ staffId, oldPassword, newPassword }) {
+    if (!this.data.users || this.data.users.length === 0) {
+      throw new Error('No staff users found in system.');
+    }
+    const cleanId = (staffId || '').trim().toLowerCase();
+    const user = this.data.users.find(u => 
+      (u.staffId && u.staffId.toLowerCase() === cleanId) ||
+      u.id === staffId ||
+      (u.email && u.email.toLowerCase() === cleanId)
+    );
+    if (!user) {
+      throw new Error('Staff account not found.');
+    }
+    if (user.password !== (oldPassword || '').trim()) {
+      throw new Error('Current password does not match.');
+    }
+    if (!newPassword || newPassword.trim().length < 4) {
+      throw new Error('New password must be at least 4 characters long.');
+    }
+    user.password = newPassword.trim();
+    this.save();
+    this.addAuditLog({
+      actorId: user.staffId,
+      actorName: user.name,
+      action: 'STAFF_PASSWORD_CHANGED',
+      metadata: { staffId: user.staffId, name: user.name }
+    });
+    return true;
+  }
+
   deleteUser(id) {
     if (!this.data.users) return false;
     const target = this.data.users.find(u => u.id === id || u.staffId === id);
