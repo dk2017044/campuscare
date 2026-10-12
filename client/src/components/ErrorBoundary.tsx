@@ -25,6 +25,20 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('CampusCare UI Uncaught Error:', error, errorInfo);
+    // Auto-reload once if dynamic chunk failed to load due to deployment update
+    const isChunkError = error?.message && (
+      error.message.includes('dynamically imported module') ||
+      error.message.includes('Loading chunk') ||
+      error.message.includes('Failed to fetch')
+    );
+    if (isChunkError && typeof window !== 'undefined') {
+      const hasRetried = sessionStorage.getItem('chunk_reload_retry');
+      if (!hasRetried) {
+        sessionStorage.setItem('chunk_reload_retry', 'true');
+        window.location.reload();
+        return;
+      }
+    }
     this.setState({ errorInfo });
   }
 
