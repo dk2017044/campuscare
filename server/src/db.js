@@ -432,18 +432,59 @@ class Database {
     return item;
   }
 
-  // Audit Logs
+  // Audit Logs with 3 Portal Categories ('student' | 'staff' | 'admin')
+  resolveLogPortal(entry) {
+    if (entry.portal) return entry.portal;
+    const act = (entry.action || '').toUpperCase();
+    const actorId = (entry.actorId || '').toLowerCase();
+    const actorName = (entry.actorName || '').toLowerCase();
+
+    if (
+      actorId.includes('admin') ||
+      actorName.includes('admin') ||
+      act.startsWith('ADMIN_') ||
+      act.includes('DEPARTMENT_') ||
+      act.includes('STAFF_ACCOUNT_') ||
+      act.includes('STAFF_PROVISIONED') ||
+      act.includes('CASE_DELETED') ||
+      act.includes('ALL_CASES_')
+    ) {
+      return 'admin';
+    }
+
+    if (
+      actorId.includes('staff') ||
+      actorName.includes('staff') ||
+      actorName.includes('officer') ||
+      act.includes('STATUS_UPDATED') ||
+      act.includes('CASE_ASSIGNED') ||
+      act.includes('CASE_ESCALATED') ||
+      act.includes('INTERNAL_NOTE') ||
+      act.startsWith('STAFF_')
+    ) {
+      return 'staff';
+    }
+
+    return 'student';
+  }
+
   getAuditLogs(limit = 100) {
     return [...(this.data.auditLogs || [])]
+      .map(log => ({
+        ...log,
+        portal: log.portal || this.resolveLogPortal(log)
+      }))
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
       .slice(0, limit);
   }
 
   addAuditLog(entry) {
     if (!this.data.auditLogs) this.data.auditLogs = [];
+    const portal = entry.portal || this.resolveLogPortal(entry);
     const log = {
       id: `audit-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       timestamp: new Date().toISOString(),
+      portal,
       ...entry
     };
     this.data.auditLogs.unshift(log);

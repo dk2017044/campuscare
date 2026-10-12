@@ -69,6 +69,9 @@ export interface Case {
   createdAt: string;
   updatedAt: string;
   timeline: TimelineEvent[];
+  resolutionNotes?: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
 }
 
 export interface CaseMessage {
@@ -131,6 +134,7 @@ export interface LostFoundMatch {
 
 export interface AuditLog {
   id: string;
+  portal?: 'student' | 'staff' | 'admin';
   actorId: string;
   actorName: string;
   action: string;
@@ -138,6 +142,7 @@ export interface AuditLog {
   publicCaseId?: string;
   timestamp: string;
   metadata?: any;
+  details?: string;
 }
 
 export interface SystemStats {

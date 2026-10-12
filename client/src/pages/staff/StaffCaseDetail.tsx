@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, ShieldCheck, MapPin, Clock, Sparkles, AlertOctagon, FileText, MessageSquare, Send } from 'lucide-react';
+import { X, ShieldCheck, MapPin, Clock, Sparkles, AlertOctagon, FileText, MessageSquare, Send, CheckCircle2 } from 'lucide-react';
 import { Case, Department, CaseMessage } from '../../types';
 import { api } from '../../services/api';
+import { playSuccessChime } from '../../services/sound';
 import { StatusBadge } from '../../components/StatusBadge';
 import { PriorityBadge } from '../../components/PriorityBadge';
 import { CategoryBadge } from '../../components/CategoryBadge';
@@ -33,6 +34,11 @@ export const StaffCaseDetail: React.FC<Props> = ({
   const [selectedDeptId, setSelectedDeptId] = useState(caseItem.assignedDepartmentId || (departments.length > 0 ? departments[0].id : ''));
   const [escalating, setEscalating] = useState(false);
   const [accessDeniedError, setAccessDeniedError] = useState<string | null>(null);
+
+  // Resolution Confirmation State
+  const [showResolveConfirmModal, setShowResolveConfirmModal] = useState(false);
+  const [resolutionNotesInput, setResolutionNotesInput] = useState('');
+  const [resolvingCase, setResolvingCase] = useState(false);
 
   useEffect(() => {
     loadCaseData();
@@ -70,6 +76,11 @@ export const StaffCaseDetail: React.FC<Props> = ({
   };
 
   const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === 'RESOLVED') {
+      setShowResolveConfirmModal(true);
+      return;
+    }
+
     try {
       setUpdatingStatus(true);
       const res = await api.updateCaseStatus(currentCase.publicCaseId, newStatus, actorName, `Status updated to ${newStatus}`);
@@ -81,6 +92,35 @@ export const StaffCaseDetail: React.FC<Props> = ({
       alert(e.message || 'Failed to update status');
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleConfirmResolution = async () => {
+    try {
+      setResolvingCase(true);
+      const note = resolutionNotesInput.trim() || 'Incident addressed, inspected, and officially resolved by campus authorities.';
+      const res = await api.updateCaseStatus(currentCase.publicCaseId, 'RESOLVED', actorName, note);
+      
+      // Also post official closure message visible to student
+      await api.sendCaseMessage(currentCase.publicCaseId, {
+        message: `[OFFICIAL RESOLUTION]: ${note}`,
+        senderType: 'staff',
+        senderName: actorName,
+        visibleToStudent: true
+      }).catch(() => {});
+
+      playSuccessChime();
+      setShowResolveConfirmModal(false);
+      setResolutionNotesInput('');
+      if (res.case) {
+        setCurrentCase(res.case);
+        onCaseUpdated(res.case);
+      }
+      loadCaseData();
+    } catch (e: any) {
+      alert(e.message || 'Failed to resolve case');
+    } finally {
+      setResolvingCase(false);
     }
   };
 
@@ -307,26 +347,47 @@ export const StaffCaseDetail: React.FC<Props> = ({
                   )}
                 </div>
 
-                <form onSubmit={handleSendMessage} className="pt-1 flex gap-2">
-                  <input
-                    type="text"
-                    value={newResponse}
-                    onChange={(e) => setNewResponse(e.target.value)}
-                    placeholder={isInternalNote ? 'Confidential staff note (invisible to student)...' : `Reply to student as ${actorName}...`}
-                    className="flex-1 p-2.5 rounded-xl bg-white border border-slate-200 focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none"
-                  />
-                  <button
-                    type="submit"
-                    disabled={sending || !newResponse.trim()}
-                    className={`px-4 py-2.5 rounded-xl font-semibold text-xs transition-all cursor-pointer disabled:opacity-40 shadow-xs ${
-                      isInternalNote
-                        ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                        : 'bg-[#0066FF] hover:bg-[#0052CC] text-white'
-                    }`}
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </button>
-                </form>
+                {currentCase.status === 'RESOLVED' && !isInternalNote ? (
+                  <div className="p-3.5 bg-emerald-50 border border-emerald-200/90 rounded-2xl text-xs text-emerald-900 space-y-1.5 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold flex items-center gap-1.5 text-emerald-800">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        Case Resolved & Concluded
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsInternalNote(true)}
+                        className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 transition-colors cursor-pointer"
+                      >
+                        + Add Staff Note
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-emerald-700 leading-snug">
+                      Dialogue with student has been closed. If additional internal investigation logs are required, switch to <strong>Internal Note</strong> above.
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSendMessage} className="pt-1 flex gap-2">
+                    <input
+                      type="text"
+                      value={newResponse}
+                      onChange={(e) => setNewResponse(e.target.value)}
+                      placeholder={isInternalNote ? 'Confidential staff note (invisible to student)...' : `Reply to student as ${actorName}...`}
+                      className="flex-1 p-2.5 rounded-xl bg-white border border-slate-200 focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={sending || !newResponse.trim()}
+                      className={`px-4 py-2.5 rounded-xl font-semibold text-xs transition-all cursor-pointer disabled:opacity-40 shadow-xs ${
+                        isInternalNote
+                          ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                          : 'bg-[#0066FF] hover:bg-[#0052CC] text-white'
+                      }`}
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
 
@@ -422,6 +483,89 @@ export const StaffCaseDetail: React.FC<Props> = ({
           </div>
         </div>
       </motion.div>
+
+      {/* Case Resolution Confirmation Modal */}
+      {showResolveConfirmModal && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 font-heading">
+                  Confirm Case Resolution
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Case <strong className="font-mono text-slate-700">{currentCase.publicCaseId}</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-900 leading-relaxed font-medium">
+              ⚠️ Resolving this case will close two-way student dialogue and generate an official resolution receipt for the reporter.
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
+                Resolution Summary / Actions Taken
+              </label>
+              <textarea
+                value={resolutionNotesInput}
+                onChange={(e) => setResolutionNotesInput(e.target.value)}
+                placeholder="Detail the actions taken to resolve this case (visible on student tracking portal)..."
+                rows={3}
+                className="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-emerald-500 text-xs text-slate-900 outline-none transition-all placeholder:text-slate-400"
+              />
+
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {[
+                  'Physical maintenance/repair completed',
+                  'Security inspection & safety verified',
+                  'Student grievance addressed satisfactorily',
+                  'Item recovered & returned to owner'
+                ].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setResolutionNotesInput(preset)}
+                    className="text-[10px] font-semibold px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 cursor-pointer transition-colors"
+                  >
+                    + {preset}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowResolveConfirmModal(false);
+                  setResolutionNotesInput('');
+                }}
+                disabled={resolvingCase}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmResolution}
+                disabled={resolvingCase}
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{resolvingCase ? 'Resolving Case...' : 'Confirm & Mark Resolved'}</span>
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

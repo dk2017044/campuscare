@@ -196,3 +196,81 @@ export function stopEmergencySiren() {
     // Ignore close errors
   }
 }
+
+/**
+ * Dual-tone pleasant notification chime for user (student) incoming messages and status changes
+ */
+export function playNotificationChime() {
+  if (soundMuted) return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const ctx = new AudioContextClass();
+    const now = ctx.currentTime;
+
+    const notes = [
+      { freq: 587.33, delay: 0 },    // D5
+      { freq: 880.00, delay: 0.11 }  // A5
+    ];
+
+    notes.forEach((note) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(note.freq, now + note.delay);
+
+      gain.gain.setValueAtTime(0.08, now + note.delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + note.delay + 0.38);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now + note.delay);
+      osc.stop(now + note.delay + 0.38);
+    });
+  } catch {
+    // Ignore autoplay restriction
+  }
+}
+
+/**
+ * Tri-tone alert chime for Super Admin incoming NEW case only
+ */
+export function playAdminNewCaseAlert() {
+  if (soundMuted) return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const ctx = new AudioContextClass();
+    const now = ctx.currentTime;
+
+    const notes = [
+      { freq: 523.25, delay: 0 },    // C5
+      { freq: 659.25, delay: 0.09 }, // E5
+      { freq: 783.99, delay: 0.18 }  // G5
+    ];
+
+    notes.forEach((note) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(note.freq, now + note.delay);
+
+      gain.gain.setValueAtTime(0.12, now + note.delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + note.delay + 0.42);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now + note.delay);
+      osc.stop(now + note.delay + 0.42);
+    });
+  } catch {
+    // Ignore autoplay restriction
+  }
+}
+

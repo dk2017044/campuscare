@@ -8,6 +8,7 @@ import { Role, StaffUser } from './types';
 import { CheckCircle2, Loader2, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { playSuccessChime } from './services/sound';
 import { api } from './services/api';
+import { parseCurrentLocation, pushRoute, replaceRoute } from './services/router';
 
 // Code-Splitting: Lazy load secondary heavy dashboards & pages to maximize Lighthouse Performance & eliminate FCP delay
 const ReportSafely = lazy(() => import('./pages/student/ReportSafely').then(m => ({ default: m.ReportSafely })));
@@ -20,8 +21,10 @@ const StaffLogin = lazy(() => import('./pages/staff/StaffLogin').then(m => ({ de
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 
 export function App() {
+  const initialRoute = parseCurrentLocation();
+
   const [userRole, setUserRole] = useState<Role>(() => {
-    return (localStorage.getItem('campuscare_role') as Role) || 'student';
+    return initialRoute.role;
   });
 
   const [activeStaffUser, setActiveStaffUser] = useState<StaffUser | null>(() => {
@@ -38,18 +41,19 @@ export function App() {
   });
 
   const [currentTab, setCurrentTab] = useState<string>(() => {
-    const savedRole = localStorage.getItem('campuscare_role');
-    if (savedRole === 'staff') return 'staff_dashboard';
-    if (savedRole === 'super_admin') return 'admin_queue';
-    return 'student_home';
+    return initialRoute.tab;
   });
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
 
-  // Auto-fill state for Track Report after filing
-  const [trackedCaseId, setTrackedCaseId] = useState<string>('');
-  const [trackedPin, setTrackedPin] = useState<string>('');
+  // Auto-fill state for Track Report after filing or from URL query (?caseId=...&pin=...)
+  const [trackedCaseId, setTrackedCaseId] = useState<string>(() => {
+    return initialRoute.params.get('caseId') || '';
+  });
+  const [trackedPin, setTrackedPin] = useState<string>(() => {
+    return initialRoute.params.get('pin') || '';
+  });
 
   // Real-time Network Connectivity & Backend Health Status
   const [isOnline, setIsOnline] = useState<boolean>(() => {
@@ -111,6 +115,51 @@ export function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Synchronize browser Back & Forward button clicks
+  useEffect(() => {
+    // Ensure initial canonical URL matches the loaded route without adding duplicate history
+    replaceRoute(currentTab, userRole, trackedCaseId ? { caseId: trackedCaseId, pin: trackedPin } : undefined);
+
+    const handlePopState = () => {
+      const resolved = parseCurrentLocation();
+      setCurrentTab(resolved.tab);
+      setUserRole(resolved.role);
+      localStorage.setItem('campuscare_role', resolved.role);
+
+      const cid = resolved.params.get('caseId');
+      const pin = resolved.params.get('pin');
+      if (cid) setTrackedCaseId(cid);
+      if (pin) setTrackedPin(pin);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Unified Navigation Handler: Synchronizes React state, URL bar, and browser history
+  const handleNavigate = (tab: string, extraParams?: Record<string, string>) => {
+    let targetRole = userRole;
+    if (tab === 'staff_dashboard' || tab.startsWith('staff_')) {
+      targetRole = 'staff';
+    } else if (tab === 'admin_dashboard' || tab.startsWith('admin_')) {
+      targetRole = 'super_admin';
+    } else if (
+      tab === 'student_home' ||
+      tab === 'report_safely' ||
+      tab === 'emergency' ||
+      tab === 'maintenance' ||
+      tab === 'track_report'
+    ) {
+      targetRole = 'student';
+    }
+
+    setUserRole(targetRole);
+    localStorage.setItem('campuscare_role', targetRole);
+    setCurrentTab(tab);
+
+    pushRoute(tab, targetRole, extraParams);
+  };
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     playSuccessChime();
@@ -123,6 +172,7 @@ export function App() {
     setTrackedCaseId(publicCaseId);
     setTrackedPin(rawPin);
     showToast(`Case ${publicCaseId} logged safely. Private PIN generated.`);
+    handleNavigate('track_report', { caseId: publicCaseId, pin: rawPin });
   };
 
   return (
@@ -205,11 +255,7 @@ export function App() {
       <CommandPalette
         isOpen={isCommandOpen}
         onClose={() => setIsCommandOpen(false)}
-        onNavigate={(tab) => {
-          if (tab === 'staff_dashboard') setUserRole('staff');
-          if (tab === 'admin_dashboard' || tab.startsWith('admin_')) setUserRole('super_admin');
-          setCurrentTab(tab);
-        }}
+        onNavigate={(tab) => handleNavigate(tab)}
       />
 
       {/* Toast Notification with Motion */}
@@ -231,7 +277,7 @@ export function App() {
       {/* Main Navigation with Institutional Role Authentication */}
       <Navbar
         currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
+        setCurrentTab={handleNavigate}
         userRole={userRole}
         setUserRole={setUserRole}
         staffDept={staffDept}
@@ -265,21 +311,21 @@ export function App() {
                 <>
                   {currentTab === 'student_home' && (
                     <StudentHome 
-                      onNavigate={setCurrentTab} 
+                      onNavigate={handleNavigate} 
                       onOpenCommand={() => setIsCommandOpen(true)}
                     />
                   )}
                   {currentTab === 'report_safely' && (
-                    <ReportSafely onNavigate={setCurrentTab} onCaseCreated={handleCaseCreated} />
+                    <ReportSafely onNavigate={handleNavigate} onCaseCreated={handleCaseCreated} />
                   )}
                   {currentTab === 'emergency' && (
-                    <EmergencyReport onNavigate={setCurrentTab} onCaseCreated={handleCaseCreated} />
+                    <EmergencyReport onNavigate={handleNavigate} onCaseCreated={handleCaseCreated} />
                   )}
                   {currentTab === 'maintenance' && (
-                    <MaintenanceReport onNavigate={setCurrentTab} onCaseCreated={handleCaseCreated} />
+                    <MaintenanceReport onNavigate={handleNavigate} onCaseCreated={handleCaseCreated} />
                   )}
                   {currentTab === 'lost_found' && (
-                    <LostAndFound onNavigate={setCurrentTab} onCaseCreated={handleCaseCreated} />
+                    <LostAndFound onNavigate={handleNavigate} onCaseCreated={handleCaseCreated} />
                   )}
                   {currentTab === 'track_report' && (
                     <TrackReport initialCaseId={trackedCaseId} initialPin={trackedPin} />
@@ -296,8 +342,7 @@ export function App() {
                       localStorage.setItem('campuscare_staff_session', JSON.stringify(user));
                     }}
                     onNavigateToAdmin={() => {
-                      setUserRole('super_admin');
-                      setCurrentTab('admin_staff');
+                      handleNavigate('admin_staff');
                     }}
                   />
                 ) : (
@@ -310,18 +355,12 @@ export function App() {
                           setActiveStaffUser(null);
                           localStorage.removeItem('campuscare_staff_session');
                         }}
-                        onNavigateTab={(t) => {
-                          if (t.startsWith('admin_') || t === 'admin_dashboard') {
-                            setUserRole('super_admin');
-                            localStorage.setItem('campuscare_role', 'super_admin');
-                          }
-                          setCurrentTab(t);
-                        }}
+                        onNavigateTab={(t) => handleNavigate(t)}
                       />
                     )}
                     {currentTab === 'lost_found' && (
                       <LostAndFound
-                        onNavigate={setCurrentTab}
+                        onNavigate={handleNavigate}
                         staffUser={activeStaffUser}
                       />
                     )}
@@ -333,13 +372,7 @@ export function App() {
                           setActiveStaffUser(null);
                           localStorage.removeItem('campuscare_staff_session');
                         }}
-                        onNavigateTab={(t) => {
-                          if (t.startsWith('admin_') || t === 'admin_dashboard') {
-                            setUserRole('super_admin');
-                            localStorage.setItem('campuscare_role', 'super_admin');
-                          }
-                          setCurrentTab(t);
-                        }}
+                        onNavigateTab={(t) => handleNavigate(t)}
                       />
                     )}
                   </>
@@ -350,7 +383,7 @@ export function App() {
               {userRole === 'super_admin' && (
                 <AdminDashboard
                   currentTab={currentTab}
-                  onNavigateTab={setCurrentTab}
+                  onNavigateTab={handleNavigate}
                   isAdminAuthenticated={isAdminAuthenticated}
                   onAdminAuthChange={setIsAdminAuthenticated}
                 />

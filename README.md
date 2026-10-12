@@ -9,7 +9,7 @@
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-> **CampusCare** is a modern, zero-telemetry campus grievance management, emergency response dispatching, and facilities coordination system built for universities and colleges. It bridges students and campus administration through end-to-end anonymity, AI incident triage, cryptographic tracking PINs, and real-time emergency dispatching.
+> **CampusCare** is a production-grade, zero-telemetry campus grievance management, emergency response dispatching, and facilities coordination system built for universities and colleges. It bridges students and campus administration through end-to-end anonymity, AI incident triage, cryptographic tracking PINs, real-time desktop notifications, and a categorized multi-portal audit trail.
 
 ---
 
@@ -27,22 +27,55 @@ Access the deployed application on Vercel:
 - **Salted HMAC-SHA256 Private PINs:** Submitting a report produces a unique Case ID (e.g., `CC-RSFNA3B`) and a private cryptographic PIN. Only the person holding the PIN can track progress or chat with the committee.
 - **Zero Surveillance:** No tracking cookies, third-party analytics trackers, or browser fingerprinting.
 
-### 🚨 2. Instant SOS Emergency Beacon & Synthesized Siren
+### 🌐 2. Client-Side Routing & Browser History Navigation
+- **Deep-Linking & Canonical URLs:** Every module and sub-view has a clean URL:
+  - `/` — Student Home & Quick Actions
+  - `/report` — Anonymous Incident & Safety Report
+  - `/emergency` — 1-Click SOS Emergency Beacon
+  - `/services` — Campus Infrastructure & Maintenance
+  - `/lost-found` — Lost & Found Item Registry
+  - `/track` — Case Status Tracking & Live Chat (`/track?caseId=...&pin=...`)
+  - `/staff` — Staff Officer Incident Queue
+  - `/admin/queue`, `/admin/analytics`, `/admin/departments`, `/admin/staff`, `/admin/audit` — Executive Admin Views
+- **Browser History Integration:** Full support for browser **Back (`←`)** and **Forward (`→`)** navigation without leaving the website.
+- **Refresh State Retention:** Pressing `F5` or reloading keeps the user exactly on their current module and sub-tab without resetting to home.
+- **HTML5 Fallback:** Configured for Vercel SPA rewrites and Node.js Express static server fallbacks.
+
+### 📜 3. Tri-Category Institutional Audit Trail
+- **Strict Separation of Governance Concerns:** Audit trail entries are automatically tagged across three distinct institutional security contexts:
+  - 🎓 **Student Portal Activity:** Anonymous report creation, case PIN verifications, student message exchanges.
+  - 👔 **Staff Portal Activity:** Staff logins, case status transitions, officer case claim/assignment, and notes.
+  - 🛡️ **Admin Portal Activity:** Executive logins, staff account creation/credentials change, department creation, system maintenance.
+- **Smart Audit Filtering:** Instant tab filtering by portal category (`All Portals`, `Student`, `Staff`, `Admin`) with distinct badge colorings and contextual metadata.
+
+### 🔒 4. Smart Case Resolution Protocol & User Confirmation
+- **Resolution Lock:** When a case is marked as `RESOLVED`, the free-form text input is cleanly replaced with an official Resolution Confirmation Banner displaying:
+  - Resolving officer / administrative department name.
+  - Timestamp of resolution.
+  - Official resolution summary message.
+- **Controlled Re-opening:** Prevents redundant chat spam while providing an explicit *"Request Case Re-Opening"* option if the student requires further assistance.
+
+### 🔔 5. Desktop Notifications & Sound Chimes
+- **Native Web Notifications API:** Real-time desktop alerts when an officer replies or when case status updates occur.
+- **Acoustic Feedback:** Audio chimes synthesized and played on critical events (case creation, incoming reply, resolution).
+- **Executive Alerts:** Push notifications for newly submitted high-priority grievances.
+
+### 🚨 6. Instant SOS Emergency Beacon & Synthesized Siren
 - **1-Click Emergency Beacon:** Immediate alert for medical emergencies, active security threats, or acute student distress.
 - **Web Audio API Dual-Tone Siren:** Synthesized emergency audio beacon and animated strobe banner alert on the officer dashboard for rapid response.
 - **Auto-Escalation:** Emergency alerts automatically elevate to `CRITICAL` priority and dispatch directly to Campus Security and Emergency Officers.
 
-### 🎙️ 3. Multilingual Voice Dictaphone (Speech-to-Text)
-- Speech recognition supporting **English**, **Hindi (हिन्दी)**, and regional dialects using the Web Speech API.
+### 🎙️ 7. Multilingual Voice Dictaphone (Speech-to-Text)
+- Speech recognition supporting **English**, **Hindi (हिन्दी)**, and regional accents using the Web Speech API.
 - Live microphone waveform visualization and instant transcript insertion into incident reports.
 
-### 🤖 4. AI-Powered Incident Triage (Gemini 2.5)
+### 🤖 8. AI-Powered Incident Triage (Gemini 2.5)
 - Automated semantic classification of submitted grievances:
   - **Severity & Priority Assessment:** `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`.
   - **Intelligent Department Routing:** `Campus Security`, `Student Welfare`, `Hostel Administration`, `Civil & Infrastructure Maintenance`, `Electrical`, `Plumbing`, `IT & Labs`.
   - **Category Classification:** Detects category and subcategory with confidence scores.
 
-### 👥 5. Dedicated Role-Based Access Portals (RBAC)
+### 👥 9. Role-Based Access Portals (RBAC)
 
 #### 🎓 Student Portal
 - Anonymous grievance and safety report filing with optional image/document evidence.
@@ -52,18 +85,18 @@ Access the deployed application on Vercel:
 
 #### 👔 Staff Officer Incident Queue
 - Clean, focused incident queue organized by department jurisdiction.
-- Instant case filtering by status (`NEW`, `IN PROGRESS`, `RESOLVED`) and priority level.
+- Instant case filtering by status (`NEW`, `UNDER_REVIEW`, `IN_PROGRESS`, `RESOLVED`) and priority level.
 - Encrypted officer reply thread to correspond with anonymous students without compromising identity.
-- Dedicated user profile menu with self-service password updates and demo emergency SOS simulation.
+- Dedicated user profile menu with self-service password updates.
 
 #### 🛡️ Executive Administration Portal
 - Protected administrative dashboard with secure authentication.
 - **Staff Provisioning:** Dynamically create staff accounts, assign department scopes, and manage access credentials.
-- **Department Orchestration:** Create, manage, and configure university departments.
+- **Department Orchestration:** Create, manage, and configure university departments and SLA policies.
 - **Institutional Analytics:** Live breakdown of incident trends, resolution rates, and category statistics.
-- **Real-Time Audit Trail:** Tamper-evident logging of all logins, status changes, and administrator actions.
+- **Categorized Audit Trail:** Tamper-evident logging of all logins, status changes, and administrative actions.
 
-### 📦 6. Dual-Layer Storage Engine
+### 📦 10. Dual-Layer Storage Engine
 - **Local JSON Engine (`campuscare_db.json`):** Zero-configuration local database that works out of the box with automatic data persistence.
 - **Supabase PostgreSQL Cloud Sync:** Real-time cloud sync with Supabase PostgreSQL tables and secure Row-Level Security (RLS) policies.
 
@@ -80,20 +113,23 @@ CampusCare/
 │   │   │   ├── student/        # StudentHome, ReportSafely, EmergencyReport,
 │   │   │   │                   # MaintenanceReport, LostAndFound, TrackReport
 │   │   │   ├── staff/          # StaffDashboard, StaffLogin, StaffCaseDetail
-│   │   │   └── admin/          # AdminDashboard (Staff, Depts, Analytics, Audit)
-│   │   ├── services/           # REST API client, Web Audio siren generator
-│   │   └── types.ts            # Core TypeScript interfaces & types
+│   │   │   └── admin/          # AdminDashboard (Queue, Analytics, Depts, Staff, Audit)
+│   │   ├── services/           # REST API client, Router, Notifications, Sound engine
+│   │   └── types/              # TypeScript definitions & data contracts
 │   ├── index.html              # Non-blocking web fonts & SEO metadata
+│   ├── vercel.json             # SPA URL rewrite configuration for Vercel
 │   └── vite.config.ts          # Rollup manual chunking & performance optimizations
 │
 ├── server/                     # Backend REST API (Node.js Express, Supabase, Crypto)
 │   ├── src/
-│   │   ├── index.js            # Express API routes & middleware
+│   │   ├── index.js            # Express API routes, static assets & SPA fallback
 │   │   ├── db.js               # Dual-layer database adapter (JSON + Supabase sync)
 │   │   ├── supabase.js         # Supabase PostgreSQL client & table syncing
 │   │   ├── ai.js               # Google Gemini AI triage & semantic classification
 │   │   ├── crypto.js           # Salted HMAC-SHA256 tracking PIN generation & hashing
-│   │   └── upload.js           # Sanitized multi-format file upload handler
+│   │   ├── upload.js           # Sanitized multi-format file upload handler
+│   │   ├── middleware/         # Security headers, rate limiters, input sanitizers
+│   │   └── utils/              # Email OTP validator, keep-alive heartbeat
 │   ├── data/                   # Local database storage (campuscare_db.json)
 │   ├── uploads/                # Sanitized user evidence attachments
 │   └── supabase_schema.sql     # PostgreSQL cloud database schema & RLS policies
@@ -107,14 +143,16 @@ CampusCare/
 
 | Domain | Technology | Description |
 | :--- | :--- | :--- |
-| **Frontend Framework** | [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) | Next-generation declarative UI with type safety |
-| **Build Tool** | [Vite 8](https://vitejs.dev/) | High-performance build tool with manual chunk splitting |
+| **Frontend Framework** | [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) | Declarative UI with strict type safety |
+| **Build Tool** | [Vite 8](https://vitejs.dev/) | Ultra-fast bundling with manual chunk splitting |
+| **Routing & History** | HTML5 History API + Custom Router | Canonical URLs, deep-linking, back/forward popstate |
 | **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) | Modern utility-first CSS styling system |
 | **Animations** | [Motion](https://motion.dev/) | Fluid micro-interactions and route transitions |
 | **Icons** | [Lucide React](https://lucide.dev/) | Modern, clean feather-style icons |
-| **Audio Engine** | Web Audio API | Client-side synthesized dual-tone emergency siren |
+| **Audio Engine** | Web Audio API | Synthesized dual-tone emergency siren & notification chimes |
 | **Speech Engine** | Web Speech API | Client-side multilingual speech recognition |
-| **Backend API** | [Node.js](https://nodejs.org/) & [Express](https://expressjs.com/) | Fast RESTful API services |
+| **Notifications** | Web Notifications API | Browser desktop alerts for case status and messages |
+| **Backend API** | [Node.js](https://nodejs.org/) & [Express](https://expressjs.com/) | Fast RESTful API services with OWASP security headers |
 | **Database** | Local JSON DB + [Supabase](https://supabase.com/) | Dual-mode persistence (Zero-config local + PostgreSQL cloud) |
 | **AI Integration** | [Google Gemini 2.5](https://ai.google.dev/) | Semantic incident analysis and smart department triage |
 
@@ -182,17 +220,21 @@ npm run dev
 
 Open your browser at **`http://localhost:5173`**.
 
+---
+
 ## 🔐 Institutional Access & Role Portals
 
-Use the role switcher in the header navigation or institutional authentication:
+Use the role switcher in the header navigation or direct URLs:
 
-| Role | Portal Tab | Access Control & Security Model |
+| Role | Portal URL | Access Control & Security Model |
 | :--- | :--- | :--- |
-| **Student** | Student Portal | **Public & 100% Anonymous** — Zero credentials required |
-| **Staff Officer** | Staff Portal | **Role-Based Access (RBAC)** — Staff ID & Password provisioned dynamically by Admin |
-| **Administrator** | Executive Admin | **Database-Backed Authentication** — Verified securely via backend API & Database |
+| **Student** | `/`, `/report`, `/track` | **Public & 100% Anonymous** — Zero credentials required |
+| **Staff Officer** | `/staff` | **Role-Based Access (RBAC)** — Staff ID & Password provisioned by Admin |
+| **Administrator** | `/admin/queue`, `/admin/audit` | **Database-Backed Authentication** — Verified securely via backend API |
 
 > 🔒 **Security Notice:** Administrative and officer authentication credentials are stored and verified securely within the institutional backend database. Plaintext secrets are never stored in client bundles or public documentation.
+
+---
 
 ## 📡 Core API Reference
 
@@ -203,24 +245,23 @@ Use the role switcher in the header navigation or institutional authentication:
 | `/api/cases/:id/verify-pin` | `POST` | Authenticate student access using Case ID and private PIN |
 | `/api/cases/:id/messages` | `GET` | Retrieve encrypted message thread for an incident |
 | `/api/cases/:id/messages` | `POST` | Post a message from student or investigating officer |
-| `/api/cases/:id/status` | `PATCH` | Update incident status (`UNDER_REVIEW`, `RESOLVED`, etc.) |
+| `/api/cases/:id/status` | `PATCH` | Update incident status (`UNDER_REVIEW`, `IN_PROGRESS`, `RESOLVED`) |
 | `/api/staff/login` | `POST` | Authenticate staff officer using Staff ID and password |
 | `/api/staff/change-password` | `POST` | Self-service password update for staff officer |
 | `/api/staff/create` | `POST` | Admin endpoint to create new staff officer accounts |
 | `/api/departments` | `GET` / `POST` | Fetch or create campus administrative departments |
 | `/api/lost-and-found` | `GET` / `POST` | Fetch or report lost and found items |
-| `/api/audit-logs` | `GET` | Retrieve institutional audit trail logs |
+| `/api/audit-logs` | `GET` | Retrieve institutional audit trail logs (supports portal filter) |
 
 ---
 
 ## ⚡ Performance & Production Build
 
 - **Lighthouse Score:** Non-blocking Google Fonts with system fallback fonts (`Outfit`, `Inter`).
-- **Dynamic Chunking:** Large administrative views (`AdminDashboard`, `StaffDashboard`, `ReportSafely`) are dynamically loaded via `React.lazy()` and `<Suspense>`, keeping the initial bundle light and responsive.
+- **Dynamic Chunking:** Large administrative views (`AdminDashboard`, `StaffDashboard`, `ReportSafely`, `TrackReport`) are dynamically split via Rollup and Vite, keeping initial load fast.
 - **Production Build:**
   ```bash
-  cd client
-  npm run build
+  npm run build:client
   ```
 
 ---

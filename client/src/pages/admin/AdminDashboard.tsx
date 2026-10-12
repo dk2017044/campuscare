@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Shield,
@@ -27,9 +27,16 @@ import {
   EyeOff,
   Copy,
   ChevronDown,
-  AlertCircle
+  AlertCircle,
+  Bell,
+  BellRing,
+  CheckCircle2,
+  GraduationCap,
+  Briefcase
 } from 'lucide-react';
 import { api } from '../../services/api';
+import { playAdminNewCaseAlert } from '../../services/sound';
+import { sendDesktopNotification, requestNotificationPermission, getNotificationPermission, isNotificationSupported } from '../../services/notifications';
 import { SystemStats, Department, AuditLog, StaffUser, Case } from '../../types';
 import { StaffCaseDetail } from '../staff/StaffCaseDetail';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -60,6 +67,12 @@ export const AdminDashboard: React.FC<Props> = ({
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Real-Time New Case Notification State for Super Admin (Only notifies when NEW case arrives)
+  const seenCaseIdsRef = useRef<Set<string>>(new Set());
+  const isInitialCasesLoadRef = useRef<boolean>(true);
+  const [newCaseAlert, setNewCaseAlert] = useState<Case | null>(null);
+  const [desktopPerm, setDesktopPerm] = useState<NotificationPermission>(() => getNotificationPermission());
+
   const getSubTabFromTab = (tab?: string): AdminSubTab => {
     if (tab === 'admin_analytics') return 'analytics';
     if (tab === 'admin_departments') return 'departments';
@@ -82,6 +95,45 @@ export const AdminDashboard: React.FC<Props> = ({
   const [filterCaseStatus, setFilterCaseStatus] = useState('all');
   const [expandedCaseIds, setExpandedCaseIds] = useState<Set<string>>(new Set());
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Audit Trail 3 Portal Categories State ('all' | 'student' | 'staff' | 'admin')
+  const [auditPortalFilter, setAuditPortalFilter] = useState<'all' | 'student' | 'staff' | 'admin'>('all');
+  const [auditSearchQuery, setAuditSearchQuery] = useState('');
+
+  const getLogPortal = (log: AuditLog): 'student' | 'staff' | 'admin' => {
+    if (log.portal) return log.portal;
+    const act = (log.action || '').toUpperCase();
+    const actorId = (log.actorId || '').toLowerCase();
+    const actorName = (log.actorName || '').toLowerCase();
+
+    if (
+      actorId.includes('admin') ||
+      actorName.includes('admin') ||
+      act.startsWith('ADMIN_') ||
+      act.includes('DEPARTMENT_') ||
+      act.includes('STAFF_ACCOUNT_') ||
+      act.includes('STAFF_PROVISIONED') ||
+      act.includes('CASE_DELETED') ||
+      act.includes('ALL_CASES_')
+    ) {
+      return 'admin';
+    }
+
+    if (
+      actorId.includes('staff') ||
+      actorName.includes('staff') ||
+      actorName.includes('officer') ||
+      act.includes('STATUS_UPDATED') ||
+      act.includes('CASE_ASSIGNED') ||
+      act.includes('CASE_ESCALATED') ||
+      act.includes('INTERNAL_NOTE') ||
+      act.startsWith('STAFF_')
+    ) {
+      return 'staff';
+    }
+
+    return 'student';
+  };
 
   const toggleExpandCase = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -234,7 +286,12 @@ export const AdminDashboard: React.FC<Props> = ({
       setDepartments(deptsRes.departments || []);
       setStaffMembers(staffRes.staff || []);
       setAuditLogs(auditRes.logs || []);
-      setCases(casesRes.cases || []);
+      const fetchedCases = casesRes.cases || [];
+      setCases(fetchedCases);
+      if (isInitialCasesLoadRef.current) {
+        fetchedCases.forEach((c: Case) => seenCaseIdsRef.current.add(c.publicCaseId));
+        isInitialCasesLoadRef.current = false;
+      }
       if (deptsRes.departments && deptsRes.departments.length > 0 && !newStaffDept) {
         setNewStaffDept(deptsRes.departments[0].id);
       }
@@ -243,6 +300,63 @@ export const AdminDashboard: React.FC<Props> = ({
       setLoadError(e.message || 'Unable to sync live administration data. Please check your network connection.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Real-time polling for brand NEW incoming cases only (Admin requirement: "admin me jab new case aaye tab sirf notification aaye")
+  useEffect(() => {
+    if (!isAdminAuthenticated) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const casesRes = await api.getCases({ role: 'super_admin' }).catch(() => null);
+        if (!casesRes || !casesRes.cases) return;
+
+        const fetchedCases: Case[] = casesRes.cases;
+
+        if (isInitialCasesLoadRef.current) {
+          fetchedCases.forEach(c => seenCaseIdsRef.current.add(c.publicCaseId));
+          isInitialCasesLoadRef.current = false;
+          return;
+        }
+
+        // Strictly detect brand new cases that were not in our seen list
+        const brandNewCases = fetchedCases.filter(c => !seenCaseIdsRef.current.has(c.publicCaseId));
+
+        if (brandNewCases.length > 0) {
+          brandNewCases.forEach(c => seenCaseIdsRef.current.add(c.publicCaseId));
+          const latestCase = brandNewCases[0];
+
+          // Trigger audio & notifications for Admin exclusively on NEW case
+          playAdminNewCaseAlert();
+          setNewCaseAlert(latestCase);
+
+          sendDesktopNotification({
+            title: `🚨 New Case #${latestCase.publicCaseId} Logged`,
+            body: `${latestCase.category || latestCase.reportType} (${latestCase.priority}) - ${latestCase.description.slice(0, 80)}`
+          });
+
+          // Live update queue & stats counters
+          setCases(fetchedCases);
+          api.getStats().then(s => setStats(s.stats)).catch(() => {});
+        }
+      } catch (e) {
+        // silent background poll fail
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isAdminAuthenticated]);
+
+  const handleRequestDesktopAlerts = async () => {
+    const perm = await requestNotificationPermission();
+    setDesktopPerm(perm);
+    if (perm === 'granted') {
+      playAdminNewCaseAlert();
+      sendDesktopNotification({
+        title: 'Admin Alerts Activated',
+        body: 'You will receive immediate alerts whenever a new incident case is logged.'
+      });
     }
   };
 
@@ -427,6 +541,25 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {isNotificationSupported() && desktopPerm !== 'granted' && (
+            <button
+              type="button"
+              onClick={handleRequestDesktopAlerts}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-xs font-semibold text-[#0066FF] transition-all cursor-pointer shadow-2xs"
+              title="Enable desktop notifications when new cases are reported"
+            >
+              <Bell className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Enable New-Case Alerts</span>
+            </button>
+          )}
+
+          {desktopPerm === 'granted' && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-700 shadow-2xs">
+              <BellRing className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden sm:inline">New-Case Alerts Active</span>
+            </span>
+          )}
+
           <button
             onClick={loadAdminData}
             disabled={loading}
@@ -1012,39 +1145,262 @@ export const AdminDashboard: React.FC<Props> = ({
         </div>
       )}
 
-      {/* SUB-TAB 5: AUDIT TRAIL */}
-      {subTab === 'audit' && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 font-heading">Security & Action Audit Logs</h3>
-            <span className="text-xs font-mono text-slate-500 font-medium">Last 50 Logged Events</span>
-          </div>
+      {/* SUB-TAB 5: AUDIT TRAIL (Categorized into 3 Portals: Student, Staff, Admin) */}
+      {subTab === 'audit' && (() => {
+        const studentCount = auditLogs.filter(l => getLogPortal(l) === 'student').length;
+        const staffCount = auditLogs.filter(l => getLogPortal(l) === 'staff').length;
+        const adminCount = auditLogs.filter(l => getLogPortal(l) === 'admin').length;
 
-          <div className="bg-white p-3 rounded-3xl border border-slate-200/80 divide-y divide-slate-100 max-h-96 overflow-y-auto shadow-xs">
-            {auditLogs.map((log) => (
-              <div key={log.id} className="py-3 px-3 flex items-start justify-between gap-4 text-xs">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900">{log.action.replace(/_/g, ' ')}</span>
-                    {log.publicCaseId && (
-                      <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-blue-50 text-[#0066FF] border border-blue-100 font-semibold">
-                        {log.publicCaseId}
-                      </span>
-                    )}
+        const filteredLogs = auditLogs.filter(log => {
+          const p = getLogPortal(log);
+          if (auditPortalFilter !== 'all' && p !== auditPortalFilter) return false;
+          if (auditSearchQuery.trim()) {
+            const q = auditSearchQuery.toLowerCase();
+            const matchAction = log.action.toLowerCase().includes(q);
+            const matchActor = log.actorName.toLowerCase().includes(q) || log.actorId.toLowerCase().includes(q);
+            const matchCase = log.publicCaseId?.toLowerCase().includes(q);
+            const matchDetails = log.details?.toLowerCase().includes(q);
+            return matchAction || matchActor || matchCase || matchDetails;
+          }
+          return true;
+        });
+
+        return (
+          <div className="space-y-4">
+            {/* Header & Meta */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 font-heading flex items-center gap-2">
+                  <span>Portal Activity Audit Trail</span>
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Track and verify actions segregated across Student, Staff, and Executive Admin portals.
+                </p>
+              </div>
+              <span className="text-xs font-mono text-slate-500 bg-slate-100 px-3 py-1 rounded-xl border border-slate-200 self-start sm:self-auto font-semibold">
+                Total Events: {auditLogs.length}
+              </span>
+            </div>
+
+            {/* 3 Portal Category KPI Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Category 1: Student / Public Portal */}
+              <button
+                type="button"
+                onClick={() => setAuditPortalFilter(auditPortalFilter === 'student' ? 'all' : 'student')}
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs ${
+                  auditPortalFilter === 'student'
+                    ? 'bg-blue-50/90 border-[#0066FF] ring-2 ring-blue-500/20'
+                    : 'bg-white border-slate-200/80 hover:border-blue-200 hover:bg-slate-50/60'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 text-[#0066FF] flex items-center justify-center font-bold text-xs">
+                    <GraduationCap className="w-4 h-4" />
                   </div>
-                  <p className="text-[11px] text-slate-500">
-                    Actor: <strong className="text-slate-800">{log.actorName}</strong> ({log.actorId})
+                  <span className="font-mono text-lg font-bold text-slate-900">{studentCount}</span>
+                </div>
+                <div className="mt-2.5">
+                  <span className="text-xs font-bold text-slate-900 block font-heading">
+                    1. Student Portal
+                  </span>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Case submissions, emergency SOS & follow-ups
                   </p>
                 </div>
+              </button>
 
-                <span className="text-[10px] font-mono text-slate-400 shrink-0 font-medium">
-                  {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+              {/* Category 2: Staff / Officer Portal */}
+              <button
+                type="button"
+                onClick={() => setAuditPortalFilter(auditPortalFilter === 'staff' ? 'all' : 'staff')}
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs ${
+                  auditPortalFilter === 'staff'
+                    ? 'bg-amber-50/90 border-amber-500 ring-2 ring-amber-500/20'
+                    : 'bg-white border-slate-200/80 hover:border-amber-200 hover:bg-slate-50/60'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">
+                    <Briefcase className="w-4 h-4" />
+                  </div>
+                  <span className="font-mono text-lg font-bold text-slate-900">{staffCount}</span>
+                </div>
+                <div className="mt-2.5">
+                  <span className="text-xs font-bold text-slate-900 block font-heading">
+                    2. Staff Portal
+                  </span>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Resolution progression, escalations & department routing
+                  </p>
+                </div>
+              </button>
+
+              {/* Category 3: Admin / Executive Portal */}
+              <button
+                type="button"
+                onClick={() => setAuditPortalFilter(auditPortalFilter === 'admin' ? 'all' : 'admin')}
+                className={`p-4 rounded-2xl border text-left transition-all cursor-pointer shadow-2xs ${
+                  auditPortalFilter === 'admin'
+                    ? 'bg-purple-50/90 border-purple-500 ring-2 ring-purple-500/20'
+                    : 'bg-white border-slate-200/80 hover:border-purple-200 hover:bg-slate-50/60'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <span className="font-mono text-lg font-bold text-slate-900">{adminCount}</span>
+                </div>
+                <div className="mt-2.5">
+                  <span className="text-xs font-bold text-slate-900 block font-heading">
+                    3. Admin Portal
+                  </span>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
+                    Staff account provisioning, departments & security
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            {/* Filter Pills and Search Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+              {/* Category Filter Pills */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { id: 'all', label: 'All Portals', count: auditLogs.length },
+                  { id: 'student', label: '🎓 Student Portal', count: studentCount },
+                  { id: 'staff', label: '🛡️ Staff Portal', count: staffCount },
+                  { id: 'admin', label: '⚡ Admin Portal', count: adminCount }
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setAuditPortalFilter(cat.id as any)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      auditPortalFilter === cat.id
+                        ? 'bg-[#0066FF] text-white shadow-xs font-bold'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>{cat.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                      auditPortalFilter === cat.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {cat.count}
+                    </span>
+                  </button>
+                ))}
               </div>
-            ))}
+
+              {/* Search input */}
+              <div className="relative min-w-[200px]">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={auditSearchQuery}
+                  onChange={(e) => setAuditSearchQuery(e.target.value)}
+                  placeholder="Filter by action or actor..."
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 outline-none focus:border-[#0066FF]"
+                />
+              </div>
+            </div>
+
+            {/* Audit Logs List */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 divide-y divide-slate-100 max-h-[480px] overflow-y-auto shadow-xs">
+              {filteredLogs.length === 0 ? (
+                <div className="p-10 text-center text-xs text-slate-400 space-y-1.5">
+                  <FileText className="w-7 h-7 text-slate-300 mx-auto" />
+                  <p className="font-semibold text-slate-700">No audit events match this portal filter</p>
+                  <p className="text-[11px] text-slate-400">Try selecting "All Portals" or clearing your search term.</p>
+                </div>
+              ) : (
+                filteredLogs.map((log) => {
+                  const p = getLogPortal(log);
+                  const isStudent = p === 'student';
+                  const isStaff = p === 'staff';
+                  const isAdmin = p === 'admin';
+
+                  return (
+                    <div key={log.id} className="p-3.5 sm:p-4 hover:bg-slate-50/50 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Portal Category Badge */}
+                          <span className={`inline-flex items-center gap-1 font-semibold text-[10px] px-2 py-0.5 rounded-md border shrink-0 ${
+                            isStudent
+                              ? 'bg-blue-50 text-[#0066FF] border-blue-200'
+                              : isStaff
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : 'bg-purple-50 text-purple-700 border-purple-200'
+                          }`}>
+                            {isStudent && <GraduationCap className="w-3 h-3" />}
+                            {isStaff && <Briefcase className="w-3 h-3" />}
+                            {isAdmin && <Shield className="w-3 h-3" />}
+                            <span>
+                              {isStudent ? 'Student Portal' : isStaff ? 'Staff Portal' : 'Admin Portal'}
+                            </span>
+                          </span>
+
+                          {/* Action Name */}
+                          <span className="font-bold text-slate-900 font-mono text-[11px]">
+                            {log.action.replace(/_/g, ' ')}
+                          </span>
+
+                          {/* Case Reference if present */}
+                          {log.publicCaseId && (
+                            <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 font-bold shrink-0">
+                              #{log.publicCaseId}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Actor & Details Context */}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500">
+                          <span>
+                            Actor: <strong className="text-slate-800 font-semibold">{log.actorName}</strong>{' '}
+                            <span className="text-slate-400 font-mono">({log.actorId})</span>
+                          </span>
+
+                          {log.details && (
+                            <span className="text-slate-600 truncate max-w-sm">
+                              • {log.details}
+                            </span>
+                          )}
+
+                          {log.metadata?.newStatus && (
+                            <span className="text-emerald-700 font-medium">
+                              • Status → <strong className="font-mono">{log.metadata.newStatus}</strong>
+                            </span>
+                          )}
+
+                          {log.metadata?.departmentName && (
+                            <span className="text-blue-700 font-medium">
+                              • Routed to {log.metadata.departmentName}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Timestamp */}
+                      <div className="text-[10px] font-mono text-slate-400 shrink-0 font-medium flex items-center gap-1 sm:self-center">
+                        <Clock className="w-3 h-3 text-slate-300" />
+                        <span>
+                          {new Date(log.timestamp).toLocaleString([], {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Add Department Modal */}
       <AnimatePresence>
@@ -1395,6 +1751,77 @@ export const AdminDashboard: React.FC<Props> = ({
           }}
         />
       )}
+
+      {/* Floating Live Alert for Brand New Case (Admin Only) */}
+      <AnimatePresence>
+        {newCaseAlert && (
+          <motion.div
+            initial={{ opacity: 0, y: -40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-6 right-6 z-50 max-w-md w-full bg-slate-900/95 backdrop-blur-md text-white rounded-3xl p-4 sm:p-5 shadow-2xl border border-blue-500/40 space-y-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#0066FF] text-white flex items-center justify-center shrink-0 shadow-md">
+                  <ShieldAlert className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400">
+                      New Incident Reported
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-md">
+                      {newCaseAlert.publicCaseId}
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-white font-heading mt-0.5">
+                    {newCaseAlert.category || newCaseAlert.reportType}
+                  </h4>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewCaseAlert(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/60 font-medium">
+              "{newCaseAlert.description}"
+            </p>
+
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="text-[11px] text-slate-400 flex items-center gap-1 truncate">
+                <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                <span>{newCaseAlert.location || 'Campus'}</span>
+              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setNewCaseAlert(null)}
+                  className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors cursor-pointer"
+                >
+                  Dismiss
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCase(newCaseAlert);
+                    setNewCaseAlert(null);
+                  }}
+                  className="px-4 py-1.5 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Inspect Case</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

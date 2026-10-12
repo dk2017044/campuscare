@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { db } from './db.js';
@@ -57,6 +58,12 @@ app.use(sanitizeInputs);
 
 // Static route for evidence preview with secure disposition headers
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
+// Serve Client SPA assets if built
+const clientDistPath = path.join(__dirname, '..', '..', 'client', 'dist');
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+}
 
 // Health check
 app.get('/api/health', async (req, res) => {
@@ -413,9 +420,15 @@ app.patch('/api/cases/:publicCaseId/status', (req, res) => {
       description: notes || `Case progressed by ${actorName}.`
     });
 
+    const isResolved = status === 'RESOLVED';
     const updated = db.updateCase(publicCaseId, {
       status,
-      timeline: updatedTimeline
+      timeline: updatedTimeline,
+      ...(isResolved ? {
+        resolutionNotes: notes || 'Case has been successfully resolved and concluded by campus administration.',
+        resolvedAt: now,
+        resolvedBy: actorName
+      } : {})
     });
     syncCaseToSupabase(updated);
 
@@ -547,6 +560,13 @@ app.post('/api/cases/:publicCaseId/messages', (req, res) => {
     const c = db.getCaseByPublicId(publicCaseId);
     if (!c) {
       return res.status(404).json({ error: 'Case not found' });
+    }
+
+    // Security check: if case is resolved, further student messages are disabled
+    if (c.status === 'RESOLVED' && senderType === 'student') {
+      return res.status(400).json({
+        error: 'This case has been officially resolved and closed. Further follow-up messaging is disabled.'
+      });
     }
 
     // Security check: if sender is student, verify PIN
@@ -1037,6 +1057,13 @@ app.use('/api', notFoundHandler);
 
 // Global Centralized Error Handler
 app.use(globalErrorHandler);
+
+// SPA HTML5 Fallback for client navigation (handles refresh on /track, /report, /admin, etc.)
+if (fs.existsSync(clientDistPath)) {
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 // Start server if not running in serverless environment
 if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
