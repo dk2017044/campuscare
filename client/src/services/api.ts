@@ -2,7 +2,9 @@ import { Case, CaseMessage, Department, StaffUser, LostFoundItem, LostFoundMatch
 
 const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
-  : '/api';
+  : (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app'))
+    ? 'https://campuscare-api-bvyl.onrender.com/api'
+    : '/api';
 
 /**
  * Robust fetch wrapper with automatic rate-limit (429) handling,

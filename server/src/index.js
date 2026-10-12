@@ -38,12 +38,10 @@ app.set('trust proxy', 1);
 // 1. HTTP Security Headers (OWASP Helmet Protection)
 app.use(configureSecurityHeaders());
 
-// 2. CORS & Preflight Configuration (Supports Vercel cross-origin calls to Render backend)
+// 2. Open Permissive CORS (Allows all origins, methods, and all headers dynamically)
 app.use(cors({
   origin: true,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-admin-auth', 'X-Admin-Auth']
+  credentials: true
 }));
 app.options('*', cors());
 
