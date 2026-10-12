@@ -243,7 +243,7 @@ export const Navbar: React.FC<Props> = ({
               key={tab.id}
               type="button"
               onClick={() => setCurrentTab(tab.id)}
-              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs shrink-0 transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-full text-xs shrink-0 transition-colors cursor-pointer ${
                 isActive 
                   ? 'bg-[#EBF3FF] text-[#0066FF] font-semibold' 
                   : 'text-slate-600 hover:bg-slate-50'

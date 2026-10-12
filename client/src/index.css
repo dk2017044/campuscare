@@ -158,12 +158,45 @@ h1, h2, h3, h4, .font-heading {
   animation: jioShimmer 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-/* Mobile border protection */
+/* Mobile responsive & adaptive media */
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+
 p, span, h1, h2, h3, h4 {
   overflow-wrap: break-word;
+}
+
+/* Touch UX: eliminate tap delay & highlight flash */
+button, a, input, select, textarea, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Prevent iOS Safari 16px auto-zoom glitch on mobile inputs */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Accessible reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Safe area insets for mobile notched devices */
+.safe-area-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 

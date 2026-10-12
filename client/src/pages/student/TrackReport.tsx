@@ -132,7 +132,11 @@ export const TrackReport: React.FC<Props> = ({ initialCaseId = '', initialPin = 
                 value={caseIdInput}
                 onChange={(e) => setCaseIdInput(e.target.value.toUpperCase())}
                 placeholder="Enter Case ID"
-                className="w-full p-3.5 font-mono text-sm font-bold rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 uppercase placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 outline-none transition-all"
+                inputMode="text"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                className="w-full min-h-[44px] p-3.5 font-mono text-sm font-bold rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 uppercase placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
 
@@ -146,7 +150,10 @@ export const TrackReport: React.FC<Props> = ({ initialCaseId = '', initialPin = 
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value)}
                 placeholder="6-digit PIN"
-                className="w-full p-3.5 font-mono text-sm font-bold rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 placeholder:text-slate-400 tracking-widest outline-none transition-all"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
+                className="w-full min-h-[44px] p-3.5 font-mono text-sm font-bold rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 placeholder:text-slate-400 tracking-widest outline-none transition-all"
               />
             </div>
 
@@ -154,7 +161,7 @@ export const TrackReport: React.FC<Props> = ({ initialCaseId = '', initialPin = 
               type="button"
               onClick={() => handleLogin()}
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold text-xs transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              className="w-full min-h-[44px] py-3.5 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold text-xs transition-all shadow-xs cursor-pointer disabled:opacity-50"
             >
               {loading ? 'Authenticating Case...' : 'Access Real-Time Status →'}
             </button>

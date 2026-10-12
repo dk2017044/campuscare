@@ -98,7 +98,10 @@ export const StaffLogin: React.FC<Props> = ({ onLoginSuccess, onNavigateToAdmin 
                 onChange={(e) => setStaffId(e.target.value)}
                 placeholder="Staff ID or Official Email"
                 required
-                className="w-full pl-3.5 pr-10 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs placeholder:text-slate-400 focus:bg-white focus:border-[#0066FF] outline-none transition-all font-medium"
+                autoCapitalize="none"
+                autoCorrect="off"
+                inputMode="email"
+                className="w-full min-h-[44px] pl-3.5 pr-10 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs placeholder:text-slate-400 focus:bg-white focus:border-[#0066FF] outline-none transition-all font-medium"
               />
               <KeyRound className="w-4 h-4 text-slate-400 absolute right-3.5 top-3.5 pointer-events-none" />
             </div>
@@ -115,12 +118,14 @@ export const StaffLogin: React.FC<Props> = ({ onLoginSuccess, onNavigateToAdmin 
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
                 required
-                className="w-full pl-3.5 pr-10 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs placeholder:text-slate-400 focus:bg-white focus:border-[#0066FF] outline-none transition-all font-medium"
+                autoComplete="current-password"
+                className="w-full min-h-[44px] pl-3.5 pr-12 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs placeholder:text-slate-400 focus:bg-white focus:border-[#0066FF] outline-none transition-all font-medium"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-1 top-1 bottom-1 w-10 flex items-center justify-center text-slate-400 hover:text-slate-600 cursor-pointer min-h-[40px]"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -130,7 +135,7 @@ export const StaffLogin: React.FC<Props> = ({ onLoginSuccess, onNavigateToAdmin 
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-3 px-4 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] active:scale-[0.99] text-white font-bold text-xs tracking-wide shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="w-full min-h-[44px] mt-2 py-3 px-4 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] active:scale-[0.99] text-white font-bold text-xs tracking-wide shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {loading ? (
               <span>Authenticating Officer...</span>

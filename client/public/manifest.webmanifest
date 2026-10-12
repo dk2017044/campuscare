@@ -1,0 +1,43 @@
+{
+  "name": "CampusCare — AI Privacy-First Campus Safety & Grievance Platform",
+  "short_name": "CampusCare",
+  "description": "Confidential, AI-powered campus safety reporting, maintenance management, and emergency SOS platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0066FF",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "utilities", "safety"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Emergency SOS",
+      "short_name": "SOS",
+      "description": "Instant campus emergency beacon",
+      "url": "/?tab=emergency",
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Report Safely",
+      "short_name": "Report",
+      "description": "File confidential safety report",
+      "url": "/?tab=report_safely",
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Track Case",
+      "short_name": "Track",
+      "description": "Track existing case status",
+      "url": "/?tab=track_report",
+      "icons": [{ "src": "/favicon.svg", "sizes": "96x96" }]
+    }
+  ]
+}
