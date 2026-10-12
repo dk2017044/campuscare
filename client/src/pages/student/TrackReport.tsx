@@ -22,6 +22,7 @@ export const TrackReport: React.FC<Props> = ({ initialCaseId = '', initialPin = 
   const [messages, setMessages] = useState<CaseMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [sendingMsg, setSendingMsg] = useState(false);
+  const [msgError, setMsgError] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialCaseId && initialPin) {
@@ -68,9 +69,11 @@ export const TrackReport: React.FC<Props> = ({ initialCaseId = '', initialPin = 
       if (res.success) {
         setMessages(prev => [...prev, res.message]);
         setNewMessage('');
+        setMsgError(null);
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to send message');
+      setMsgError(err.message || 'Failed to send message');
+      setTimeout(() => setMsgError(null), 4000);
     } finally {
       setSendingMsg(false);
     }
@@ -319,6 +322,12 @@ export const TrackReport: React.FC<Props> = ({ initialCaseId = '', initialPin = 
                     <span>Send</span>
                   </button>
                 </form>
+                {msgError && (
+                  <p className="text-[11px] text-rose-500 font-medium px-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{msgError}</span>
+                  </p>
+                )}
               </div>
             </div>
 

@@ -34,12 +34,15 @@ async function fetchSafe(input: string, init?: RequestInit): Promise<Response> {
     return res;
   } catch (err: any) {
     if (err.name === 'TypeError' && err.message?.toLowerCase().includes('fetch')) {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        throw new Error('Network Offline: You appear to be disconnected from the internet. Please reconnect and try again.');
+      }
       const isLocalhost = typeof window !== 'undefined' && 
         (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       if (isLocalhost) {
-        throw new Error('Backend server is offline (port 5000 not reachable). Please start the backend server using run.bat or "cd server && npm run dev".');
+        throw new Error('Local backend server is offline (port 5000 not reachable). Please start the backend server.');
       }
-      throw new Error('Unable to connect to backend server. Please verify your internet connection or check backend service status.');
+      throw new Error('Unable to connect to CampusCare Cloud. Please check your network connection or try again in a moment.');
     }
     throw err;
   }

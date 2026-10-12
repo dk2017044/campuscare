@@ -5,7 +5,7 @@ import { Footer } from './components/Footer';
 import { StudentHome } from './pages/student/StudentHome';
 import { CommandPalette } from './components/CommandPalette';
 import { Role, StaffUser } from './types';
-import { CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Loader2, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { playSuccessChime } from './services/sound';
 import { api } from './services/api';
 
@@ -51,7 +51,11 @@ export function App() {
   const [trackedCaseId, setTrackedCaseId] = useState<string>('');
   const [trackedPin, setTrackedPin] = useState<string>('');
 
-  // Local/Network Backend Health Status
+  // Real-time Network Connectivity & Backend Health Status
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  });
+  const [showReconnectedToast, setShowReconnectedToast] = useState(false);
   const [backendOffline, setBackendOffline] = useState(false);
   const [isCheckingBackend, setIsCheckingBackend] = useState(false);
 
@@ -73,6 +77,26 @@ export function App() {
 
   useEffect(() => {
     checkBackendStatus();
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      setShowReconnectedToast(true);
+      checkBackendStatus();
+      setTimeout(() => setShowReconnectedToast(false), 3500);
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      setShowReconnectedToast(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Global Ctrl+K / ⌘K listener
@@ -103,28 +127,76 @@ export function App() {
 
   return (
     <div className="min-h-screen flex flex-col text-slate-900 font-sans selection:bg-[#0066FF] selection:text-white relative">
-      {/* Backend Offline Indicator Banner */}
+      {/* Real-time Network & Backend Status Banners */}
       <AnimatePresence>
-        {backendOffline && (
+        {!isOnline && (
           <motion.div
+            key="offline-banner"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-rose-500/10 border-b border-rose-500/20 px-4 py-2.5 text-xs text-rose-800 dark:text-rose-200 flex items-center justify-between gap-3 z-50 backdrop-blur-md"
+          >
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
+              <WifiOff className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+              <span>
+                <strong>Offline Mode Active:</strong> Internet connection unavailable. Cached modules remain active.
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && navigator.onLine) {
+                  setIsOnline(true);
+                  checkBackendStatus();
+                } else {
+                  showToast('Still offline. Please check your network connection.');
+                }
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-medium transition-colors shrink-0 cursor-pointer text-xs shadow-2xs"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Retry</span>
+            </button>
+          </motion.div>
+        )}
+
+        {showReconnectedToast && (
+          <motion.div
+            key="reconnected-banner"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-emerald-500/10 border-b border-emerald-500/20 px-4 py-2 text-xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2 z-50 backdrop-blur-md"
+          >
+            <Wifi className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span className="font-medium">
+              Internet connection restored. Synchronized with CampusCare Cloud.
+            </span>
+          </motion.div>
+        )}
+
+        {isOnline && backendOffline && (
+          <motion.div
+            key="backend-offline-banner"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between gap-3 z-50 backdrop-blur-md"
           >
             <div className="flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
               <span>
-                <strong>Backend Server Not Running (Port 5000):</strong> Run <code className="bg-amber-100 dark:bg-amber-900/60 px-1 py-0.5 rounded font-mono text-[11px]">run.bat</code> or <code className="bg-amber-100 dark:bg-amber-900/60 px-1 py-0.5 rounded font-mono text-[11px]">cd server && npm run dev</code> to connect the local database.
+                <strong>Local Backend Server (Port 5000) Unreachable:</strong> Start server with <code className="bg-amber-100 dark:bg-amber-900/60 px-1 py-0.5 rounded font-mono text-[11px]">npm run dev</code> or verify API connection.
               </span>
             </div>
             <button
               onClick={checkBackendStatus}
               disabled={isCheckingBackend}
-              className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 shrink-0 cursor-pointer text-xs"
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 shrink-0 cursor-pointer text-xs shadow-2xs"
             >
               <RefreshCw className={`w-3 h-3 ${isCheckingBackend ? 'animate-spin' : ''}`} />
-              <span>Retry</span>
+              <span>{isCheckingBackend ? 'Checking...' : 'Retry'}</span>
             </button>
           </motion.div>
         )}

@@ -26,7 +26,8 @@ import {
   Eye,
   EyeOff,
   Copy,
-  ChevronDown
+  ChevronDown,
+  AlertCircle
 } from 'lucide-react';
 import { api } from '../../services/api';
 import { SystemStats, Department, AuditLog, StaffUser, Case } from '../../types';
@@ -80,6 +81,7 @@ export const AdminDashboard: React.FC<Props> = ({
   const [filterCasePriority, setFilterCasePriority] = useState('all');
   const [filterCaseStatus, setFilterCaseStatus] = useState('all');
   const [expandedCaseIds, setExpandedCaseIds] = useState<Set<string>>(new Set());
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const toggleExpandCase = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -220,6 +222,7 @@ export const AdminDashboard: React.FC<Props> = ({
   const loadAdminData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [statsRes, deptsRes, staffRes, auditRes, casesRes] = await Promise.all([
         api.getStats(),
         api.getDepartments(),
@@ -235,8 +238,9 @@ export const AdminDashboard: React.FC<Props> = ({
       if (deptsRes.departments && deptsRes.departments.length > 0 && !newStaffDept) {
         setNewStaffDept(deptsRes.departments[0].id);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setLoadError(e.message || 'Unable to sync live administration data. Please check your network connection.');
     } finally {
       setLoading(false);
     }
@@ -459,6 +463,22 @@ export const AdminDashboard: React.FC<Props> = ({
           </button>
         </div>
       </div>
+
+      {/* Live Data Connection Error Banner */}
+      {loadError && (
+        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+            <span className="font-medium">{loadError}</span>
+          </div>
+          <button
+            onClick={loadAdminData}
+            className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-semibold text-xs transition-colors shrink-0 cursor-pointer shadow-2xs"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Aggregate Stats Cards */}
       {stats && (
