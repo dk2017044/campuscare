@@ -39,11 +39,18 @@ import { JioSkeletonLoader } from '../../components/JioSkeletonLoader';
 interface Props {
   currentTab?: string;
   onNavigateTab?: (tab: string) => void;
+  isAdminAuthenticated?: boolean;
+  onAdminAuthChange?: (auth: boolean) => void;
 }
 
 type AdminSubTab = 'queue' | 'analytics' | 'departments' | 'staff' | 'audit';
 
-export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', onNavigateTab }) => {
+export const AdminDashboard: React.FC<Props> = ({
+  currentTab = 'admin_queue',
+  onNavigateTab,
+  isAdminAuthenticated: propIsAdminAuth,
+  onAdminAuthChange
+}) => {
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffUser[]>([]);
@@ -102,9 +109,14 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
   const [savingStaff, setSavingStaff] = useState(false);
 
   // Admin Login Authentication Gate (Clean empty defaults)
-  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+  const [internalAdminAuth, setInternalAdminAuth] = useState<boolean>(() => {
     return localStorage.getItem('campuscare_admin_auth') === 'true';
   });
+  const isAdminAuthenticated = propIsAdminAuth !== undefined ? propIsAdminAuth : internalAdminAuth;
+  const setIsAdminAuthenticated = (val: boolean) => {
+    setInternalAdminAuth(val);
+    if (onAdminAuthChange) onAdminAuthChange(val);
+  };
   const [adminLoginUser, setAdminLoginUser] = useState('');
   const [adminLoginPass, setAdminLoginPass] = useState('');
   const [adminLoginError, setAdminLoginError] = useState<string | null>(null);

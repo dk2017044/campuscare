@@ -28,6 +28,10 @@ export function App() {
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('campuscare_admin_auth') === 'true';
+  });
+
   const [staffDept, setStaffDept] = useState<string>(() => {
     return localStorage.getItem('campuscare_dept') || 'all';
   });
@@ -110,6 +114,7 @@ export function App() {
         staffDept={staffDept}
         setStaffDept={setStaffDept}
         activeStaffUser={activeStaffUser}
+        isAdminAuthenticated={isAdminAuthenticated}
         onOpenCommand={() => setIsCommandOpen(true)}
       />
 
@@ -220,7 +225,12 @@ export function App() {
 
               {/* ADMIN PORTAL VIEWS */}
               {userRole === 'super_admin' && (
-                <AdminDashboard currentTab={currentTab} onNavigateTab={setCurrentTab} />
+                <AdminDashboard
+                  currentTab={currentTab}
+                  onNavigateTab={setCurrentTab}
+                  isAdminAuthenticated={isAdminAuthenticated}
+                  onAdminAuthChange={setIsAdminAuthenticated}
+                />
               )}
             </motion.div>
           </AnimatePresence>

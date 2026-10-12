@@ -27,6 +27,7 @@ interface Props {
   staffDept: string;
   setStaffDept: (dept: string) => void;
   activeStaffUser?: StaffUser | null;
+  isAdminAuthenticated?: boolean;
   onOpenCommand?: () => void;
 }
 
@@ -35,7 +36,8 @@ export const Navbar: React.FC<Props> = ({
   setCurrentTab,
   userRole,
   setUserRole,
-  activeStaffUser
+  activeStaffUser,
+  isAdminAuthenticated
 }) => {
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -72,7 +74,12 @@ export const Navbar: React.FC<Props> = ({
         { id: 'lost_found', label: 'Lost & Found', icon: Search }
       ];
     }
-    // super_admin
+    // super_admin (LOCKED UNTIL ADMIN LOGS IN)
+    if (!isAdminAuthenticated) {
+      return [
+        { id: 'admin_dashboard', label: 'Administrator Sign In', icon: ShieldAlert }
+      ];
+    }
     return [
       { id: 'admin_queue', label: 'Incident Queue', icon: ClipboardList },
       { id: 'admin_analytics', label: 'Analytics', icon: BarChart3 },
@@ -89,7 +96,7 @@ export const Navbar: React.FC<Props> = ({
     localStorage.setItem('campuscare_role', role);
     if (role === 'student') setCurrentTab('student_home');
     else if (role === 'staff') setCurrentTab('staff_dashboard');
-    else setCurrentTab('admin_queue');
+    else setCurrentTab(isAdminAuthenticated ? 'admin_queue' : 'admin_dashboard');
     setRoleDropdownOpen(false);
   };
 
@@ -106,7 +113,11 @@ export const Navbar: React.FC<Props> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Left: Brand Logo & Slogan */}
         <div
-          onClick={() => setCurrentTab(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : 'admin_queue')}
+          onClick={() => {
+            if (userRole === 'student') setCurrentTab('student_home');
+            else if (userRole === 'staff') setCurrentTab('staff_dashboard');
+            else setCurrentTab(isAdminAuthenticated ? 'admin_queue' : 'admin_dashboard');
+          }}
           className="flex items-center gap-3 cursor-pointer group shrink-0"
         >
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0066FF] to-[#0047BA] text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
@@ -127,7 +138,9 @@ export const Navbar: React.FC<Props> = ({
         <nav className="hidden md:flex items-center gap-1 bg-white border border-slate-200/80 rounded-full px-2 py-1 shadow-sm">
           {navTabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = currentTab === tab.id || (userRole === 'super_admin' && currentTab === 'admin_dashboard' && tab.id === 'admin_queue');
+            const isActive = currentTab === tab.id || 
+              (userRole === 'super_admin' && !isAdminAuthenticated && tab.id === 'admin_dashboard') ||
+              (userRole === 'staff' && !activeStaffUser && tab.id === 'staff_dashboard');
             return (
               <button
                 key={tab.id}
@@ -209,6 +222,8 @@ export const Navbar: React.FC<Props> = ({
           <div className="w-9 h-9 rounded-full bg-[#EBF3FF] border border-blue-200/60 text-[#0066FF] flex items-center justify-center cursor-pointer hover:bg-[#DCEBFF] transition-colors shadow-xs">
             {userRole === 'staff' && activeStaffUser ? (
               <span className="font-bold text-xs">{activeStaffUser.name.charAt(0)}</span>
+            ) : userRole === 'super_admin' && isAdminAuthenticated ? (
+              <span className="font-bold text-xs">A</span>
             ) : (
               <User className="w-4 h-4" />
             )}
@@ -220,7 +235,9 @@ export const Navbar: React.FC<Props> = ({
       <div className="md:hidden flex items-center gap-1 overflow-x-auto px-4 py-2 border-t border-slate-100 bg-white">
         {navTabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive = currentTab === tab.id || (userRole === 'super_admin' && currentTab === 'admin_dashboard' && tab.id === 'admin_queue');
+          const isActive = currentTab === tab.id || 
+            (userRole === 'super_admin' && !isAdminAuthenticated && tab.id === 'admin_dashboard') ||
+            (userRole === 'staff' && !activeStaffUser && tab.id === 'staff_dashboard');
           return (
             <button
               key={tab.id}
