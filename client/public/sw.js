@@ -28,10 +28,20 @@ self.addEventListener('activate', (event) => {
 
 // Fetch: Stale-While-Revalidate for static assets, Network-First for API calls
 self.addEventListener('fetch', (event) => {
+  // Only handle GET requests; never cache POST, PUT, DELETE, etc.
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   const url = new URL(event.request.url);
 
-  // Never cache API requests - always fetch live
-  if (url.pathname.startsWith('/api')) {
+  // Never cache or intercept API or uploads requests - always fetch live
+  if (url.pathname.startsWith('/api') || url.pathname.startsWith('/uploads')) {
+    return;
+  }
+
+  // Only handle requests for our origin
+  if (url.origin !== location.origin) {
     return;
   }
 

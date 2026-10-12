@@ -22,16 +22,40 @@ async function fetchSafe(input: string, init?: RequestInit): Promise<Response> {
       const data = await res.json().catch(() => null);
       throw new Error(data?.error || 'Rate limit reached: Please wait a moment before trying again.');
     }
+
+    // Detect if server or CDN returned an HTML document instead of API data
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      throw new Error('Backend server returned an HTML page instead of JSON. The backend server might be offline or the API route is misconfigured.');
+    }
+
     return res;
   } catch (err: any) {
     if (err.name === 'TypeError' && err.message?.toLowerCase().includes('fetch')) {
-      throw new Error('Unable to connect to campus network server. Please verify your internet connection.');
+      const isLocalhost = typeof window !== 'undefined' && 
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      if (isLocalhost) {
+        throw new Error('Backend server is offline (port 5000 not reachable). Please start the backend server using run.bat or "cd server && npm run dev".');
+      }
+      throw new Error('Unable to connect to backend server. Please verify your internet connection or check backend service status.');
     }
     throw err;
   }
 }
 
 export const api = {
+  // Health & Diagnostics
+  async checkHealth(): Promise<{
+    status: string;
+    platform?: string;
+    geminiConfigured?: boolean;
+    supabase?: { connected: boolean; tablesReady?: boolean; message?: string };
+    keepAlive?: any;
+  }> {
+    const res = await fetchSafe(`${API_BASE}/health`);
+    if (!res.ok) throw new Error('Backend health check failed');
+    return res.json();
+  },
   // Cases
   async createCase(data: {
     reportType: string;

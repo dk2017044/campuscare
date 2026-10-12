@@ -1037,13 +1037,17 @@ app.use('/api', notFoundHandler);
 // Global Centralized Error Handler
 app.use(globalErrorHandler);
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`=======================================================`);
-  console.log(`🛡️  CampusCare Backend Server running on port ${PORT}`);
-  console.log(`🔒  Privacy-First Anonymous Protection: ACTIVE`);
-  console.log(`🤖  AI Triage Engine: READY (Gemini / Heuristic Engine)`);
-  console.log(`⚡  Anti-Pause & Keep-Alive Service: INITIALIZING...`);
-  console.log(`=======================================================`);
-  startKeepAliveService();
-});
+// Start server if not running in serverless environment
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`=======================================================`);
+    console.log(`🛡️  CampusCare Backend Server running on port ${PORT}`);
+    console.log(`🔒  Privacy-First Anonymous Protection: ACTIVE`);
+    console.log(`🤖  AI Triage Engine: READY (Gemini / Heuristic Engine)`);
+    console.log(`⚡  Anti-Pause & Keep-Alive Service: INITIALIZING...`);
+    console.log(`=======================================================`);
+    startKeepAliveService();
+  });
+}
+
+export default app;
