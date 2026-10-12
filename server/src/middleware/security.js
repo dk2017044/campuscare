@@ -15,19 +15,20 @@ const createRateLimitHandler = (message, code = 'RATE_LIMIT_EXCEEDED') => (req, 
   });
 };
 
-// General API Limiter: 300 requests per 15 minutes per IP
+// General API Limiter: 1000 requests per 15 minutes per IP (generous for active SPAs)
 export const globalApiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.path === '/health' || req.path === '/keep-alive',
   handler: createRateLimitHandler('Too many requests from this IP. Please slow down and try again later.')
 });
 
-// Authentication Brute-Force Limiter: 10 attempts per 15 minutes per IP
+// Authentication Brute-Force Limiter: 30 attempts per 15 minutes per IP
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   handler: createRateLimitHandler('Too many login attempts. Account access throttled for 15 minutes for security.', 'AUTH_THROTTLED')

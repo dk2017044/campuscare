@@ -32,15 +32,18 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust reverse proxy (Essential for Render, Vercel, Cloudflare to obtain real client IP)
+app.set('trust proxy', 1);
+
 // 1. HTTP Security Headers (OWASP Helmet Protection)
 app.use(configureSecurityHeaders());
 
-// 2. CORS & Preflight Configuration
+// 2. CORS & Preflight Configuration (Supports Vercel cross-origin calls to Render backend)
 app.use(cors({
   origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'x-admin-auth', 'X-Admin-Auth']
 }));
 app.options('*', cors());
 
