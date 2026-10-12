@@ -148,11 +148,11 @@ export const Navbar: React.FC<Props> = ({
                 onClick={() => setCurrentTab(tab.id)}
                 className={`relative inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-[#EBF3FF] text-[#0066FF] font-semibold shadow-xs'
+                    ? 'bg-[#EBF3FF] text-[#0050C8] font-semibold shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#0066FF]' : 'text-slate-500'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#0050C8]' : 'text-slate-500'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -168,7 +168,7 @@ export const Navbar: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setRoleDropdownOpen(prev => !prev)}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EBF3FF] hover:bg-[#DCEBFF] text-[#0066FF] text-xs font-semibold border border-blue-200/60 shadow-xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EBF3FF] hover:bg-[#DCEBFF] text-[#0050C8] text-xs font-semibold border border-blue-200/60 shadow-xs transition-all cursor-pointer"
             >
               <RoleIcon className="w-4 h-4" />
               <span>{getRoleLabel()}</span>
@@ -201,7 +201,7 @@ export const Navbar: React.FC<Props> = ({
                         onClick={() => handleRoleSelect(roleItem.id as Role)}
                         className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors cursor-pointer text-left ${
                           isSelected
-                            ? 'bg-[#EBF3FF] text-[#0066FF] font-semibold'
+                            ? 'bg-[#EBF3FF] text-[#0050C8] font-semibold'
                             : 'text-slate-700 hover:bg-slate-50'
                         }`}
                       >
@@ -209,7 +209,7 @@ export const Navbar: React.FC<Props> = ({
                           <Icon className="w-4 h-4 text-slate-500" />
                           <span>{roleItem.label}</span>
                         </div>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#0066FF]" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#0050C8]" />}
                       </button>
                     );
                   })}
@@ -219,7 +219,7 @@ export const Navbar: React.FC<Props> = ({
           </div>
 
           {/* User Profile Avatar */}
-          <div className="w-9 h-9 rounded-full bg-[#EBF3FF] border border-blue-200/60 text-[#0066FF] flex items-center justify-center cursor-pointer hover:bg-[#DCEBFF] transition-colors shadow-xs">
+          <div className="w-9 h-9 rounded-full bg-[#EBF3FF] border border-blue-200/60 text-[#0050C8] flex items-center justify-center cursor-pointer hover:bg-[#DCEBFF] transition-colors shadow-xs">
             {userRole === 'staff' && activeStaffUser ? (
               <span className="font-bold text-xs">{activeStaffUser.name.charAt(0)}</span>
             ) : userRole === 'super_admin' && isAdminAuthenticated ? (
@@ -245,7 +245,7 @@ export const Navbar: React.FC<Props> = ({
               onClick={() => setCurrentTab(tab.id)}
               className={`inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-full text-xs shrink-0 transition-colors cursor-pointer ${
                 isActive 
-                  ? 'bg-[#EBF3FF] text-[#0066FF] font-semibold' 
+                  ? 'bg-[#EBF3FF] text-[#0050C8] font-semibold' 
                   : 'text-slate-600 hover:bg-slate-50'
               }`}
             >

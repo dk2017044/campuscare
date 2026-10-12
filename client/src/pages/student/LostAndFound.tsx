@@ -152,7 +152,7 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
           <button
             type="button"
             onClick={() => setActiveSubTab('report_lost')}
-            className="text-xs font-semibold px-3.5 py-2 rounded-xl bg-white border border-[#FED4D1] text-[#D92D20] hover:bg-[#FFF0ED] shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
+            className="text-xs font-semibold px-3.5 py-2 rounded-xl bg-white border border-[#FED4D1] text-[#B42318] hover:bg-[#FFF0ED] shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Report Lost</span>
@@ -286,7 +286,7 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                         item.type === 'lost'
-                          ? 'bg-[#FFF0ED] text-[#D92D20] border border-[#FED4D1]'
+                          ? 'bg-[#FFF0ED] text-[#B42318] border border-[#FED4D1]'
                           : 'bg-[#F0FDF9] text-[#0E9384] border border-[#CCFBEF]'
                       }`}
                     >

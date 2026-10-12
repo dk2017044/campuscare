@@ -1,0 +1,14 @@
+# CampusCare — AI-Powered Campus Safety & Grievance Platform
+
+> AI-Powered Privacy-First Campus Safety, Incident Reporting, and Maintenance Platform for Universities.
+
+## System Overview
+CampusCare is an enterprise university web platform providing anonymous safety reporting, emergency SOS dispatch, AI-driven grievance triage, and maintenance tracking with cryptographic zero-knowledge verification.
+
+## Core Services and Endpoints
+- [CampusCare Home Portal](https://cmpscare.vercel.app/): Main landing page and incident reporting dashboard for university students, faculty, and administration.
+- [Anonymous Safety Reporting](https://cmpscare.vercel.app/#report): File confidential safety, harassment, and campus grievance reports with private PIN authentication.
+- [Emergency SOS Dispatch](https://cmpscare.vercel.app/#emergency): Instant emergency SOS response for critical university campus security incidents.
+- [Track Incident Status](https://cmpscare.vercel.app/#track): Check real-time resolution timeline with private case ID and verification PIN.
+- [Campus Maintenance Grievances](https://cmpscare.vercel.app/#maintenance): Report hostel, electrical, and plumbing infrastructure issues with instant AI triage.
+- [Campus Lost and Found Directory](https://cmpscare.vercel.app/#lost-found): Search and claim lost property across campus buildings.

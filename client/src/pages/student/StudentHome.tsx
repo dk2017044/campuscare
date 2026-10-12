@@ -116,9 +116,9 @@ export const StudentHome: React.FC<Props> = ({ onNavigate }) => {
           <button
             type="button"
             onClick={() => handleNavigate('emergency')}
-            className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#FFF0ED] hover:bg-[#FFE4DF] text-[#D92D20] text-sm font-semibold border border-[#FECDCA] shadow-xs hover:shadow-md transition-all cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0"
+            className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#FFF0ED] hover:bg-[#FFE4DF] text-[#B42318] text-sm font-semibold border border-[#FECDCA] shadow-xs hover:shadow-md transition-all cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0"
           >
-            <Siren className="w-4 h-4 animate-pulse text-[#D92D20]" />
+            <Siren className="w-4 h-4 animate-pulse text-[#B42318]" />
             <span>Emergency SOS</span>
             <ArrowRight className="w-4 h-4" />
           </button>
