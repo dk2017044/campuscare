@@ -19,7 +19,7 @@ export const StaffLogin: React.FC<Props> = ({ onLoginSuccess, onNavigateToAdmin 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!staffId.trim() || !password.trim()) {
-      setErrorMessage('Please enter both your Staff ID / Email and Password.');
+      setErrorMessage('Please enter your Staff ID and Password.');
       return;
     }
 
@@ -35,8 +35,8 @@ export const StaffLogin: React.FC<Props> = ({ onLoginSuccess, onNavigateToAdmin 
         localStorage.setItem('campuscare_staff_session', JSON.stringify(res.user));
         onLoginSuccess(res.user);
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Invalid Staff ID or Password. Please check credentials.');
+    } catch (_err: any) {
+      setErrorMessage('Invalid Staff ID or Password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -76,23 +76,12 @@ export const StaffLogin: React.FC<Props> = ({ onLoginSuccess, onNavigateToAdmin 
         {/* Error Notification */}
         {errorMessage && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-5 px-3.5 py-2.5 rounded-xl bg-rose-50 border border-rose-200/90 text-rose-700 text-xs flex items-center gap-2.5 shadow-2xs"
           >
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <p className="font-semibold leading-snug">{errorMessage}</p>
-              {onNavigateToAdmin && (
-                <button
-                  type="button"
-                  onClick={onNavigateToAdmin}
-                  className="text-[#0066FF] font-bold underline hover:text-blue-800 block cursor-pointer"
-                >
-                  Go to Admin Portal to create staff accounts →
-                </button>
-              )}
-            </div>
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+            <p className="font-medium leading-snug">{errorMessage}</p>
           </motion.div>
         )}
 

@@ -886,6 +886,33 @@ app.get('/api/audit', (req, res) => {
   res.json({ success: true, logs: db.getAuditLogs(limit) });
 });
 
+// Admin Authentication & Security Management (Database-Backed)
+app.post('/api/admin/login', (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and Password are required.' });
+    }
+    const result = db.verifyAdminLogin({ username, password });
+    return res.json({ success: true, ...result });
+  } catch (error) {
+    return res.status(401).json({ error: error.message || 'Invalid Administrator credentials.' });
+  }
+});
+
+app.post('/api/admin/change-password', (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required.' });
+    }
+    const result = db.updateAdminPassword({ currentPassword, newPassword });
+    return res.json(result);
+  } catch (error) {
+    return res.status(400).json({ error: error.message || 'Failed to update admin password.' });
+  }
+});
+
 // Staff Authentication & User Management (Purely dynamic, created by Admin)
 app.post('/api/staff/login', (req, res) => {
   try {

@@ -121,25 +121,38 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
   const [queueDisplayLimit, setQueueDisplayLimit] = useState(5);
   const [isLoadingMoreQueue, setIsLoadingMoreQueue] = useState(false);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const [isAdminLoggingIn, setIsAdminLoggingIn] = useState(false);
+  const [isSavingAdminPassword, setIsSavingAdminPassword] = useState(false);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const activeAdminPassword = localStorage.getItem('campuscare_admin_password') || 'admin@123';
-    if (adminLoginUser.trim() === 'admin' && adminLoginPass === activeAdminPassword) {
+    if (!adminLoginUser.trim() || !adminLoginPass.trim()) {
+      setAdminLoginError('Please enter Administrator Username and Password.');
+      return;
+    }
+
+    try {
+      setIsAdminLoggingIn(true);
+      setAdminLoginError(null);
+      await api.loginAdmin({
+        username: adminLoginUser.trim(),
+        password: adminLoginPass.trim()
+      });
       setIsAdminAuthenticated(true);
       localStorage.setItem('campuscare_admin_auth', 'true');
-      setAdminLoginError(null);
-    } else {
-      setAdminLoginError('Invalid Administrator credentials.');
+    } catch (err: any) {
+      setAdminLoginError(err.message || 'Invalid Administrator credentials.');
+    } finally {
+      setIsAdminLoggingIn(false);
     }
   };
 
-  const handleChangeAdminPassword = (e: React.FormEvent) => {
+  const handleChangeAdminPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdminPasswordChangeError(null);
     setAdminPasswordChangeSuccess(null);
-    const activeAdminPassword = localStorage.getItem('campuscare_admin_password') || 'admin@123';
-    if (adminCurrentPassword !== activeAdminPassword) {
-      setAdminPasswordChangeError('Current password is incorrect.');
+    if (!adminCurrentPassword.trim()) {
+      setAdminPasswordChangeError('Current password is required.');
       return;
     }
     if (!adminNewPassword || adminNewPassword.length < 6) {
@@ -150,15 +163,25 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
       setAdminPasswordChangeError('New passwords do not match.');
       return;
     }
-    localStorage.setItem('campuscare_admin_password', adminNewPassword);
-    setAdminPasswordChangeSuccess('Admin password changed successfully!');
-    setTimeout(() => {
-      setShowAdminChangePasswordModal(false);
-      setAdminCurrentPassword('');
-      setAdminNewPassword('');
-      setAdminConfirmPassword('');
-      setAdminPasswordChangeSuccess(null);
-    }, 1200);
+    try {
+      setIsSavingAdminPassword(true);
+      await api.changeAdminPassword({
+        currentPassword: adminCurrentPassword,
+        newPassword: adminNewPassword
+      });
+      setAdminPasswordChangeSuccess('Admin password changed successfully in database!');
+      setTimeout(() => {
+        setShowAdminChangePasswordModal(false);
+        setAdminCurrentPassword('');
+        setAdminNewPassword('');
+        setAdminConfirmPassword('');
+        setAdminPasswordChangeSuccess(null);
+      }, 1200);
+    } catch (err: any) {
+      setAdminPasswordChangeError(err.message || 'Failed to update administrator password.');
+    } finally {
+      setIsSavingAdminPassword(false);
+    }
   };
 
   const handleAdminLogout = () => {
@@ -357,9 +380,10 @@ export const AdminDashboard: React.FC<Props> = ({ currentTab = 'admin_queue', on
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-blue-500/20"
+              disabled={isAdminLoggingIn}
+              className="w-full py-3.5 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-blue-500/20 disabled:opacity-50"
             >
-              Sign In as Administrator →
+              {isAdminLoggingIn ? 'Authenticating Administrator...' : 'Sign In as Administrator →'}
             </button>
           </form>
         </motion.div>

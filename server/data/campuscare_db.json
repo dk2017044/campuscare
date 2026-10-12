@@ -1,4 +1,9 @@
 {
+  "adminSettings": {
+    "username": "admin",
+    "password": "admin@123",
+    "updatedAt": "2026-10-12T12:49:00.000Z"
+  },
   "departments": [],
   "users": [],
   "cases": [

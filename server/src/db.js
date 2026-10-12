@@ -23,7 +23,8 @@ export function getCleanEmptyData() {
     cases: [],
     messages: [],
     lostFoundItems: [],
-    auditLogs: []
+    auditLogs: [],
+    adminSettings: null
   };
 }
 
@@ -49,6 +50,14 @@ class Database {
         if (!this.data.messages) this.data.messages = [];
         if (!this.data.lostFoundItems) this.data.lostFoundItems = [];
         if (!this.data.auditLogs) this.data.auditLogs = [];
+        if (!this.data.adminSettings) {
+          this.data.adminSettings = {
+            username: process.env.ADMIN_USERNAME || 'admin',
+            password: process.env.ADMIN_PASSWORD || '',
+            updatedAt: new Date().toISOString()
+          };
+          this.save();
+        }
       } else {
         this.reset();
       }
@@ -244,14 +253,14 @@ class Database {
   // Staff Portal Login: verifies Staff ID / Email and Password
   staffLogin({ identifier, password }) {
     if (!this.data.users || this.data.users.length === 0) {
-      throw new Error('No staff accounts registered in system. University Admin must first create staff accounts from Admin Portal.');
+      throw new Error('Invalid Staff ID or Password');
     }
 
     const idClean = (identifier || '').trim().toLowerCase();
     const pwdClean = (password || '').trim();
 
     if (!idClean || !pwdClean) {
-      throw new Error('Please provide both Staff ID / Email and Password.');
+      throw new Error('Please enter Staff ID and Password');
     }
 
     const user = this.data.users.find(u => 
@@ -259,12 +268,8 @@ class Database {
       (u.email && u.email.toLowerCase() === idClean)
     );
 
-    if (!user) {
-      throw new Error('Invalid Staff ID or Email. No matching staff account found.');
-    }
-
-    if (user.password !== pwdClean) {
-      throw new Error('Incorrect password. Please verify your credentials or contact Admin.');
+    if (!user || user.password !== pwdClean) {
+      throw new Error('Invalid Staff ID or Password');
     }
 
     const dept = (this.data.departments || []).find(d => d.id === user.departmentId);
@@ -304,6 +309,58 @@ class Database {
       metadata: { staffId: user.staffId, name: user.name }
     });
     return true;
+  }
+
+  // Admin Portal Authentication & Password Management (Database-Backed)
+  verifyAdminLogin({ username, password }) {
+    const uClean = (username || '').trim().toLowerCase();
+    const pClean = (password || '').trim();
+
+    const admin = this.data.adminSettings;
+    if (!admin || !admin.password) {
+      throw new Error('Administrator account not configured in database.');
+    }
+    if (uClean === (admin.username || 'admin').toLowerCase() && pClean === admin.password) {
+      this.addAuditLog({
+        action: 'ADMIN_LOGIN_SUCCESS',
+        actorId: 'admin',
+        actorName: 'University Administrator',
+        details: 'Administrator successfully logged into Executive Portal.'
+      });
+      return { success: true, username: admin.username };
+    }
+
+    this.addAuditLog({
+      action: 'ADMIN_LOGIN_FAILED',
+      actorId: 'system',
+      actorName: 'Security Monitor',
+      details: `Failed administrator login attempt for username '${username}'.`
+    });
+    throw new Error('Invalid Administrator credentials');
+  }
+
+  updateAdminPassword({ currentPassword, newPassword }) {
+    const admin = this.data.adminSettings;
+    if (!admin || !admin.password) {
+      throw new Error('Administrator account not configured in database.');
+    }
+    if ((currentPassword || '').trim() !== admin.password) {
+      throw new Error('Current administrator password is incorrect.');
+    }
+    if (!newPassword || newPassword.trim().length < 6) {
+      throw new Error('New password must be at least 6 characters long.');
+    }
+    this.data.adminSettings.password = newPassword.trim();
+    this.data.adminSettings.updatedAt = new Date().toISOString();
+    this.save();
+
+    this.addAuditLog({
+      action: 'ADMIN_PASSWORD_CHANGED',
+      actorId: 'admin',
+      actorName: 'University Administrator',
+      details: 'Administrator security password was successfully updated in database.'
+    });
+    return { success: true, message: 'Administrator password updated successfully in database.' };
   }
 
   deleteUser(id) {
