@@ -4,7 +4,7 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { StudentHome } from './pages/student/StudentHome';
 import { CommandPalette } from './components/CommandPalette';
-import { Role } from './types';
+import { Role, StaffUser } from './types';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { playSuccessChime } from './services/sound';
 
@@ -15,11 +15,17 @@ const MaintenanceReport = lazy(() => import('./pages/student/MaintenanceReport')
 const LostAndFound = lazy(() => import('./pages/student/LostAndFound').then(m => ({ default: m.LostAndFound })));
 const TrackReport = lazy(() => import('./pages/student/TrackReport').then(m => ({ default: m.TrackReport })));
 const StaffDashboard = lazy(() => import('./pages/staff/StaffDashboard').then(m => ({ default: m.StaffDashboard })));
+const StaffLogin = lazy(() => import('./pages/staff/StaffLogin').then(m => ({ default: m.StaffLogin })));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 
 export function App() {
   const [userRole, setUserRole] = useState<Role>(() => {
     return (localStorage.getItem('campuscare_role') as Role) || 'student';
+  });
+
+  const [activeStaffUser, setActiveStaffUser] = useState<StaffUser | null>(() => {
+    const saved = localStorage.getItem('campuscare_staff_session');
+    return saved ? JSON.parse(saved) : null;
   });
 
   const [staffDept, setStaffDept] = useState<string>(() => {
@@ -103,6 +109,7 @@ export function App() {
         setUserRole={setUserRole}
         staffDept={staffDept}
         setStaffDept={setStaffDept}
+        activeStaffUser={activeStaffUser}
         onOpenCommand={() => setIsCommandOpen(true)}
       />
 
@@ -118,7 +125,7 @@ export function App() {
         >
           <AnimatePresence mode="wait">
             <motion.div
-              key={`${userRole}-${currentTab}`}
+              key={`${userRole}-${currentTab}-${activeStaffUser ? 'logged' : 'anon'}`}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -152,37 +159,63 @@ export function App() {
                 </>
               )}
 
-              {/* STAFF PORTAL VIEWS */}
+              {/* STAFF PORTAL VIEWS (100% Protected Behind Staff Login) */}
               {userRole === 'staff' && (
-                <>
-                  {currentTab === 'staff_dashboard' && (
-                    <StaffDashboard
-                      staffDept={staffDept}
-                      onNavigateTab={(t) => {
-                        if (t.startsWith('admin_') || t === 'admin_dashboard') {
-                          setUserRole('super_admin');
-                          localStorage.setItem('campuscare_role', 'super_admin');
-                        }
-                        setCurrentTab(t);
-                      }}
-                    />
-                  )}
-                  {currentTab === 'lost_found' && (
-                    <LostAndFound onNavigate={setCurrentTab} />
-                  )}
-                  {currentTab !== 'staff_dashboard' && currentTab !== 'lost_found' && (
-                    <StaffDashboard
-                      staffDept={staffDept}
-                      onNavigateTab={(t) => {
-                        if (t.startsWith('admin_') || t === 'admin_dashboard') {
-                          setUserRole('super_admin');
-                          localStorage.setItem('campuscare_role', 'super_admin');
-                        }
-                        setCurrentTab(t);
-                      }}
-                    />
-                  )}
-                </>
+                !activeStaffUser ? (
+                  <StaffLogin
+                    onLoginSuccess={(user) => {
+                      setActiveStaffUser(user);
+                      localStorage.setItem('campuscare_staff_session', JSON.stringify(user));
+                    }}
+                    onNavigateToAdmin={() => {
+                      setUserRole('super_admin');
+                      setCurrentTab('admin_staff');
+                    }}
+                  />
+                ) : (
+                  <>
+                    {currentTab === 'staff_dashboard' && (
+                      <StaffDashboard
+                        staffDept={staffDept}
+                        activeStaffUser={activeStaffUser}
+                        onStaffLogout={() => {
+                          setActiveStaffUser(null);
+                          localStorage.removeItem('campuscare_staff_session');
+                        }}
+                        onNavigateTab={(t) => {
+                          if (t.startsWith('admin_') || t === 'admin_dashboard') {
+                            setUserRole('super_admin');
+                            localStorage.setItem('campuscare_role', 'super_admin');
+                          }
+                          setCurrentTab(t);
+                        }}
+                      />
+                    )}
+                    {currentTab === 'lost_found' && (
+                      <LostAndFound
+                        onNavigate={setCurrentTab}
+                        staffUser={activeStaffUser}
+                      />
+                    )}
+                    {currentTab !== 'staff_dashboard' && currentTab !== 'lost_found' && (
+                      <StaffDashboard
+                        staffDept={staffDept}
+                        activeStaffUser={activeStaffUser}
+                        onStaffLogout={() => {
+                          setActiveStaffUser(null);
+                          localStorage.removeItem('campuscare_staff_session');
+                        }}
+                        onNavigateTab={(t) => {
+                          if (t.startsWith('admin_') || t === 'admin_dashboard') {
+                            setUserRole('super_admin');
+                            localStorage.setItem('campuscare_role', 'super_admin');
+                          }
+                          setCurrentTab(t);
+                        }}
+                      />
+                    )}
+                  </>
+                )
               )}
 
               {/* ADMIN PORTAL VIEWS */}

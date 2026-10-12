@@ -17,7 +17,7 @@ import {
   Building2,
   Users
 } from 'lucide-react';
-import { Role } from '../types';
+import { Role, StaffUser } from '../types';
 
 interface Props {
   currentTab: string;
@@ -26,6 +26,7 @@ interface Props {
   setUserRole: (role: Role) => void;
   staffDept: string;
   setStaffDept: (dept: string) => void;
+  activeStaffUser?: StaffUser | null;
   onOpenCommand?: () => void;
 }
 
@@ -33,7 +34,8 @@ export const Navbar: React.FC<Props> = ({
   currentTab,
   setCurrentTab,
   userRole,
-  setUserRole
+  setUserRole,
+  activeStaffUser
 }) => {
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -60,6 +62,11 @@ export const Navbar: React.FC<Props> = ({
       ];
     }
     if (userRole === 'staff') {
+      if (!activeStaffUser) {
+        return [
+          { id: 'staff_dashboard', label: 'Officer Sign In', icon: ClipboardList }
+        ];
+      }
       return [
         { id: 'staff_dashboard', label: 'Incident Queue', icon: ClipboardList },
         { id: 'lost_found', label: 'Lost & Found', icon: Search }
@@ -200,7 +207,11 @@ export const Navbar: React.FC<Props> = ({
 
           {/* User Profile Avatar */}
           <div className="w-9 h-9 rounded-full bg-[#EBF3FF] border border-blue-200/60 text-[#0066FF] flex items-center justify-center cursor-pointer hover:bg-[#DCEBFF] transition-colors shadow-xs">
-            <User className="w-4 h-4" />
+            {userRole === 'staff' && activeStaffUser ? (
+              <span className="font-bold text-xs">{activeStaffUser.name.charAt(0)}</span>
+            ) : (
+              <User className="w-4 h-4" />
+            )}
           </div>
         </div>
       </div>

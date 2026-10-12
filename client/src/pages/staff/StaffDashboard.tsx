@@ -13,17 +13,29 @@ import { playEmergencySiren, stopEmergencySiren } from '../../services/sound';
 
 interface Props {
   staffDept: string;
+  activeStaffUser?: StaffUser | null;
+  onStaffLogout?: () => void;
   onNavigateTab?: (tab: string) => void;
 }
 
-export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) => {
+export const StaffDashboard: React.FC<Props> = ({
+  staffDept,
+  activeStaffUser: propActiveStaffUser,
+  onStaffLogout,
+  onNavigateTab
+}) => {
   const [cases, setCases] = useState<Case[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffUser[]>([]);
-  const [activeStaffUser, setActiveStaffUser] = useState<StaffUser | null>(() => {
+  const [internalStaffUser, setInternalStaffUser] = useState<StaffUser | null>(() => {
     const saved = localStorage.getItem('campuscare_staff_session');
     return saved ? JSON.parse(saved) : null;
   });
+  const activeStaffUser = propActiveStaffUser !== undefined ? propActiveStaffUser : internalStaffUser;
+  const setActiveStaffUser = (u: StaffUser | null) => {
+    setInternalStaffUser(u);
+    if (!u && onStaffLogout) onStaffLogout();
+  };
   const [loading, setLoading] = useState(false);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
 
@@ -56,7 +68,8 @@ export const StaffDashboard: React.FC<Props> = ({ staffDept, onNavigateTab }) =>
 
   const handleLogout = () => {
     localStorage.removeItem('campuscare_staff_session');
-    setActiveStaffUser(null);
+    setInternalStaffUser(null);
+    if (onStaffLogout) onStaffLogout();
   };
 
   const handleChangeStaffPassword = async (e: React.FormEvent) => {

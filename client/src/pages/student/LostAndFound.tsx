@@ -2,14 +2,15 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Sparkles, MapPin, CheckCircle, ArrowRight, Check, Copy, Clock, Filter, Eye, Plus } from 'lucide-react';
 import { api } from '../../services/api';
-import { LostFoundItem, LostFoundMatch } from '../../types';
+import { LostFoundItem, LostFoundMatch, StaffUser } from '../../types';
 
 interface Props {
   onNavigate: (tab: string) => void;
   onCaseCreated?: (publicCaseId: string, rawPin: string) => void;
+  staffUser?: StaffUser | null;
 }
 
-export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => {
+export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staffUser }) => {
   const [activeSubTab, setActiveSubTab] = useState<'browse' | 'report_lost' | 'report_found'>('browse');
   const [items, setItems] = useState<LostFoundItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -154,6 +155,20 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
             <span>Report Found</span>
           </button>
         </div>
+
+        {staffUser && (
+          <div className="w-full pt-3 mt-1 border-t border-[#99F6E0]/60 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2 text-[#0E9384] font-semibold">
+              <span className="w-2 h-2 rounded-full bg-[#0E9384] animate-pulse" />
+              <span>
+                Staff Officer Jurisdiction: <strong>{staffUser.name}</strong> ({staffUser.departmentName || 'General Staff'})
+              </span>
+            </div>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white text-[#0E9384] font-bold border border-[#99F6E0]">
+              Staff ID: {staffUser.staffId}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Sleek Segmented Pill Tabs */}
