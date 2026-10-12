@@ -8,7 +8,7 @@ import { Role, StaffUser } from './types';
 import { CheckCircle2, Loader2, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { playSuccessChime } from './services/sound';
 import { api } from './services/api';
-import { parseCurrentLocation, pushRoute, replaceRoute } from './services/router';
+import { parseCurrentLocation, pushRoute, replaceRoute, getTitleForTab } from './services/router';
 
 // Code-Splitting: Lazy load secondary heavy dashboards & pages to maximize Lighthouse Performance & eliminate FCP delay
 const ReportSafely = lazy(() => import('./pages/student/ReportSafely').then(m => ({ default: m.ReportSafely })));
@@ -125,6 +125,7 @@ export function App() {
       setCurrentTab(resolved.tab);
       setUserRole(resolved.role);
       localStorage.setItem('campuscare_role', resolved.role);
+      document.title = getTitleForTab(resolved.tab);
 
       const cid = resolved.params.get('caseId');
       const pin = resolved.params.get('pin');
@@ -148,9 +149,10 @@ export function App() {
       tab === 'report_safely' ||
       tab === 'emergency' ||
       tab === 'maintenance' ||
+      tab === 'lost_found' ||
       tab === 'track_report'
     ) {
-      targetRole = 'student';
+      targetRole = userRole === 'staff' ? 'staff' : 'student';
     }
 
     setUserRole(targetRole);

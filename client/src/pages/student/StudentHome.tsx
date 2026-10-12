@@ -12,6 +12,7 @@ import {
   Users
 } from 'lucide-react';
 import { playTapSound } from '../../services/sound';
+import { getPathForTab } from '../../services/router';
 
 interface Props {
   onNavigate: (tab: string) => void;
@@ -167,10 +168,14 @@ export const StudentHome: React.FC<Props> = ({ onNavigate }) => {
           const Icon = card.icon;
           const WatermarkIcon = card.watermarkIcon;
           return (
-            <div
+            <a
               key={card.id}
-              onClick={() => handleNavigate(card.id)}
-              className={`p-6 rounded-3xl border ${card.cardBg} cursor-pointer flex flex-col justify-between group transition-all relative overflow-hidden shadow-xs hover:shadow-md transform hover:-translate-y-1`}
+              href={getPathForTab(card.id, 'student')}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavigate(card.id);
+              }}
+              className={`p-6 rounded-3xl border ${card.cardBg} cursor-pointer flex flex-col justify-between group transition-all relative overflow-hidden shadow-xs hover:shadow-md transform hover:-translate-y-1 no-underline text-inherit`}
             >
               {/* Background Faint Watermark Icon */}
               <div className={`absolute -bottom-6 -right-6 pointer-events-none ${card.watermarkColor} transition-transform group-hover:scale-110`}>
@@ -200,7 +205,7 @@ export const StudentHome: React.FC<Props> = ({ onNavigate }) => {
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
-            </div>
+            </a>
           );
         })}
       </section>

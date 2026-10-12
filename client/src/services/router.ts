@@ -46,6 +46,42 @@ export function getPathForTab(tab: string, userRole?: Role): string {
 }
 
 /**
+ * Returns dynamic document page title for browser history and tab title
+ */
+export function getTitleForTab(tab: string): string {
+  switch (tab) {
+    case 'student_home':
+      return 'CampusCare — Safe & Anonymous Campus Grievance Platform';
+    case 'report_safely':
+      return 'Confidential Report | CampusCare';
+    case 'emergency':
+      return 'Emergency SOS Beacon | CampusCare';
+    case 'maintenance':
+      return 'Campus Repairs & Maintenance | CampusCare';
+    case 'lost_found':
+      return 'Lost & Found Registry | CampusCare';
+    case 'track_report':
+      return 'Track Incident Status | CampusCare';
+    case 'staff_dashboard':
+      return 'Staff Incident Management | CampusCare';
+    case 'admin_dashboard':
+      return 'Executive Administration | CampusCare';
+    case 'admin_queue':
+      return 'Admin Incident Queue | CampusCare';
+    case 'admin_analytics':
+      return 'Campus Safety Analytics | CampusCare';
+    case 'admin_departments':
+      return 'Department Management | CampusCare';
+    case 'admin_staff':
+      return 'Staff & Faculty Accounts | CampusCare';
+    case 'admin_audit':
+      return 'Audit Trail Logs | CampusCare';
+    default:
+      return 'CampusCare — Campus Safety Platform';
+  }
+}
+
+/**
  * Parses the current window.location (supporting both HTML5 pathname and hash fallback)
  * to determine the active tab, role, and query parameters.
  */
@@ -160,9 +196,11 @@ export function pushRoute(tab: string, userRole: Role, extraParams?: Record<stri
 
   const currentFull = window.location.pathname + window.location.search;
   const targetFull = url.pathname + url.search;
+  const pageTitle = getTitleForTab(tab);
+  document.title = pageTitle;
 
   if (currentFull !== targetFull) {
-    window.history.pushState({ tab, role: userRole }, '', targetFull);
+    window.history.pushState({ tab, role: userRole }, pageTitle, targetFull);
   }
 }
 
@@ -183,8 +221,10 @@ export function replaceRoute(tab: string, userRole: Role, extraParams?: Record<s
 
   const currentFull = window.location.pathname + window.location.search;
   const targetFull = url.pathname + url.search;
+  const pageTitle = getTitleForTab(tab);
+  document.title = pageTitle;
 
   if (currentFull !== targetFull) {
-    window.history.replaceState({ tab, role: userRole }, '', targetFull);
+    window.history.replaceState({ tab, role: userRole }, pageTitle, targetFull);
   }
 }

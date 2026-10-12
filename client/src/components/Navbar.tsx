@@ -18,6 +18,7 @@ import {
   Users
 } from 'lucide-react';
 import { Role, StaffUser } from '../types';
+import { getPathForTab } from '../services/router';
 
 interface Props {
   currentTab: string;
@@ -112,13 +113,15 @@ export const Navbar: React.FC<Props> = ({
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Left: Brand Logo & Slogan */}
-        <div
-          onClick={() => {
+        <a
+          href={getPathForTab(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : isAdminAuthenticated ? 'admin_queue' : 'admin_dashboard', userRole)}
+          onClick={(e) => {
+            e.preventDefault();
             if (userRole === 'student') setCurrentTab('student_home');
             else if (userRole === 'staff') setCurrentTab('staff_dashboard');
             else setCurrentTab(isAdminAuthenticated ? 'admin_queue' : 'admin_dashboard');
           }}
-          className="flex items-center gap-3 cursor-pointer group shrink-0"
+          className="flex items-center gap-3 cursor-pointer group shrink-0 no-underline text-inherit"
         >
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0066FF] to-[#0047BA] text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
             <Shield className="w-5 h-5 fill-white/20" />
@@ -132,7 +135,7 @@ export const Navbar: React.FC<Props> = ({
               Safe Campus. Support Always.
             </span>
           </div>
-        </div>
+        </a>
 
         {/* Center: Role-Aware Floating Pill Dock */}
         <nav className="hidden md:flex items-center gap-1 bg-white border border-slate-200/80 rounded-full px-2 py-1 shadow-sm">
@@ -142,11 +145,14 @@ export const Navbar: React.FC<Props> = ({
               (userRole === 'super_admin' && !isAdminAuthenticated && tab.id === 'admin_dashboard') ||
               (userRole === 'staff' && !activeStaffUser && tab.id === 'staff_dashboard');
             return (
-              <button
+              <a
                 key={tab.id}
-                type="button"
-                onClick={() => setCurrentTab(tab.id)}
-                className={`relative inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                href={getPathForTab(tab.id, userRole)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentTab(tab.id);
+                }}
+                className={`relative inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-all cursor-pointer no-underline ${
                   isActive
                     ? 'bg-[#EBF3FF] text-[#0050C8] font-semibold shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -154,7 +160,7 @@ export const Navbar: React.FC<Props> = ({
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#0050C8]' : 'text-slate-500'}`} />
                 <span>{tab.label}</span>
-              </button>
+              </a>
             );
           })}
         </nav>
@@ -239,11 +245,14 @@ export const Navbar: React.FC<Props> = ({
             (userRole === 'super_admin' && !isAdminAuthenticated && tab.id === 'admin_dashboard') ||
             (userRole === 'staff' && !activeStaffUser && tab.id === 'staff_dashboard');
           return (
-            <button
+            <a
               key={tab.id}
-              type="button"
-              onClick={() => setCurrentTab(tab.id)}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-full text-xs shrink-0 transition-colors cursor-pointer ${
+              href={getPathForTab(tab.id, userRole)}
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentTab(tab.id);
+              }}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-full text-xs shrink-0 transition-colors cursor-pointer no-underline ${
                 isActive 
                   ? 'bg-[#EBF3FF] text-[#0050C8] font-semibold' 
                   : 'text-slate-600 hover:bg-slate-50'
@@ -251,7 +260,7 @@ export const Navbar: React.FC<Props> = ({
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
-            </button>
+            </a>
           );
         })}
       </div>
