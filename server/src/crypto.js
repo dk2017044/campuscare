@@ -39,6 +39,13 @@ export function hashPin(pin, salt = null) {
  */
 export function verifyPin(inputPin, storedHash, salt) {
   if (!inputPin || !storedHash || !salt) return false;
-  const { hash } = hashPin(inputPin, salt);
-  return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(storedHash));
+  try {
+    const { hash } = hashPin(String(inputPin).trim(), salt);
+    const bufA = Buffer.from(hash);
+    const bufB = Buffer.from(storedHash);
+    if (bufA.length !== bufB.length) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch (_e) {
+    return false;
+  }
 }

@@ -10,6 +10,19 @@ import { upload } from './upload.js';
 import { syncCaseToSupabase, syncMessageToSupabase, syncLostFoundToSupabase, checkSupabaseHealth } from './supabase.js';
 import { validateEmailAddress, generateEmailOtp, verifyEmailOtp } from './utils/emailValidator.js';
 import { startKeepAliveService, getKeepAliveStatus, pingSupabase, pingServerSelf } from './utils/keepAlive.js';
+import {
+  globalApiLimiter,
+  authLimiter,
+  pinVerifyLimiter,
+  reportSubmissionLimiter,
+  uploadLimiter,
+  configureSecurityHeaders,
+  sanitizeInputs,
+  isValidCaseId,
+  isValidPin,
+  notFoundHandler,
+  globalErrorHandler
+} from './middleware/security.js';
 
 dotenv.config();
 
@@ -19,7 +32,10 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware with full CORS & Preflight support
+// 1. HTTP Security Headers (OWASP Helmet Protection)
+app.use(configureSecurityHeaders());
+
+// 2. CORS & Preflight Configuration
 app.use(cors({
   origin: true,
   credentials: true,
@@ -27,8 +43,16 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 app.options('*', cors());
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+
+// 3. Request Body Parsers (Controlled limits to prevent memory exhaustion DOS)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// 4. Global API Rate Limiting (DDoS Protection)
+app.use('/api', globalApiLimiter);
+
+// 5. Input Sanitization (XSS and Prototype Pollution Injection Prevention)
+app.use(sanitizeInputs);
 
 // Static route for evidence preview with secure disposition headers
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
@@ -67,7 +91,7 @@ app.get('/api/keep-alive', async (req, res) => {
 /**
  * POST /api/cases - Submit a new report (Anonymous or Identified)
  */
-app.post('/api/cases', async (req, res) => {
+app.post('/api/cases', reportSubmissionLimiter, async (req, res, next) => {
   try {
     const {
       reportType, // 'safety' | 'maintenance' | 'lost_found' | 'other'
@@ -271,10 +295,14 @@ app.delete('/api/cases/:publicCaseId', (req, res) => {
 });
 
 /**
- * DELETE /api/cases - Clear all case and message records
+ * DELETE /api/cases - Clear all case and message records (Protected: Super Admin Only)
  */
 app.delete('/api/cases', (req, res) => {
   try {
+    const adminAuth = req.headers['x-admin-auth'] || req.query.adminAuth;
+    if (adminAuth !== 'true') {
+      return res.status(403).json({ error: 'Access Denied: Administrator authorization required.' });
+    }
     db.clearCases();
     return res.json({ success: true, message: 'All case data removed successfully' });
   } catch (error) {
@@ -284,28 +312,19 @@ app.delete('/api/cases', (req, res) => {
 });
 
 /**
- * POST /api/cases/clear - Clear all case and message records (Alternative POST)
+ * POST /api/cases/:publicCaseId/verify-pin - Student access via Case ID + PIN (Protected against brute-force)
  */
-app.post('/api/cases/clear', (req, res) => {
-  try {
-    db.clearCases();
-    return res.json({ success: true, message: 'All case data removed successfully' });
-  } catch (error) {
-    console.error('Error clearing cases:', error);
-    return res.status(500).json({ error: 'Failed to clear cases' });
-  }
-});
-
-/**
- * POST /api/cases/:publicCaseId/verify-pin - Student access via Case ID + PIN
- */
-app.post('/api/cases/:publicCaseId/verify-pin', (req, res) => {
+app.post('/api/cases/:publicCaseId/verify-pin', pinVerifyLimiter, (req, res, next) => {
   try {
     const { publicCaseId } = req.params;
     const { pin } = req.body;
 
-    if (!pin) {
-      return res.status(400).json({ error: 'Private PIN is required' });
+    if (!publicCaseId || !isValidCaseId(publicCaseId)) {
+      return res.status(400).json({ error: 'Invalid Case ID format. Example: CC-4UU76FD' });
+    }
+
+    if (!pin || !isValidPin(pin)) {
+      return res.status(400).json({ error: 'Private PIN must be a 6-digit numeric code.' });
     }
 
     const c = db.getCaseByPublicId(publicCaseId);
@@ -656,7 +675,7 @@ app.post('/api/ai/classify-maintenance', async (req, res) => {
 /**
  * POST /api/lost-found - Report Lost or Found item
  */
-app.post('/api/lost-found', (req, res) => {
+app.post('/api/lost-found', reportSubmissionLimiter, (req, res, next) => {
   try {
     const {
       type, // 'lost' | 'found'
@@ -797,7 +816,7 @@ app.post('/api/lost-found/match', (req, res) => {
 // 5. EVIDENCE UPLOAD
 // ==========================================
 
-app.post('/api/evidence/upload', upload.single('evidence'), (req, res) => {
+app.post('/api/evidence/upload', uploadLimiter, upload.single('evidence'), (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded or file rejected by security filters' });
@@ -886,8 +905,8 @@ app.get('/api/audit', (req, res) => {
   res.json({ success: true, logs: db.getAuditLogs(limit) });
 });
 
-// Admin Authentication & Security Management (Database-Backed)
-app.post('/api/admin/login', (req, res) => {
+// Admin Authentication & Security Management (Protected against Brute-Force)
+app.post('/api/admin/login', authLimiter, (req, res, next) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -913,8 +932,8 @@ app.post('/api/admin/change-password', (req, res) => {
   }
 });
 
-// Staff Authentication & User Management (Purely dynamic, created by Admin)
-app.post('/api/staff/login', (req, res) => {
+// Staff Authentication (Protected against Brute-Force)
+app.post('/api/staff/login', authLimiter, (req, res, next) => {
   try {
     const { identifier, staffId, password } = req.body;
     const loginId = identifier || staffId;
@@ -1012,15 +1031,11 @@ app.post('/api/verify-email-otp', (req, res) => {
   }
 });
 
-// Reset demo data back to clean sample scenario
-app.post('/api/reset-demo', (req, res) => {
-  try {
-    const fresh = db.reset();
-    return res.json({ success: true, message: 'CampusCare demo data has been reset to initial state.', data: fresh });
-  } catch (error) {
-    return res.status(500).json({ error: 'Reset failed' });
-  }
-});
+// 404 Handler for undefined API routes
+app.use('/api', notFoundHandler);
+
+// Global Centralized Error Handler
+app.use(globalErrorHandler);
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {

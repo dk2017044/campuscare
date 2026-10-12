@@ -69,9 +69,15 @@ class Database {
 
   save() {
     try {
-      fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
-    } catch (err) {
-      console.error('Failed to write to DB file:', err);
+      const tmpFile = `${DB_FILE}.tmp`;
+      fs.writeFileSync(tmpFile, JSON.stringify(this.data, null, 2), 'utf-8');
+      fs.renameSync(tmpFile, DB_FILE);
+    } catch (_err) {
+      try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+      } catch (fallbackErr) {
+        console.error('Failed to write to DB file:', fallbackErr);
+      }
     }
   }
 

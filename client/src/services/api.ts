@@ -4,6 +4,33 @@ const API_BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
   : '/api';
 
+/**
+ * Robust fetch wrapper with automatic rate-limit (429) handling,
+ * network dropout detection, and admin authentication injection.
+ */
+async function fetchSafe(input: string, init?: RequestInit): Promise<Response> {
+  const isAdmin = typeof localStorage !== 'undefined' && localStorage.getItem('campuscare_admin_auth') === 'true';
+  const headers = new Headers(init?.headers || {});
+  if (isAdmin && !headers.has('x-admin-auth')) {
+    headers.set('x-admin-auth', 'true');
+  }
+
+  try {
+    const res = await fetch(input, { ...init, headers });
+    // Catch rate limit throttles (HTTP 429)
+    if (res.status === 429) {
+      const data = await res.json().catch(() => null);
+      throw new Error(data?.error || 'Rate limit reached: Please wait a moment before trying again.');
+    }
+    return res;
+  } catch (err: any) {
+    if (err.name === 'TypeError' && err.message?.toLowerCase().includes('fetch')) {
+      throw new Error('Unable to connect to campus network server. Please verify your internet connection.');
+    }
+    throw err;
+  }
+}
+
 export const api = {
   // Cases
   async createCase(data: {
@@ -20,7 +47,7 @@ export const api = {
     evidence?: any[];
     isEmergency?: boolean;
   }): Promise<{ success: boolean; publicCaseId: string; rawPin: string; case: Case }> {
-    const res = await fetch(`${API_BASE}/cases`, {
+    const res = await fetchSafe(`${API_BASE}/cases`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -50,7 +77,7 @@ export const api = {
     if (filters.isAnonymous !== undefined && filters.isAnonymous !== 'all') params.append('isAnonymous', String(filters.isAnonymous));
     if (filters.role) params.append('role', filters.role);
 
-    const res = await fetch(`${API_BASE}/cases?${params.toString()}`);
+    const res = await fetchSafe(`${API_BASE}/cases?${params.toString()}`);
     if (!res.ok) throw new Error('Failed to fetch cases');
     return res.json();
   },
@@ -60,7 +87,7 @@ export const api = {
     if (staffDeptId) params.append('staffDeptId', staffDeptId);
     if (role) params.append('role', role);
     const qs = params.toString() ? `?${params.toString()}` : '';
-    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}${qs}`);
+    const res = await fetchSafe(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}${qs}`);
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Case not found' }));
       throw new Error(err.error || 'Case not found or access restricted.');
@@ -69,7 +96,7 @@ export const api = {
   },
 
   async verifyCasePin(publicCaseId: string, pin: string): Promise<{ success: boolean; case: Case; messages: CaseMessage[] }> {
-    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/verify-pin`, {
+    const res = await fetchSafe(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/verify-pin`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin })
@@ -82,7 +109,7 @@ export const api = {
   },
 
   async deleteCase(publicCaseId: string): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}`, {
+    const res = await fetchSafe(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}`, {
       method: 'DELETE'
     });
     if (!res.ok) throw new Error('Failed to delete case');
@@ -90,7 +117,7 @@ export const api = {
   },
 
   async updateCaseStatus(publicCaseId: string, status: string, actorName = 'Staff Member', notes = ''): Promise<{ success: boolean; case: Case }> {
-    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/status`, {
+    const res = await fetchSafe(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status, actorName, notes })
@@ -100,7 +127,7 @@ export const api = {
   },
 
   async assignCase(publicCaseId: string, departmentId: string, staffId?: string, staffName?: string, actorName = 'Admin'): Promise<{ success: boolean; case: Case }> {
-    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/assign`, {
+    const res = await fetchSafe(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/assign`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ departmentId, staffId, staffName, actorName })
@@ -110,7 +137,7 @@ export const api = {
   },
 
   async escalateCase(publicCaseId: string, reason: string, actorName = 'Staff Member'): Promise<{ success: boolean; case: Case }> {
-    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/escalate`, {
+    const res = await fetchSafe(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/escalate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason, actorName })
@@ -125,7 +152,7 @@ export const api = {
     if (pin) params.append('pin', pin);
     if (isStaff) params.append('isStaff', 'true');
 
-    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/messages?${params.toString()}`);
+    const res = await fetchSafe(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/messages?${params.toString()}`);
     if (!res.ok) throw new Error('Failed to fetch messages');
     return res.json();
   },
@@ -137,7 +164,7 @@ export const api = {
     pin?: string;
     visibleToStudent?: boolean;
   }): Promise<{ success: boolean; message: CaseMessage }> {
-    const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/messages`, {
+    const res = await fetchSafe(`${API_BASE}/cases/${encodeURIComponent(publicCaseId)}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -151,7 +178,7 @@ export const api = {
 
   // AI Services
   async requestAITriage(payload: { text: string; location?: string; when?: string; userCategory?: string }): Promise<{ success: boolean; analysis: AITriageAnalysis; disclaimer: string }> {
-    const res = await fetch(`${API_BASE}/ai/triage`, {
+    const res = await fetchSafe(`${API_BASE}/ai/triage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -161,7 +188,7 @@ export const api = {
   },
 
   async classifyMaintenance(description: string, fileName?: string, imageBase64?: string, mimeType?: string): Promise<{ success: boolean; analysis: any; disclaimer: string }> {
-    const res = await fetch(`${API_BASE}/ai/classify-maintenance`, {
+    const res = await fetchSafe(`${API_BASE}/ai/classify-maintenance`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ description, fileName, imageBase64, mimeType })
@@ -173,7 +200,7 @@ export const api = {
   // Lost & Found
   async getLostFoundItems(type?: 'lost' | 'found' | 'all'): Promise<{ success: boolean; items: LostFoundItem[] }> {
     const url = type ? `${API_BASE}/lost-found?type=${type}` : `${API_BASE}/lost-found`;
-    const res = await fetch(url);
+    const res = await fetchSafe(url);
     if (!res.ok) throw new Error('Failed to fetch items');
     return res.json();
   },
@@ -185,7 +212,7 @@ export const api = {
     rawPin: string;
     potentialMatches: LostFoundMatch[];
   }> {
-    const res = await fetch(`${API_BASE}/lost-found`, {
+    const res = await fetchSafe(`${API_BASE}/lost-found`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(item)
@@ -199,7 +226,7 @@ export const api = {
     const formData = new FormData();
     formData.append('evidence', file);
 
-    const res = await fetch(`${API_BASE}/evidence/upload`, {
+    const res = await fetchSafe(`${API_BASE}/evidence/upload`, {
       method: 'POST',
       body: formData
     });
@@ -212,13 +239,13 @@ export const api = {
 
   // Departments & Stats
   async getDepartments(): Promise<{ success: boolean; departments: Department[] }> {
-    const res = await fetch(`${API_BASE}/departments`);
+    const res = await fetchSafe(`${API_BASE}/departments`);
     if (!res.ok) throw new Error('Failed to load departments');
     return res.json();
   },
 
   async createDepartment(data: { name: string; type?: string; email?: string }): Promise<{ success: boolean; department: Department }> {
-    const res = await fetch(`${API_BASE}/departments`, {
+    const res = await fetchSafe(`${API_BASE}/departments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -228,7 +255,7 @@ export const api = {
   },
 
   async deleteDepartment(id: string): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/departments/${id}`, { method: 'DELETE' });
+    const res = await fetchSafe(`${API_BASE}/departments/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete department');
     return res.json();
   },
@@ -243,7 +270,7 @@ export const api = {
     fieldScope?: string;
     title: string;
   }): Promise<{ success: boolean; user: StaffUser }> {
-    const res = await fetch(`${API_BASE}/staff/create`, {
+    const res = await fetchSafe(`${API_BASE}/staff/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -256,7 +283,7 @@ export const api = {
   },
 
   async loginStaff(data: { staffId: string; password: string }): Promise<{ success: boolean; user: StaffUser }> {
-    const res = await fetch(`${API_BASE}/staff/login`, {
+    const res = await fetchSafe(`${API_BASE}/staff/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -269,7 +296,7 @@ export const api = {
   },
 
   async changeStaffPassword(data: { staffId: string; oldPassword: string; newPassword: string }): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE}/staff/change-password`, {
+    const res = await fetchSafe(`${API_BASE}/staff/change-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -282,7 +309,7 @@ export const api = {
   },
 
   async loginAdmin(data: { username: string; password: string }): Promise<{ success: boolean; username: string }> {
-    const res = await fetch(`${API_BASE}/admin/login`, {
+    const res = await fetchSafe(`${API_BASE}/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -295,7 +322,7 @@ export const api = {
   },
 
   async changeAdminPassword(data: { currentPassword: string; newPassword: string }): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE}/admin/change-password`, {
+    const res = await fetchSafe(`${API_BASE}/admin/change-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -308,13 +335,13 @@ export const api = {
   },
 
   async getStaff(): Promise<{ success: boolean; staff: StaffUser[] }> {
-    const res = await fetch(`${API_BASE}/staff`);
+    const res = await fetchSafe(`${API_BASE}/staff`);
     if (!res.ok) throw new Error('Failed to load staff directory');
     return res.json();
   },
 
   async deleteStaff(id: string): Promise<{ success: boolean }> {
-    const res = await fetch(`${API_BASE}/staff/${id}`, { method: 'DELETE' });
+    const res = await fetchSafe(`${API_BASE}/staff/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete staff member');
     return res.json();
   },
@@ -332,7 +359,7 @@ export const api = {
       warning?: string;
     };
   }> {
-    const res = await fetch(`${API_BASE}/verify-email`, {
+    const res = await fetchSafe(`${API_BASE}/verify-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
@@ -341,7 +368,7 @@ export const api = {
   },
 
   async sendEmailOtp(email: string): Promise<{ success: boolean; message: string; demoOtp?: string; error?: string }> {
-    const res = await fetch(`${API_BASE}/send-email-otp`, {
+    const res = await fetchSafe(`${API_BASE}/send-email-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
@@ -350,7 +377,7 @@ export const api = {
   },
 
   async verifyEmailOtp(email: string, otp: string): Promise<{ verified: boolean; message?: string; error?: string }> {
-    const res = await fetch(`${API_BASE}/verify-email-otp`, {
+    const res = await fetchSafe(`${API_BASE}/verify-email-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, otp })
@@ -359,20 +386,14 @@ export const api = {
   },
 
   async getStats(): Promise<{ success: boolean; stats: SystemStats }> {
-    const res = await fetch(`${API_BASE}/stats`);
+    const res = await fetchSafe(`${API_BASE}/stats`);
     if (!res.ok) throw new Error('Failed to load statistics');
     return res.json();
   },
 
   async getAuditLogs(limit = 100): Promise<{ success: boolean; logs: AuditLog[] }> {
-    const res = await fetch(`${API_BASE}/audit?limit=${limit}`);
+    const res = await fetchSafe(`${API_BASE}/audit?limit=${limit}`);
     if (!res.ok) throw new Error('Failed to load audit logs');
-    return res.json();
-  },
-
-  async resetDemoData(): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE}/reset-demo`, { method: 'POST' });
-    if (!res.ok) throw new Error('Failed to reset demo');
     return res.json();
   }
 };
