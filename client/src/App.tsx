@@ -138,21 +138,24 @@ export function App() {
   }, []);
 
   // Unified Navigation Handler: Synchronizes React state, URL bar, and browser history
-  const handleNavigate = (tab: string, extraParams?: Record<string, string>) => {
-    let targetRole = userRole;
-    if (tab === 'staff_dashboard' || tab.startsWith('staff_')) {
-      targetRole = 'staff';
-    } else if (tab === 'admin_dashboard' || tab.startsWith('admin_')) {
-      targetRole = 'super_admin';
-    } else if (
-      tab === 'student_home' ||
-      tab === 'report_safely' ||
-      tab === 'emergency' ||
-      tab === 'maintenance' ||
-      tab === 'lost_found' ||
-      tab === 'track_report'
-    ) {
-      targetRole = userRole === 'staff' ? 'staff' : 'student';
+  const handleNavigate = (tab: string, extraParams?: Record<string, string>, overrideRole?: Role) => {
+    let targetRole: Role = overrideRole || userRole;
+    if (!overrideRole) {
+      if (tab === 'staff_dashboard' || tab.startsWith('staff_')) {
+        targetRole = 'staff';
+      } else if (tab === 'admin_dashboard' || tab.startsWith('admin_')) {
+        targetRole = 'super_admin';
+      } else if (tab === 'lost_found') {
+        targetRole = userRole === 'staff' ? 'staff' : 'student';
+      } else if (
+        tab === 'student_home' ||
+        tab === 'report_safely' ||
+        tab === 'emergency' ||
+        tab === 'maintenance' ||
+        tab === 'track_report'
+      ) {
+        targetRole = 'student';
+      }
     }
 
     setUserRole(targetRole);

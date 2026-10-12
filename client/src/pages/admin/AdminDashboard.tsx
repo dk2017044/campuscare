@@ -62,6 +62,7 @@ export const AdminDashboard: React.FC<Props> = ({
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffUser[]>([]);
+  const [isStaffLoading, setIsStaffLoading] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [cases, setCases] = useState<Case[]>([]);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
@@ -265,11 +266,29 @@ export const AdminDashboard: React.FC<Props> = ({
     }
   };
 
+  const loadStaffMembers = async () => {
+    try {
+      setIsStaffLoading(true);
+      const res = await api.getStaff();
+      setStaffMembers(res.staff || []);
+    } catch (err: any) {
+      console.error('Failed to load staff members:', err);
+    } finally {
+      setIsStaffLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isAdminAuthenticated) {
       loadAdminData();
     }
   }, [isAdminAuthenticated]);
+
+  useEffect(() => {
+    if (isAdminAuthenticated && subTab === 'staff') {
+      loadStaffMembers();
+    }
+  }, [isAdminAuthenticated, subTab]);
 
   const loadAdminData = async () => {
     try {
@@ -407,6 +426,7 @@ export const AdminDashboard: React.FC<Props> = ({
       setNewStaffPassword('');
       setNewStaffFieldScope('all');
       setShowNewStaffModal(false);
+      await loadStaffMembers();
       loadAdminData();
     } catch (e: any) {
       alert(e.message || 'Failed to register staff member');
@@ -419,6 +439,7 @@ export const AdminDashboard: React.FC<Props> = ({
     if (!confirm(`Remove staff member "${name}"?`)) return;
     try {
       await api.deleteStaff(id);
+      await loadStaffMembers();
       loadAdminData();
     } catch (e: any) {
       alert(e.message || 'Failed to remove staff');
@@ -1060,13 +1081,25 @@ export const AdminDashboard: React.FC<Props> = ({
               <h3 className="text-base font-bold text-slate-900 font-heading">Faculty & Staff Registry ({staffMembers.length})</h3>
               <p className="text-xs text-slate-500">Authenticated staff members authorized to review campus cases.</p>
             </div>
-            <button
-              onClick={() => setShowNewStaffModal(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold text-xs transition-all cursor-pointer shadow-xs"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>Enroll Staff Member</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={loadStaffMembers}
+                disabled={isStaffLoading}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                title="Reload staff directory"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isStaffLoading ? 'animate-spin text-[#0066FF]' : ''}`} />
+                <span className="hidden sm:inline">{isStaffLoading ? 'Loading...' : 'Refresh'}</span>
+              </button>
+              <button
+                onClick={() => setShowNewStaffModal(true)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0066FF] hover:bg-[#0052CC] text-white font-semibold text-xs transition-all cursor-pointer shadow-xs"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Enroll Staff Member</span>
+              </button>
+            </div>
           </div>
 
           {departments.length === 0 && (
@@ -1082,7 +1115,17 @@ export const AdminDashboard: React.FC<Props> = ({
             </div>
           )}
 
-          {staffMembers.length === 0 ? (
+          {isStaffLoading && staffMembers.length === 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-5 rounded-2xl bg-white border border-slate-200/80 space-y-3 animate-pulse shadow-xs">
+                  <div className="h-4 bg-slate-200 rounded-md w-2/3"></div>
+                  <div className="h-3 bg-slate-100 rounded-md w-1/2"></div>
+                  <div className="h-3 bg-slate-100 rounded-md w-3/4"></div>
+                </div>
+              ))}
+            </div>
+          ) : staffMembers.length === 0 ? (
             <div className="p-10 text-center rounded-3xl bg-white border border-slate-200/80 text-xs text-slate-500 space-y-3 shadow-xs">
               <Users className="w-9 h-9 text-slate-400 mx-auto" />
               <div>
@@ -1177,9 +1220,19 @@ export const AdminDashboard: React.FC<Props> = ({
                   Track and verify actions segregated across Student, Staff, and Executive Admin portals.
                 </p>
               </div>
-              <span className="text-xs font-mono text-slate-500 bg-slate-100 px-3 py-1 rounded-xl border border-slate-200 self-start sm:self-auto font-semibold">
-                Total Events: {auditLogs.length}
-              </span>
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setAuditPortalFilter('all')}
+                  className={`text-xs px-3.5 py-1.5 rounded-xl border font-semibold transition-all cursor-pointer ${
+                    auditPortalFilter === 'all'
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  All Logs ({auditLogs.length})
+                </button>
+              </div>
             </div>
 
             {/* 3 Portal Category KPI Summary Cards */}
@@ -1263,38 +1316,36 @@ export const AdminDashboard: React.FC<Props> = ({
               </button>
             </div>
 
-            {/* Filter Pills and Search Bar */}
+            {/* Search and Active Filter Bar (No duplicate category pills below) */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
-              {/* Category Filter Pills */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                {[
-                  { id: 'all', label: 'All Portals', count: auditLogs.length },
-                  { id: 'student', label: '🎓 Student Portal', count: studentCount },
-                  { id: 'staff', label: '🛡️ Staff Portal', count: staffCount },
-                  { id: 'admin', label: '⚡ Admin Portal', count: adminCount }
-                ].map(cat => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setAuditPortalFilter(cat.id as any)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      auditPortalFilter === cat.id
-                        ? 'bg-[#0066FF] text-white shadow-xs font-bold'
-                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>{cat.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      auditPortalFilter === cat.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {cat.count}
+              <div className="flex items-center gap-2 text-xs">
+                {auditPortalFilter !== 'all' ? (
+                  <div className="inline-flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+                    <span className="text-slate-500 font-medium">Filtered by:</span>
+                    <span className="font-bold text-slate-900 capitalize flex items-center gap-1.5">
+                      {auditPortalFilter === 'student' && <GraduationCap className="w-3.5 h-3.5 text-[#0066FF]" />}
+                      {auditPortalFilter === 'staff' && <Briefcase className="w-3.5 h-3.5 text-amber-700" />}
+                      {auditPortalFilter === 'admin' && <Shield className="w-3.5 h-3.5 text-purple-700" />}
+                      <span>{auditPortalFilter} Portal ({filteredLogs.length} events)</span>
                     </span>
-                  </button>
-                ))}
+                    <button
+                      type="button"
+                      onClick={() => setAuditPortalFilter('all')}
+                      className="ml-1 text-slate-400 hover:text-slate-700 p-0.5 rounded cursor-pointer"
+                      title="Clear filter"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-slate-500 font-medium pl-1">
+                    Showing all events across all 3 portals ({filteredLogs.length})
+                  </span>
+                )}
               </div>
 
               {/* Search input */}
-              <div className="relative min-w-[200px]">
+              <div className="relative min-w-[220px]">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"

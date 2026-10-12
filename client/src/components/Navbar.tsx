@@ -22,7 +22,7 @@ import { getPathForTab } from '../services/router';
 
 interface Props {
   currentTab: string;
-  setCurrentTab: (tab: string) => void;
+  setCurrentTab: (tab: string, extraParams?: Record<string, string>, overrideRole?: Role) => void;
   userRole: Role;
   setUserRole: (role: Role) => void;
   staffDept: string;
@@ -95,9 +95,9 @@ export const Navbar: React.FC<Props> = ({
   const handleRoleSelect = (role: Role) => {
     setUserRole(role);
     localStorage.setItem('campuscare_role', role);
-    if (role === 'student') setCurrentTab('student_home');
-    else if (role === 'staff') setCurrentTab('staff_dashboard');
-    else setCurrentTab(isAdminAuthenticated ? 'admin_queue' : 'admin_dashboard');
+    if (role === 'student') setCurrentTab('student_home', undefined, 'student');
+    else if (role === 'staff') setCurrentTab('staff_dashboard', undefined, 'staff');
+    else setCurrentTab(isAdminAuthenticated ? 'admin_queue' : 'admin_dashboard', undefined, 'super_admin');
     setRoleDropdownOpen(false);
   };
 
@@ -117,9 +117,9 @@ export const Navbar: React.FC<Props> = ({
           href={getPathForTab(userRole === 'student' ? 'student_home' : userRole === 'staff' ? 'staff_dashboard' : isAdminAuthenticated ? 'admin_queue' : 'admin_dashboard', userRole)}
           onClick={(e) => {
             e.preventDefault();
-            if (userRole === 'student') setCurrentTab('student_home');
-            else if (userRole === 'staff') setCurrentTab('staff_dashboard');
-            else setCurrentTab(isAdminAuthenticated ? 'admin_queue' : 'admin_dashboard');
+            if (userRole === 'student') setCurrentTab('student_home', undefined, 'student');
+            else if (userRole === 'staff') setCurrentTab('staff_dashboard', undefined, 'staff');
+            else setCurrentTab(isAdminAuthenticated ? 'admin_queue' : 'admin_dashboard', undefined, 'super_admin');
           }}
           className="flex items-center gap-3 cursor-pointer group shrink-0 no-underline text-inherit"
         >
