@@ -131,8 +131,8 @@ export const TrackReport: React.FC<Props> = ({ initialCaseId = '', initialPin = 
                 type="text"
                 value={caseIdInput}
                 onChange={(e) => setCaseIdInput(e.target.value.toUpperCase())}
-                placeholder="e.g. CC-7X4P9K2"
-                className="w-full p-3.5 font-mono text-sm font-bold rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 uppercase placeholder:text-slate-400 outline-none transition-all"
+                placeholder="Enter Case ID"
+                className="w-full p-3.5 font-mono text-sm font-bold rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 uppercase placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
 

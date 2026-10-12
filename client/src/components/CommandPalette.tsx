@@ -100,7 +100,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <input
                 type="text"
                 autoFocus
-                placeholder="Search campus actions (e.g. SOS, repairs, report)..."
+                placeholder="Search actions, services, or shortcuts..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="flex-1 bg-transparent text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none"

@@ -143,7 +143,7 @@ export const StudentHome: React.FC<Props> = ({ onNavigate }) => {
             </label>
             <input
               type="text"
-              placeholder="Enter Case ID (e.g. CC-4UU76FD)"
+              placeholder="Enter Case ID"
               value={caseIdInput}
               onChange={(e) => setCaseIdInput(e.target.value)}
               className="w-full bg-transparent text-slate-900 text-xs sm:text-sm placeholder:text-slate-400 focus:outline-none py-0.5"

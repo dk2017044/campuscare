@@ -856,7 +856,7 @@ export const AdminDashboard: React.FC<Props> = ({
               <div className="space-y-1">
                 <p className="text-sm font-bold text-slate-900">Zero Custom Departments</p>
                 <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Click "+ Create Department" above to dynamically configure your campus organization.
+                  Add campus departments for incident routing and triage.
                 </p>
               </div>
               <button
@@ -935,7 +935,7 @@ export const AdminDashboard: React.FC<Props> = ({
               <div>
                 <p className="font-bold text-slate-800 text-sm">Zero staff members registered yet</p>
                 <p className="text-[11px] text-slate-500 mt-1 max-w-sm mx-auto">
-                  Click "+ Add Staff Member" to provision an authorized staff account with a Staff ID and Password for logging into the Staff Portal.
+                  Register staff members to handle assigned student reports.
                 </p>
               </div>
               <button
@@ -1050,7 +1050,7 @@ export const AdminDashboard: React.FC<Props> = ({
                     type="text"
                     value={newDeptName}
                     onChange={(e) => setNewDeptName(e.target.value)}
-                    placeholder="e.g. Student Welfare & Counseling"
+                    placeholder="Department Name"
                     className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
                     required
                   />
@@ -1146,8 +1146,8 @@ export const AdminDashboard: React.FC<Props> = ({
                         type="text"
                         value={newStaffId}
                         onChange={(e) => setNewStaffId(e.target.value)}
-                        placeholder="e.g. STF101"
-                        className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none font-mono uppercase font-bold"
+                        placeholder="Staff Login ID"
+                        className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none font-medium"
                         required
                       />
                     </div>
@@ -1230,7 +1230,7 @@ export const AdminDashboard: React.FC<Props> = ({
                     type="email"
                     value={newStaffEmail}
                     onChange={(e) => setNewStaffEmail(e.target.value)}
-                    placeholder="e.g. staff@campus.edu or name@gmail.com"
+                    placeholder="Official email (optional)"
                     className="w-full p-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs outline-none"
                   />
                 </div>

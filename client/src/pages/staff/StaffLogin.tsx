@@ -68,7 +68,7 @@ export const StaffLogin: React.FC<Props> = ({ onLoginSuccess, onNavigateToAdmin 
               Staff & Officer Portal
             </h1>
             <p className="text-xs text-slate-500 mt-1">
-              Sign in with your University Staff ID and Password created by Administrator.
+              Sign in to access your assigned incident queue.
             </p>
           </div>
         </div>
@@ -96,7 +96,7 @@ export const StaffLogin: React.FC<Props> = ({ onLoginSuccess, onNavigateToAdmin 
                 type="text"
                 value={staffId}
                 onChange={(e) => setStaffId(e.target.value)}
-                placeholder="e.g. STAFF001 or officer@campus.edu"
+                placeholder="Staff ID or Official Email"
                 required
                 className="w-full pl-3.5 pr-10 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs placeholder:text-slate-400 focus:bg-white focus:border-[#0066FF] outline-none transition-all font-medium"
               />
@@ -113,7 +113,7 @@ export const StaffLogin: React.FC<Props> = ({ onLoginSuccess, onNavigateToAdmin 
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your staff password"
+                placeholder="Enter password"
                 required
                 className="w-full pl-3.5 pr-10 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-xs placeholder:text-slate-400 focus:bg-white focus:border-[#0066FF] outline-none transition-all font-medium"
               />
@@ -143,25 +143,17 @@ export const StaffLogin: React.FC<Props> = ({ onLoginSuccess, onNavigateToAdmin 
           </button>
         </form>
 
-        {/* Security Notice & Admin Prompt */}
-        <div className="mt-6 pt-5 border-t border-slate-100 space-y-3 text-center">
-          <p className="text-[11px] text-slate-500 leading-relaxed">
-            Staff accounts are provisioned exclusively by the <strong>University Administrator</strong>. If you do not have credentials, please contact your Campus Administrator.
-          </p>
-
-          {onNavigateToAdmin && (
-            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 flex items-center justify-between">
-              <span className="font-medium text-slate-700">Are you the Administrator?</span>
-              <button
-                type="button"
-                onClick={onNavigateToAdmin}
-                className="font-bold text-[#0066FF] hover:underline cursor-pointer"
-              >
-                Open Admin Portal →
-              </button>
-            </div>
-          )}
-        </div>
+        {onNavigateToAdmin && (
+          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+            <button
+              type="button"
+              onClick={onNavigateToAdmin}
+              className="text-xs font-semibold text-slate-500 hover:text-[#0066FF] transition-colors cursor-pointer"
+            >
+              Administrator Portal →
+            </button>
+          </div>
+        )}
       </motion.div>
     </div>
   );

@@ -18,11 +18,11 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
 
   // Form states
   const [title, setTitle] = useState('');
-  const [itemType, setItemType] = useState('Calculator');
-  const [brand, setBrand] = useState('Casio');
-  const [color, setColor] = useState('Black');
-  const [location, setLocation] = useState('Electronics Lab');
-  const [date, setDate] = useState('Today');
+  const [itemType, setItemType] = useState('');
+  const [brand, setBrand] = useState('');
+  const [color, setColor] = useState('');
+  const [location, setLocation] = useState('');
+  const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
   const [contactInfo, setContactInfo] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -66,11 +66,11 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
       const res = await api.reportLostFound({
         type,
         title: title.trim(),
-        itemType,
-        brand,
-        color,
-        location,
-        date,
+        itemType: itemType.trim(),
+        brand: brand.trim(),
+        color: color.trim(),
+        location: location.trim(),
+        date: date.trim(),
         description: description.trim(),
         contactInfo: contactInfo.trim() || null
       });
@@ -84,6 +84,14 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
         if (onCaseCreated) {
           onCaseCreated(res.publicCaseId, res.rawPin);
         }
+        setTitle('');
+        setItemType('');
+        setBrand('');
+        setColor('');
+        setLocation('');
+        setDate('');
+        setDescription('');
+        setContactInfo('');
         loadItems();
       }
     } catch (err: any) {
@@ -109,9 +117,12 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
     const foundItems = items.filter((i) => i.type === 'found');
     for (const l of lostItems) {
       for (const f of foundItems) {
-        const lWords = `${l.title} ${l.itemType || ''}`.toLowerCase();
-        const fWords = `${f.title} ${f.itemType || ''}`.toLowerCase();
-        if (lWords.includes('calculator') && fWords.includes('calculator')) {
+        if (l.itemType && f.itemType && l.itemType.trim().toLowerCase() === f.itemType.trim().toLowerCase()) {
+          return { lost: l, found: f };
+        }
+        const lTitle = (l.title || '').trim().toLowerCase();
+        const fTitle = (f.title || '').trim().toLowerCase();
+        if (lTitle && fTitle && (lTitle.includes(fTitle) || fTitle.includes(lTitle))) {
           return { lost: l, found: f };
         }
       }
@@ -330,7 +341,7 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Casio fx-991EX Scientific Calculator, Blue Water Bottle, Black Leather Wallet"
+                placeholder="Item title or name"
                 className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
@@ -341,7 +352,7 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
                 type="text"
                 value={itemType}
                 onChange={(e) => setItemType(e.target.value)}
-                placeholder="Calculator, Wallet, ID Card, Keys, Phone, Earbuds"
+                placeholder="Category (Electronics, Cards, Bag)"
                 className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
@@ -352,7 +363,7 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
                 type="text"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                placeholder="Black, Silver, Blue, Matte White"
+                placeholder="Color or appearance"
                 className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
@@ -363,7 +374,7 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="Electronics Lab, Library 2nd Floor, Canteen, Ground"
+                placeholder="Where was it lost or found?"
                 className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
@@ -374,7 +385,7 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
                 type="text"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                placeholder="Today, Yesterday, Last Friday"
+                placeholder="Date of incident"
                 className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
@@ -384,7 +395,7 @@ export const LostAndFound: React.FC<Props> = ({ onNavigate, onCaseCreated, staff
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Distinctive stickers, scratch on the back, keychain charm, initials..."
+                placeholder="Any distinguishing marks, serials, or details..."
                 rows={2}
                 className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] text-slate-900 text-xs placeholder:text-slate-400 resize-none outline-none transition-all"
               />

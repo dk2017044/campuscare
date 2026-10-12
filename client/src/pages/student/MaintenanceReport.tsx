@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }) => {
-  const [issueType, setIssueType] = useState('Broken Fan');
+  const [issueType, setIssueType] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [attachedImage, setAttachedImage] = useState<any>(null);
@@ -77,6 +77,10 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!issueType) {
+      setError('Please select a defect category.');
+      return;
+    }
     if (!description.trim()) {
       setError('Please provide a description of the issue.');
       return;
@@ -110,6 +114,11 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
         if (onCaseCreated) {
           onCaseCreated(res.publicCaseId, res.rawPin);
         }
+        setIssueType('');
+        setLocation('');
+        setDescription('');
+        setAttachedImage(null);
+        setAiAnalysis(null);
       }
     } catch (err: any) {
       setError(err.message || 'Submission failed. Please try again.');
@@ -204,7 +213,7 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g. Main Building - Room 304, Electronics Lab 2, Hostel A 1st Floor"
+              placeholder="Building, room number, or floor"
               className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               required
             />
@@ -219,7 +228,7 @@ export const MaintenanceReport: React.FC<Props> = ({ onNavigate, onCaseCreated }
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe what is broken, making abnormal noise, or leaking..."
+            placeholder="Describe the maintenance defect or issue..."
             rows={3}
             className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 resize-none outline-none transition-all"
             required

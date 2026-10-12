@@ -12,7 +12,7 @@ interface Props {
 
 export const EmergencyReport: React.FC<Props> = ({ onNavigate, onCaseCreated }) => {
   const [incidentType, setIncidentType] = useState('Immediate Threat');
-  const [location, setLocation] = useState('Campus Premises');
+  const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +71,8 @@ export const EmergencyReport: React.FC<Props> = ({ onNavigate, onCaseCreated }) 
         if (onCaseCreated) {
           onCaseCreated(res.publicCaseId, res.rawPin);
         }
+        setLocation('');
+        setDescription('');
       }
     } catch (err: any) {
       setError(err.message || 'Alert failed. Please call Campus Security directly.');
@@ -180,7 +182,7 @@ export const EmergencyReport: React.FC<Props> = ({ onNavigate, onCaseCreated }) 
             type="text"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="e.g. Near Library stairs, Hostel Block A Ground floor, Canteen lawn"
+            placeholder="Campus location or landmark"
             className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#D92D20] focus:ring-2 focus:ring-[#D92D20]/20 text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
           />
         </div>
@@ -205,7 +207,7 @@ export const EmergencyReport: React.FC<Props> = ({ onNavigate, onCaseCreated }) 
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Briefly state what is happening right now... (You can speak or type quickly)"
+            placeholder="Briefly describe the emergency..."
             rows={3}
             className="w-full p-3.5 rounded-2xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#D92D20] focus:ring-2 focus:ring-[#D92D20]/20 text-slate-900 text-xs placeholder:text-slate-400 resize-none outline-none transition-all"
           />

@@ -66,7 +66,7 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
   const [catSearch, setCatSearch] = useState('');
   const catDropdownRef = useRef<HTMLDivElement>(null);
 
-  const [location, setLocation] = useState('Electronics Lab');
+  const [location, setLocation] = useState('');
   const [customLocationDetail, setCustomLocationDetail] = useState('');
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
   const [locSearch, setLocSearch] = useState('');
@@ -76,7 +76,7 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
 
   const [description, setDescription] = useState('');
   const [incidentDate, setIncidentDate] = useState('Today');
-  const [approxTime, setApproxTime] = useState('Approx. 5:30 PM');
+  const [approxTime, setApproxTime] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [reporterName, setReporterName] = useState('');
   const [reporterContact, setReporterContact] = useState('');
@@ -535,7 +535,9 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                 >
                   <div className="flex items-center gap-2 truncate">
                     <MapPin className="w-4 h-4 text-[#0066FF] shrink-0" />
-                    <span className="font-semibold text-slate-900 truncate">{location}</span>
+                    <span className={`font-semibold truncate ${location ? 'text-slate-900' : 'text-slate-400'}`}>
+                      {location || 'Select campus location...'}
+                    </span>
                   </div>
                   <ChevronDown className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${locationDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -608,7 +610,7 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                 type="text"
                 value={customLocationDetail}
                 onChange={(e) => setCustomLocationDetail(e.target.value)}
-                placeholder="e.g. 2nd Floor corridor, near Room 204 or Stairwell B"
+                placeholder="Specific room, floor, or landmark"
                 className="w-full p-2.5 sm:p-3 rounded-xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
@@ -667,7 +669,7 @@ export const ReportSafely: React.FC<Props> = ({ onNavigate, onCaseCreated }) => 
                 type="text"
                 value={approxTime}
                 onChange={(e) => setApproxTime(e.target.value)}
-                placeholder="e.g. Around 5:30 PM, During lunch break, or Late evening"
+                placeholder="Approximate time"
                 className="w-full p-2.5 sm:p-3 rounded-xl bg-slate-50/60 border border-slate-200 focus:bg-white focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-slate-900 text-xs placeholder:text-slate-400 outline-none transition-all"
               />
             </div>
